@@ -18,6 +18,7 @@ function makeState() {
     leader: 0,
     heartsBroken: false,
     trickNumber: 0,
+    passInfo: null,
   };
 }
 
@@ -31,6 +32,11 @@ export async function playHand(state, bots, direction) {
       remaining[tgt] = remaining[tgt].concat(picks[i]);
     }
     state.hands = remaining;
+    // Vaihtotieto: seat i antoi picks[i] paikalle tgt. Tämä on KOVA tieto
+    // determinisoinnille (hakubotit tietävät mitä antoivat ja kenelle).
+    state.passInfo = [0, 1, 2, 3].map((i) => ({ cards: picks[i], to: passTarget(direction, i) }));
+  } else {
+    state.passInfo = null;
   }
 
   state.handPoints = [0, 0, 0, 0];

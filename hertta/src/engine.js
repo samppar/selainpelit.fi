@@ -98,13 +98,21 @@ export function computeVoids(allPlays) {
 // chooseCard(seat, simView) palauttaa laillisen kortin. Oletuspolitiikka:
 // view.sim.defaultPolicy (nopea, pisteitä välttävä).
 export function makeSim({ seat, hand, playedCards, currentTrick, leader,
-  heartsBroken, trickNumber, handPoints, scores, voids }) {
+  heartsBroken, trickNumber, handPoints, scores, voids, passedCards, passedTo }) {
   const seen = new Set([...hand, ...playedCards]);
   const unseen = newDeck().filter((c) => !seen.has(c));
   const inTrick = new Set(currentTrick.map((t) => t.seat));
   // Montako korttia kukin vastustaja pitää kädessään juuri nyt.
   const counts = [0, 1, 2, 3].map((s) =>
     s === seat ? hand.length : 13 - trickNumber - (inTrick.has(s) ? 1 : 0));
+
+  // Vaihtotieto (tuppi-oppi #1): kortit jotka annoin paikalle passedTo ovat
+  // VARMASTI hänen kädessään, kunnes ne pelataan. Kiinnitä ne — älä arvo.
+  const pinned = (passedCards && passedTo != null && passedTo !== seat)
+    ? passedCards.filter((c) => unseen.includes(c)) // yhä pelaamatta & ei omassa kädessä
+    : [];
+  const pinnedSet = new Set(pinned);
+  const assignPool = unseen.filter((c) => !pinnedSet.has(c));
 
   // Rajoittuneisuus: montako muuta paikkaa on TYHJÄ tämän kortin maassa (mitä
   // useampi, sitä harvemmalle kortti sopii). McBrain-tyylinen preGenSample:
@@ -116,17 +124,24 @@ export function makeSim({ seat, hand, playedCards, currentTrick, leader,
     for (let s = 0; s < 4; s++) if (s !== seat && voids[s][su]) n++;
     return n;
   };
-  const ordered = [...unseen].sort((a, b) => constraint(b) - constraint(a));
+  const ordered = [...assignPool].sort((a, b) => constraint(b) - constraint(a));
+
+  // Aseta kiinnitetyt kortit valmiiksi ja vähennä paikan tarvetta.
+  function seedHands() {
+    const hands = [[], [], [], []];
+    hands[seat] = [...hand];
+    const need = counts.slice(); need[seat] = 0;
+    if (pinned.length) { hands[passedTo] = [...pinned]; need[passedTo] -= pinned.length; }
+    return { hands, need };
+  }
 
   function sampleWorld() {
     for (let attempt = 0; attempt < 40; attempt++) {
-      const hands = [[], [], [], []];
-      hands[seat] = [...hand];
-      const need = counts.slice(); need[seat] = 0;
-      let ok = true;
+      const { hands, need } = seedHands();
+      let ok = need.every((n) => n >= 0);
       // Rajoittuneimmat ensin (kiinteä järjestys); paikan satunnaisuus tuo
       // vaihtelun eri maailmojen välille.
-      for (const c of ordered) {
+      if (ok) for (const c of ordered) {
         const su = suitOf(c);
         const elig = [];
         for (let s = 0; s < 4; s++) if (s !== seat && need[s] > 0 && !voids[s][su]) elig.push(s);
@@ -136,13 +151,14 @@ export function makeSim({ seat, hand, playedCards, currentTrick, leader,
       }
       if (ok && need.every((n) => n === 0)) return { hands };
     }
-    // Varasuunnitelma: jaa tyhjät maat huomiotta (takaa terminoinnin).
-    const pool = shuffle(unseen);
-    const hands = [[], [], [], []]; hands[seat] = [...hand];
+    // Varasuunnitelma: jaa tyhjät maat huomiotta (takaa terminoinnin),
+    // mutta kunnioita kiinnitettyjä vaihtokortteja.
+    const { hands, need } = seedHands();
+    const pool = shuffle(assignPool);
     let idx = 0;
     for (let s = 0; s < 4; s++) {
       if (s === seat) continue;
-      for (let k = 0; k < counts[s]; k++) hands[s].push(pool[idx++]);
+      for (let k = 0; k < need[s]; k++) hands[s].push(pool[idx++]);
     }
     return { hands };
   }
@@ -231,7 +247,7 @@ export function makeSim({ seat, hand, playedCards, currentTrick, leader,
 // ---- Reilut näkymät: botti näkee VAIN oman kätensä ja julkisen tiedon ----
 export function buildPlayView(state, seat) {
   const { hands, currentTrick, heartsBroken, trickNumber, playedCards,
-    scores, handPoints, leader, tricks } = state;
+    scores, handPoints, leader, tricks, passInfo } = state;
   const leadSuit = currentTrick.length ? suitOf(currentTrick[0].card) : null;
   const legalMoves = getLegalMoves(hands[seat], currentTrick, heartsBroken, trickNumber === 0);
   const voids = computeVoids([...tricks.map((t) => t.plays), currentTrick]);
@@ -254,6 +270,8 @@ export function buildPlayView(state, seat) {
     seat, hand: view.hand, playedCards: view.playedCards, currentTrick,
     leader, heartsBroken, trickNumber, handPoints: view.handPoints,
     scores: view.scores, voids,
+    passedCards: passInfo ? passInfo[seat].cards : null,
+    passedTo: passInfo ? passInfo[seat].to : null,
   });
   view.analysis = makeAnalysis(view); // jaetut julkisen tiedon apurit
   return freezeView(view);

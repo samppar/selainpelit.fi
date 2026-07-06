@@ -58,6 +58,8 @@ function buildView(s, seat) {
     seat, hand: view.hand, playedCards: view.playedCards, currentTrick,
     leader: s.leader, heartsBroken: s.heartsBroken, trickNumber: s.trickCount,
     handPoints: view.handPoints, scores: view.scores, voids: s.voids,
+    passedCards: s.passInfo ? s.passInfo[seat].cards : null,
+    passedTo: s.passInfo ? s.passInfo[seat].to : null,
   });
   view.analysis = makeAnalysis(view);
   return freezeView(view);
@@ -104,7 +106,7 @@ const initialState = () => ({
   phase: "menu", hands: [[], [], [], []], handNumber: 0, passDirection: "left",
   humanPass: [], currentTrick: [], currentPlayer: 0, leader: 0, heartsBroken: false,
   trickCount: 0, takenPoints: [0, 0, 0, 0], totalScores: [0, 0, 0, 0],
-  playedCards: [], playLog: [], voids: noVoids(), lastTrickWinner: null, message: "",
+  playedCards: [], playLog: [], voids: noVoids(), passInfo: null, lastTrickWinner: null, message: "",
 });
 
 function startHand(state, handNumber) {
@@ -113,7 +115,7 @@ function startHand(state, handNumber) {
   const base = {
     ...state, hands, handNumber, passDirection: direction, humanPass: [],
     currentTrick: [], heartsBroken: false, trickCount: 0, takenPoints: [0, 0, 0, 0],
-    playedCards: [], playLog: [], voids: noVoids(), lastTrickWinner: null, _handScores: undefined,
+    playedCards: [], playLog: [], voids: noVoids(), passInfo: null, lastTrickWinner: null, _handScores: undefined,
   };
   if (direction === "hold") {
     const leader = hands.findIndex((h) => h.includes("C2"));
@@ -140,7 +142,8 @@ function reducer(state, action) {
       for (let i = 0; i < 4; i++) newHands[passTarget(dir, i)] = newHands[passTarget(dir, i)].concat(picks[i]);
       const sorted = newHands.map(sortHand);
       const leader = sorted.findIndex((h) => h.includes("C2"));
-      return { ...state, hands: sorted, humanPass: [], phase: "playing", leader, currentPlayer: leader, currentTrick: [], trickCount: 0, message: "Risti 2 aloittaa." };
+      const passInfo = picks.map((cards, i) => ({ cards, to: passTarget(dir, i) }));
+      return { ...state, hands: sorted, humanPass: [], phase: "playing", leader, currentPlayer: leader, currentTrick: [], trickCount: 0, passInfo, message: "Risti 2 aloittaa." };
     }
     case "PLAY_CARD": {
       const { player, card } = action;
