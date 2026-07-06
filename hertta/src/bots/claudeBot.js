@@ -6,7 +6,8 @@
 // lyhyen sivumaan tyhjentämistä saadakseni pudotusvoimaa myöhemmin.
 
 import codex from "./codexBot.js";
-import { SUITS, suitOf, rankOf } from "../utils.js";
+import { SUITS, suitOf, rankOf, cardPoints } from "../utils.js";
+import { shootThreat } from "../analysis.js";
 
 // Sama kuun-ampumisen arvio kuin Codexilla, jotta tiedämme milloin
 // johtaminen kannattaa jättää Codexin (hyökkäävän) logiikan hoidettavaksi.
@@ -40,6 +41,26 @@ export default {
   playCard(view) {
     const { hand, legalMoves: legal, trick, playedCards, seat, voids } = view;
     if (legal.length === 1) return legal[0];
+
+    // --- PROAKTIIVINEN PUHALLUKSEN ESTO ---
+    // Jos yksi vastustaja haalii kaikki pisteet, riko putki AIKAISEMMIN kuin
+    // oletuspuolustus (joka odottaa ~6 pistettä): nappaa pistetikki häneltä heti
+    // kun voin. Laukeaa vasta level ≥ 2 (≥4 pistettä tai rouva) → ei ylireagoi.
+    const threat = shootThreat(view);
+    if (threat && threat.level >= 2 && !amShooting(view) && trick.length > 0) {
+      const led = suitOf(trick[0].card);
+      const follow = legal.filter((c) => suitOf(c) === led);
+      const pointsIn = trick.reduce((s, t) => s + cardPoints(t.card), 0);
+      if (follow.length && pointsIn > 0) {
+        const ledCards = trick.filter((t) => suitOf(t.card) === led);
+        const winner = ledCards.reduce((w, t) => (rankOf(t.card) > rankOf(w.card) ? t : w), ledCards[0]);
+        const shooterInvolved = winner.seat === threat.seat || !trick.some((t) => t.seat === threat.seat);
+        if (shooterInvolved) {
+          const wins = follow.filter((c) => rankOf(c) > rankOf(winner.card));
+          if (wins.length) return wins.sort((a, b) => rankOf(a) - rankOf(b))[0]; // matalin voittava
+        }
+      }
+    }
 
     // Vain oma johto + ei omaa kuun ampumista → sovella void-tietoista johtoa.
     // Muuten (seuranta, tai kun ammun kuuta) Codexin logiikka on jo vahva.

@@ -36,6 +36,32 @@ export function cardsRemaining(view, seat) {
   return 13 - view.trickNumber - inTrick;
 }
 
+/**
+ * Puhalluksen (kuun ampumisen) tunnistus julkisesta tiedosta.
+ * Palauttaa null jos ei uhkaa, muuten { seat, points, level }.
+ *
+ * Vahvin luotettava signaali: jos VAIN yksi pelaaja on kerännyt kaikki
+ * tähänastiset pisteet, hän tähtää kuuhun — mitä useampi pistetikki hänelle
+ * on jo mennyt ja mitä aikaisemmin, sitä vaarallisempi. Jos pisteet ovat
+ * hajautuneet ≥2 pelaajalle, puhallus on jo kuollut (level 0 → null).
+ * level: 1 = orastava, 2 = vakava, 3 = kriittinen (rouva tai iso saldo).
+ */
+export function shootThreat(view) {
+  const hp = view.handPoints;
+  const collectors = [];
+  for (let i = 0; i < hp.length; i++) if (hp[i] > 0) collectors.push(i);
+  if (collectors.length !== 1) return null;     // hajautunut tai ei pisteitä → ei uhkaa
+  const sole = collectors[0];
+  if (sole === view.seat) return null;          // minä keräilen (ehkä ammun itse)
+
+  const pts = hp[sole];
+  const hasQueen = view.playedCards.includes("S12") && pts >= 13;
+  let level = 1;                                 // yksi kerääjä = orastava uhka
+  if (pts >= 4 || hasQueen) level = 2;           // vakava: reagoi ~2 pistettä aiemmin kuin oletus
+  if (pts >= 13) level = 3;                       // kriittinen: rouva jo hänellä
+  return { seat: sole, points: pts, level };
+}
+
 /** Rakenna view.analysis-olio, jonka metodit on sidottu tähän näkymään.
  *  Näin myös liitetyt (import-vapaat) botit saavat samat apurit valmiina. */
 export function makeAnalysis(view) {
