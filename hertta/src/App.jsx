@@ -2,6 +2,7 @@ import React, { useReducer, useEffect, useState } from "react";
 import {
   getLegalMoves, safePlay, safePass, makeSim,
 } from "./engine.js";
+import { makeAnalysis } from "./analysis.js";
 import { playMatch } from "./match.js";
 import { BOTS, getBot } from "./botRegistry.js";
 import { suitOf, rankOf, isRed, rankLabel, cardPoints, sortHand, SUIT_SYMBOL } from "./utils.js";
@@ -58,6 +59,7 @@ function buildView(s, seat) {
     leader: s.leader, heartsBroken: s.heartsBroken, trickNumber: s.trickCount,
     handPoints: view.handPoints, scores: view.scores, voids: s.voids,
   });
+  view.analysis = makeAnalysis(view);
   return view;
 }
 function buildPassView(s, seat) {

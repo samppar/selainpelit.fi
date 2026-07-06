@@ -3,6 +3,7 @@
 // turvakäärimet, jotka estävät vialliselta botilta pelin kaatumisen.
 
 import { SUITS, suitOf, rankOf, cardPoints, sortHand } from "./utils.js";
+import { makeAnalysis } from "./analysis.js";
 
 const VIEW_UTIL = { suitOf, rankOf, cardPoints };
 
@@ -254,6 +255,7 @@ export function buildPlayView(state, seat) {
     leader, heartsBroken, trickNumber, handPoints: view.handPoints,
     scores: view.scores, voids,
   });
+  view.analysis = makeAnalysis(view); // jaetut julkisen tiedon apurit
   return view;
 }
 
