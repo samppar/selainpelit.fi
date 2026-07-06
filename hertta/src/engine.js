@@ -256,17 +256,27 @@ export function buildPlayView(state, seat) {
     scores: view.scores, voids,
   });
   view.analysis = makeAnalysis(view); // jaetut julkisen tiedon apurit
-  return view;
+  return freezeView(view);
+}
+
+// Jäädytä näkymä: botti ei voi huijata muokkaamalla tilaa (tuppi-oppi).
+// Turvakäärimet (safePlay) nappaavat poikkeukset, joten jäädytys ei kaada peliä.
+function freezeView(view) {
+  for (const k of ["hand", "legalMoves", "playedCards", "scores", "handPoints", "trick", "voids"]) {
+    if (Array.isArray(view[k])) Object.freeze(view[k]);
+  }
+  return Object.freeze(view);
 }
 
 export function buildPassView(state, seat, direction) {
-  return {
+  const view = {
     seat,
     hand: sortHand(state.hands[seat]),
     direction,
     scores: [...state.scores],
     util: VIEW_UTIL,
   };
+  return freezeView(view);
 }
 
 // ---- Turvakäärimet: viallinen/väärän siirron palauttava botti ei kaada peliä ----

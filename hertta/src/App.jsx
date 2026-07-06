@@ -51,7 +51,7 @@ function buildView(s, seat) {
     playedCards: [...s.playedCards],
     scores: [...s.totalScores],
     handPoints: [...s.takenPoints],
-    voids: s.voids,
+    voids: [...s.voids], // kopio: jäädytys ei saa koskea React-tilaan
     util: { suitOf, rankOf, cardPoints }, // liitetyt botit voivat käyttää ilman importteja
   };
   view.sim = makeSim({
@@ -60,16 +60,22 @@ function buildView(s, seat) {
     handPoints: view.handPoints, scores: view.scores, voids: s.voids,
   });
   view.analysis = makeAnalysis(view);
-  return view;
+  return freezeView(view);
+}
+function freezeView(view) {
+  for (const k of ["hand", "legalMoves", "playedCards", "scores", "handPoints", "trick", "voids"]) {
+    if (Array.isArray(view[k])) Object.freeze(view[k]);
+  }
+  return Object.freeze(view);
 }
 function buildPassView(s, seat) {
-  return {
+  return freezeView({
     seat,
     hand: sortHand(s.hands[seat]),
     direction: s.passDirection,
     scores: [...s.totalScores],
     util: { suitOf, rankOf, cardPoints },
-  };
+  });
 }
 
 // Kääntää liitetyn koodin botiksi selaimessa (ei importteja sallittu).
