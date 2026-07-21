@@ -60,15 +60,15 @@ for (const bias of BIASES) {
   const tBase = {}, tCaut = {};
   let cautWins = 0, played = 0, marginSum = 0;
   for (let g = 0; g < MATCHES; g++) {
-    // Väliaikatulos 10 s välein: juokseva tilanne meneillään olevalle biasille.
-    if (Date.now() - lastPrint >= 10000) {
+    // Väliaikatulos minuutin välein.
+    if (Date.now() - lastPrint >= 60000) {
       lastPrint = Date.now();
       const el = ((Date.now() - t0) / 1000).toFixed(0);
       const ramPct = (t) => { const r = t.rami || 0, n = t.nolo || 0; return r + n ? (100 * r / (r + n)).toFixed(1) : "-.-"; };
       console.log(
         `  [${el}s] bias ${bias.toFixed(2)}  ${played}/${MATCHES * 2} peliä | ` +
-        `varov. ramaa ${ramPct(tCaut)}% | voitto-% ${played ? (100 * cautWins / played).toFixed(1) : "-"} | ` +
-        `marginaali ${played ? (marginSum / played >= 0 ? "+" : "") + (marginSum / played).toFixed(2) : "-"}${UNIT}`,
+          `varov. ramaa ${ramPct(tCaut)}% | voitto-% ${played ? (100 * cautWins / played).toFixed(1) : "-"} | ` +
+          `marginaali ${played ? (marginSum / played >= 0 ? "+" : "") + (marginSum / played).toFixed(2) : "-"}${UNIT}`,
       );
     }
     // Pariutettu vertailu: SAMA siemen (samat jaot) molemmilla puolilla, vain

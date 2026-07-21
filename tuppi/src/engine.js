@@ -28,14 +28,17 @@ export class TuppiEngine {
    * @param {number} [opts.target] tuppiraja (oletus 52)
    * @param {boolean} [opts.verbose] tulostaako tapahtumat
    * @param {boolean} [opts.strict] laiton siirto = poikkeus (muuten korjataan)
+   * @param {number} [opts.handRotate] siirrä käsiä myötäpäivään N paikkaa
+   *   (1 = joukkueen A kortit menevät joukkueelle B ja päinvastoin)
    */
-  constructor(players, { seed = null, target = TUPPI_TARGET, verbose = false, strict = true } = {}) {
+  constructor(players, { seed = null, target = TUPPI_TARGET, verbose = false, strict = true, handRotate = 0 } = {}) {
     if (players.length !== 4) throw new Error("tarvitaan tasan 4 pelaajaa");
     this.players = players;
     this.rng = new RNG(seed);
     this.target = target;
     this.verbose = verbose;
     this.strict = strict;
+    this.handRotate = ((handRotate % 4) + 4) % 4;
     // ottelun tila
     this.upTeam = null; // nousulla oleva joukkue, null = pöytäpeli
     this.upScore = 0;
@@ -155,7 +158,16 @@ export class TuppiEngine {
   //  YKSI JAKO                                                          //
   // ------------------------------------------------------------------ //
   playDeal(dealNumber, dealer) {
-    const hands = dealCards(this.rng);
+    let hands = dealCards(this.rng);
+    if (this.handRotate) {
+      // Paikka s saa kortit jotka ilman kiertoa menivät paikalle (s - rotate).
+      // rotate=1: joukkue 0 (paikat 0,2) saa entisen joukkueen 1 kortit.
+      const rotated = new Array(4);
+      for (let s = 0; s < 4; s++) {
+        rotated[s] = hands[(s - this.handRotate + 4) % 4];
+      }
+      hands = rotated;
+    }
     const mstate = this._matchState(dealNumber, dealer);
 
     for (let seat = 0; seat < 4; seat++) {

@@ -92,9 +92,34 @@ merkitsevyyden rajamailla (~1,5 SE), eikä käyrä ole täysin monotoninen
 
 **Suositus:** harkitse `ramBias ≈ 0,3` selainpelin Mestarille (pahimmillaan
 neutraali, todennäköisesti pieni parannus, vastaa peli-intuitiota).
-**Jatko:** erottele tilanteet (oma alhaalla / molemmat alhaalla / vastustaja
-nousulla) omilla kynnyksillä; aja isompi otos korkeammalla sims-arvolla
-merkitsevyyden varmistamiseksi.
+
+## 2b. Vähemmän ramaamista ALHAALLA — TESTATTU, auttaa
+
+**Hypoteesi:** Mestari ramaa liikaa kun oma joukkue ei ole nousulla
+(alhaalla / pöytä). Ylhäällä nykyinen kynnys (6.6) saa jäädä.
+
+**Toteutus:** `ChampionPlayer.ramBiasDown` — lisätään kynnykseen vain kun
+`upTeam !== myTeam`. Ajuri: `node compare-ram-down.mjs` (play-to-52,
+sims=60, peilatut parit: sama siemen + `handRotate` 0/1).
+
+**Tulos (40 peilattua paria = 80 peliä / piste, sims=60):**
+
+| ramBiasDown | caut ramaa-% alhaalla | base alhaalla | voitto-% |
+|---|---|---|---|
+| 0.3 | 23 % | 33 % | **53.8 %** |
+| **0.5** | **19 %** | **33 %** | **57.5 %** |
+| 0.7 | 14 % | 33 % | **56.3 %** |
+
+Ylhäällä ramaamis-% pysyi ~50 % molemmilla (bias ei koske nousua).
+
+**Johtopäätös:** varovaisempi näyttö **vain alhaalla** parantaa selvästi
+(~54–58 % voitto-osuus vs perus). Paras piste `ramBiasDown ≈ 0.5`.
+Peilaus (A↔B-kortit) piti otoksen hallittavana.
+
+**Suositus:** aseta Mestarille `ramBiasDown: 0.5` (tuotanto / selain).
+**Tila:** oletus nyt `0.5` (`ChampionPlayer`). Mitattu ramaamis-% alhaalla
+~19 % (ennen ~33 %), ylhäällä ~50 %.
+**Jatko:** erottele pöytäpeli vs vastustaja-nousulla omiksi kynnyksiksi.
 
 ## 3. Muuta
 

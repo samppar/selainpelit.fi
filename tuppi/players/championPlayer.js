@@ -26,12 +26,15 @@ import {
 export class ChampionPlayer extends TuppiPlayer {
   static defaultName = "Mestari";
 
-  constructor(name = null, { simulations = 60, seed = null, ramBias = 0 } = {}) {
+  constructor(name = null, { simulations = 60, seed = null, ramBias = 0, ramBiasDown = 0.5 } = {}) {
     super(name);
     this.sims = simulations;
     this.rng = new RNG(seed);
-    // ramBias nostaa ramauskynnystä -> valitsee noloa useammin (varovaisempi).
+    // ramBias nostaa ramauskynnystä aina -> valitsee noloa useammin.
     this.ramBias = ramBias;
+    // ramBiasDown nostaa kynnystä vain alhaalla (oma joukkue EI nousulla).
+    // 0.5 mitattu paremmaksi vs perus (~57.5 % voitto-osuus, sims=60).
+    this.ramBiasDown = ramBiasDown;
   }
 
   // ------------------------------------------------------------------ //
@@ -55,8 +58,9 @@ export class ChampionPlayer extends TuppiPlayer {
     }
     const avg = total / trials;
     // ~6.5 on tasapeli; vaadi selvä etu ennen ramia, rohkeampi nousulla.
-    // ramBias nostaa kynnystä (valitsee noloa useammin).
-    const need = (view.match.upTeam === myTeam ? 6.6 : 7.1) + this.ramBias;
+    // ramBias aina; ramBiasDown vain kun ei olla nousulla (alhaalla / pöytä).
+    const up = view.match.upTeam === myTeam;
+    const need = (up ? 6.6 : 7.1) + this.ramBias + (up ? 0 : this.ramBiasDown);
     return avg >= need ? "rami" : "nolo";
   }
 
