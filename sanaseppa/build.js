@@ -66,6 +66,7 @@ ${css}
     <div class="ctrls">
       <button id="btnPlay" class="primary">Pelaa sana <kbd>Enter</kbd></button>
       <button id="btnHint">Vihje <kbd>F1</kbd></button>
+      <button id="btnLetter">Kirjain <kbd>F6</kbd></button>
       <button id="btnRecall">Palauta <kbd>F2</kbd></button>
       <button id="btnShuffle">Sekoita <kbd>F3</kbd></button>
       <button id="btnExchange">Vaihda <kbd>F4</kbd></button>

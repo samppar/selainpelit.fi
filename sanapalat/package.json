@@ -1,0 +1,10 @@
+{
+  "name": "sanapalat",
+  "version": "1.0.0",
+  "description": "Sanapalat — suomenkielinen palanladontapeli tietokonetta vastaan (selainpeli).",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run_tests.js"
+  },
+  "license": "MIT"
+}

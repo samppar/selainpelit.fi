@@ -204,6 +204,7 @@
     var ht = isHumanTurn();
     el("btnPlay").disabled = !(ht && S.pending.length > 0 && !S.exchange);
     el("btnHint").disabled = !(ht && !S.exchange && S.pending.length === 0);
+    el("btnLetter").disabled = !TRIE;
     el("btnRecall").disabled = !(ht && S.pending.length > 0 && !S.exchange);
     el("btnShuffle").disabled = !(ht && !S.exchange);
     el("btnPass").disabled = !ht;
@@ -518,6 +519,140 @@
     toast("Vihje: \u201c" + best.main.toUpperCase() + "\u201d toisi " + best.score + " p. Napauta lautaa piilottaaksesi.", "ok");
   }
 
+  // ---- Kirjaimen sisältävät sanat ------------------------------------------
+  var LETTER_BROWSER_LIMIT = 80;
+  var letterBrowserCh = null;
+
+  function wordsContainingLetter(ch, limit) {
+    ch = String(ch).toLowerCase();
+    var hits = [];
+    for (var i = 0; i < WORDS.length; i++) {
+      if (WORDS[i].indexOf(ch) >= 0) hits.push(WORDS[i]);
+    }
+    hits.sort(function (a, b) {
+      function band(w) { return (w.length >= 4 && w.length <= 8) ? 0 : (w.length < 4 ? 2 : 1); }
+      var ba = band(a), bb = band(b);
+      if (ba !== bb) return ba - bb;
+      if (a.length !== b.length) return a.length - b.length;
+      return a < b ? -1 : (a > b ? 1 : 0);
+    });
+    return { total: hits.length, words: hits.slice(0, limit) };
+  }
+
+  function playableMovesWithLetter(ch) {
+    if (!S || !isHumanTurn()) return [];
+    ch = String(ch).toLowerCase();
+    var moves = E.generateMoves(S.board, human().rack, TRIE);
+    var out = [], seen = {};
+    for (var i = 0; i < moves.length; i++) {
+      var m = moves[i];
+      var uses = false;
+      for (var j = 0; j < m.cells.length; j++) if (m.cells[j].ch === ch) { uses = true; break; }
+      if (!uses) continue;
+      var key = m.main + ":" + m.score;
+      if (seen[key]) continue;
+      seen[key] = 1;
+      out.push(m);
+      if (out.length >= 24) break;
+    }
+    return out;
+  }
+
+  function showLetterBrowser(initialCh) {
+    if (!TRIE) { toast("Sanasto latautuu viel\u00e4\u2026", "warn"); return; }
+    letterBrowserCh = initialCh || letterBrowserCh || null;
+    // Jos telineessä on valittu kirjain, käytä sitä oletuksena
+    if (!letterBrowserCh && S && S.selected != null && human()) {
+      var sel = human().rack[S.selected];
+      if (sel && sel !== BLANK) letterBrowserCh = sel;
+    }
+    renderLetterBrowser();
+  }
+
+  function renderLetterBrowser() {
+    ovMode = "letter";
+    var ch = letterBrowserCh;
+    var html = '<div class="card lettercard" data-mode="letter"><h2>Kirjaimen sanat</h2>' +
+      '<p class="lead">Valitse kirjain \u2014 n\u00e4et sanalistan osumat' +
+      (S && isHumanTurn() ? " ja mahdolliset siirtosi, joissa kirjainta k\u00e4ytet\u00e4\u00e4n" : "") +
+      ".</p>";
+
+    // Telineen kirjaimet pikavalintana
+    if (S && human()) {
+      var rackLetters = [], seenR = {};
+      human().rack.forEach(function (t) {
+        if (t === BLANK || seenR[t]) return;
+        seenR[t] = 1; rackLetters.push(t);
+      });
+      if (rackLetters.length) {
+        html += '<div class="optlab">Telineest\u00e4si</div><div class="letters racklets">';
+        rackLetters.forEach(function (L) {
+          html += '<button type="button" class="lbtn' + (ch === L ? " on" : "") + '" data-l="' + L + '">' + L.toUpperCase() + "</button>";
+        });
+        html += "</div>";
+      }
+    }
+
+    html += '<div class="optlab">Aakkoset</div><div class="letters">';
+    for (var i = 0; i < CH_LETTERS.length; i++) {
+      var L = CH_LETTERS[i];
+      html += '<button type="button" class="lbtn' + (ch === L ? " on" : "") + '" data-l="' + L + '">' + L.toUpperCase() + "</button>";
+    }
+    html += "</div>";
+
+    if (ch) {
+      var playable = playableMovesWithLetter(ch);
+      if (playable.length) {
+        html += '<div class="optlab">Pelattavissa nyt (' + playable.length + (playable.length >= 24 ? "+" : "") + ")</div>" +
+          '<div class="wordlist playable">';
+        playable.forEach(function (m, ix) {
+          html += '<button type="button" class="wchip play" data-pi="' + ix + '">' +
+            m.main.toUpperCase() + ' <span class="wp">' + m.score + " p</span></button>";
+        });
+        html += "</div>";
+        // stash for click handlers
+        showLetterBrowser._playable = playable;
+      } else {
+        showLetterBrowser._playable = [];
+      }
+
+      var res = wordsContainingLetter(ch, LETTER_BROWSER_LIMIT);
+      html += '<div class="optlab">Sanalistassa \u201c' + ch.toUpperCase() + "\u201d (" +
+        Math.min(res.total, LETTER_BROWSER_LIMIT) + (res.total > LETTER_BROWSER_LIMIT ? " / " + res.total : "") +
+        ")</div><div class=\"wordlist dict\">";
+      if (!res.words.length) html += '<span class="empty">Ei osumia.</span>';
+      else res.words.forEach(function (w) {
+        html += '<span class="wchip">' + w.toUpperCase() + "</span>";
+      });
+      html += "</div>";
+    } else {
+      html += '<p class="lead" style="margin-top:8px">Valitse kirjain yllä.</p>';
+    }
+
+    html += '<div class="row"><button class="primary" id="letterClose">Sulje</button></div></div>';
+    openOverlay(html);
+
+    ov.querySelectorAll(".lbtn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        letterBrowserCh = b.dataset.l;
+        renderLetterBrowser();
+      });
+    });
+    ov.querySelectorAll(".wchip.play").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var m = showLetterBrowser._playable[b.dataset.pi | 0];
+        if (!m || !S) return;
+        var map = {};
+        for (var i = 0; i < m.cells.length; i++) { var c = m.cells[i]; map[idx(c.r, c.c)] = c; }
+        S.hint = { map: map, word: m.main, score: m.score, cells: m.cells };
+        ovMode = null; closeOverlay();
+        render();
+        toast("N\u00e4ytet\u00e4\u00e4n \u201c" + m.main.toUpperCase() + "\u201d (+" + m.score + "). Napauta lautaa piilottaaksesi.", "ok");
+      });
+    });
+    el("letterClose").addEventListener("click", function () { ovMode = null; closeOverlay(); });
+  }
+
   // ---- Pelaajan siirto -----------------------------------------------------
   function playWord() {
     if (!isHumanTurn() || S.pending.length === 0) return;
@@ -788,7 +923,7 @@
     return h + "</div></div>";
   }
 
-  // Overlay-tila näppäimistölle: "start" | "rules" | "blank" | "gameover" | null
+  // Overlay-tila näppäimistölle: "start" | "rules" | "blank" | "gameover" | "letter" | null
   var ovMode = null;
   var startState = { level: "normaali", count: 2, rackSize: 7 };
 
@@ -851,7 +986,8 @@
       '<p><b>Koko teline</b> kerralla (kaikki laatat) tuo <b>+' + E.BINGO_BONUS + '</b> bonuspistett\u00e4. <b>Tyhj\u00e4 laatta</b> on mik\u00e4 tahansa kirjain (0 pistett\u00e4).</p>' +
       '<p><b>Vihje</b> paljastaa telineesi parhaan siirron. <b>Vaihda</b> palauttaa valitut laatat pussiin, <b>Ohita</b> luovuttaa vuoron.</p>' +
       '<p>Peli p\u00e4\u00e4ttyy, kun pussi on tyhj\u00e4 ja jonkun teline tyhjenee (tai kun kukaan ei etene). J\u00e4ljelle j\u00e4\u00e4neiden laattojen arvo v\u00e4hennet\u00e4\u00e4n pisteist\u00e4; ulos p\u00e4\u00e4ssyt saa muiden j\u00e4\u00e4nn\u00f6kset.</p>' +
-      '<p><b>Nopea n\u00e4pp\u00e4imist\u00f6.</b> Vie kursori nuolilla aloitusruutuun (nuoli lukitsee suunnan; oletus on oikealle). Kirjoita sana: jokainen kirjain asettaa telineen laatan ja etenee automaattisesti (hyppää jo pelattujen yli). <b>Askelpalautin</b> peruu viimeksi asetetun, <b>Enter</b> pelaa sanan, <b>Esc</b> palauttaa kaiken. Tyhj\u00e4: <b>.</b> ja sitten kirjain. Toiminnot: <b>F1</b> Vihje, <b>F2</b> Palauta, <b>F3</b> Sekoita, <b>F4</b> Vaihda, <b>F5</b> Ohita (tai <b>?</b> = Vihje).</p>' +
+      '<p><b>Nopea n\u00e4pp\u00e4imist\u00f6.</b> Vie kursori nuolilla aloitusruutuun (nuoli lukitsee suunnan; oletus on oikealle). Kirjoita sana: jokainen kirjain asettaa telineen laatan ja etenee automaattisesti (hyppää jo pelattujen yli). <b>Askelpalautin</b> peruu viimeksi asetetun, <b>Enter</b> pelaa sanan, <b>Esc</b> palauttaa kaiken. Tyhj\u00e4: <b>.</b> ja sitten kirjain. Toiminnot: <b>F1</b> Vihje, <b>F2</b> Palauta, <b>F3</b> Sekoita, <b>F4</b> Vaihda, <b>F5</b> Ohita, <b>F6</b> Kirjaimen sanat (tai <b>?</b> = Vihje).</p>' +
+      '<p><b>Kirjain.</b> N\u00e4pp\u00e4in <b>F6</b> / nappi <b>Kirjain</b> avaa selain, jossa n\u00e4et valitun kirjaimen sis\u00e4lt\u00e4v\u00e4t sanat sanalistasta. Jos on vuorosi, n\u00e4et my\u00f6s mahdolliset siirtosi joissa kirjainta k\u00e4ytet\u00e4\u00e4n \u2014 napauta siirtoa n\u00e4ytt\u00e4\u00e4ksesi sen laudalla.</p>' +
       '</div><div class="row"><button class="primary" id="rulesClose">Sulje</button></div></div>';
     openOverlay(html);
     el("rulesClose").addEventListener("click", function () {
@@ -927,6 +1063,16 @@
         if (key === "Escape" || key === "Enter") {
           e.preventDefault();
           var tok = el("tipOk"); if (tok) tok.click();
+        }
+        return;
+      }
+      if (ovMode === "letter" || ov.querySelector('[data-mode="letter"]')) {
+        if (key === "Escape") { e.preventDefault(); ovMode = null; closeOverlay(); return; }
+        if (/^[a-zäö]$/i.test(key)) {
+          e.preventDefault();
+          letterBrowserCh = key.toLowerCase();
+          renderLetterBrowser();
+          return;
         }
         return;
       }
@@ -1036,9 +1182,12 @@
       return;
     }
 
+    // Kirjainselain toimii myös tietokoneen vuorolla
+    if (key === "F6") { e.preventDefault(); showLetterBrowser(); return; }
+
     if (!isHumanTurn()) return;
 
-    // F-n\u00e4pp\u00e4imet / ? — eiv\u00e4t vie telineen kirjaimia
+    // F-näppäimet / ? — eivät vie telineen kirjaimia
     if (key === "F1" || key === "?") { e.preventDefault(); showHint(); return; }
     if (key === "F2") { e.preventDefault(); recall(); return; }
     if (key === "F3") { e.preventDefault(); shuffleRack(); return; }
@@ -1090,6 +1239,7 @@
   // ---- Napit ---------------------------------------------------------------
   el("btnPlay").addEventListener("click", playWord);
   el("btnHint").addEventListener("click", showHint);
+  el("btnLetter").addEventListener("click", function () { showLetterBrowser(); });
   el("btnRecall").addEventListener("click", recall);
   el("btnShuffle").addEventListener("click", shuffleRack);
   el("btnExchange").addEventListener("click", toggleExchange);
@@ -1099,8 +1249,10 @@
 
   // ---- Käynnistys: rakenna trie maalauksen jälkeen -------------------------
   startScreen();
+  el("btnLetter").disabled = true;
   setTimeout(function () {
     TRIE = E.buildTrie(WORDS);
     el("loading").style.display = "none";
+    el("btnLetter").disabled = false;
   }, 30);
 })();

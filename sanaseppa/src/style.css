@@ -476,6 +476,34 @@ button:disabled { opacity: .4; cursor: not-allowed; }
 .tipcard h2 { margin-bottom: 8px; }
 
 .blankcard .letters { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 14px; }
+.lettercard { max-width: 520px; max-height: min(92vh, 720px); overflow: auto; }
+.lettercard .letters { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 12px; }
+.lettercard .racklets { margin-bottom: 14px; }
+.lettercard .lbtn.on {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  filter: brightness(1.08);
+}
+.wordlist {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 0 0 14px; max-height: 180px; overflow-y: auto;
+  padding: 4px 2px;
+}
+.wordlist.playable { max-height: 120px; }
+.wchip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--panel); border: 1px solid var(--line);
+  color: var(--ink); border-radius: 8px; padding: 6px 10px;
+  font-size: 13px; font-weight: 600; letter-spacing: .02em;
+}
+button.wchip.play {
+  cursor: pointer; font-family: inherit;
+  border-color: rgba(110, 231, 183, .35);
+  background: rgba(110, 231, 183, .08);
+}
+button.wchip.play:hover { border-color: var(--accent); background: rgba(110, 231, 183, .16); }
+.wchip .wp { color: var(--accent); font-weight: 800; font-size: 12px; }
+.wordlist .empty { color: var(--muted); font-size: 13px; }
 .lbtn {
   background: linear-gradient(180deg, var(--tile-hi), var(--tile));
   color: var(--tile-ink); border: 1px solid var(--tile-edge);

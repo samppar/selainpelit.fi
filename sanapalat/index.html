@@ -2,551 +2,266 @@
 <html lang="fi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Sanaseppä — suomenkielinen sanalaattapeli: ladö kirjaimista sanoja 15×15-laudalle ja voita tietokone.">
-<title>Sanaseppä — suomalainen sanalaattapeli</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="Sanapalat — suomenkielinen laudanladontapeli tietokonetta vastaan.">
+<title>Sanapalat — suomalainen sanalautapeli</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0c101c;
-  --bg2: #141a2c;
-  --panel: #1a2236;
-  --line: #2c3650;
-  --ink: #eef2ff;
-  --muted: #8e9bb8;
-  --accent: #6ee7b7;
-  --accent2: #f0abfc;
-  --you: #6ee7b7;
-  --cpu: #fca5a5;
-  --tile: #efe0c4;
-  --tile-hi: #faf3e4;
-  --tile-edge: #c9b48e;
-  --tile-ink: #2a2214;
-  --felt: #1a2740;
-  --felt-deep: #121c30;
-  --wood: #3d2a18;
-  --wood-hi: #5a3f24;
-  --wood-edge: #24180e;
-  --p2l: #3a6ea8;
-  --p3l: #24508a;
-  --p2w: #a84d78;
-  --p3w: #9a2a42;
-  --center: #c9a03a;
-  --shadow: 0 18px 50px rgba(0,0,0,.45);
-  --r: 14px;
+:root{
+  color-scheme: dark;
+  --bg-0:#081412;
+  --bg-1:#0f2422;
+  --panel:rgba(14,32,30,.72);
+  --ink:#eef4f0;
+  --muted:#8fb0a6;
+  --line:rgba(238,244,240,.10);
+  --wood:#1a3f38;
+  --wood-2:#0e2924;
+  --wood-3:#06201c;
+  --gold:#e6b84e;
+  --gold-dim:#b8913a;
+  --tile:#f6ecd4;
+  --tile-2:#e8d7b4;
+  --tile-ink:#2c1f0c;
+  --green:#4fbf86;
+  --red:#e2607a;
+  /* bonus — himmeät emali-inlays, ei neon */
+  --tw:#8e2f3c;
+  --tw-2:#6e212c;
+  --dw:#c47a88;
+  --dw-2:#a85f6d;
+  --tl:#2a6a75;
+  --tl-2:#1e5059;
+  --dl:#6aa3b0;
+  --dl-2:#4f8794;
+  --felt:#0b2a26;
+  --felt-2:#0e332e;
 }
-
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body {
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color:var(--ink);
   background:
-    radial-gradient(900px 500px at 12% -8%, rgba(110,231,183,.08), transparent 55%),
-    radial-gradient(800px 480px at 92% 8%, rgba(240,171,252,.07), transparent 50%),
-    radial-gradient(1200px 800px at 50% 100%, #152036 0%, var(--bg) 55%) fixed;
-  color: var(--ink);
-  font-family: "Instrument Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+    radial-gradient(ellipse 90% 55% at 50% -8%, #1c4a42 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, #143530 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 0% 80%, #0a221e 0%, transparent 45%),
+    var(--bg-0);
+  min-height:100dvh;display:flex;justify-content:center;
+  padding:14px 12px 40px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
 }
-body::before {
-  content: "";
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  opacity: .035;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.wrap, #ov, .loading { position: relative; z-index: 1; }
-.hidden { display: none !important; }
+.wrap{width:100%;max-width:620px}
 
-.wrap { max-width: 720px; margin: 0 auto; padding: 16px 14px 40px; }
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px}
+.brand h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(28px,8vw,42px);line-height:.9;letter-spacing:-.02em}
+.brand .tag{font-size:12px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
+.hbtns{display:flex;gap:7px;flex-shrink:0}
+.ghost{font:inherit;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px;cursor:pointer;transition:.15s}
+.ghost:hover{border-color:var(--gold);color:var(--gold)}
 
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-.brand h1 {
-  font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 30px; margin: 0; letter-spacing: -.5px;
-  background: linear-gradient(92deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-.brand .tag { color: var(--muted); font-size: 13px; margin-top: 2px; letter-spacing: .02em; }
-.hbtns { display: flex; gap: 8px; }
+/* scoreboard */
+.hud{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:10px}
+.pscore{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:8px 12px;transition:.2s}
+.pscore.turn{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 16px rgba(230,184,78,.15)}
+.pscore .nm{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between}
+.pscore .pt{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:26px;line-height:1.05;font-variant-numeric:tabular-nums}
+.pscore .lm{font-size:11px;color:var(--muted);min-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pscore.turn .nm{color:var(--gold)}
+.bagbox{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:8px 12px;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.bagbox .nm{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.bagbox .pt{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px}
 
-button { font-family: inherit; cursor: pointer; border: 0; }
-button:disabled { opacity: .4; cursor: not-allowed; }
-.ghost {
-  background: transparent; color: var(--ink); border: 1px solid var(--line);
-  padding: 9px 14px; border-radius: 10px; font-weight: 600; font-size: 14px;
-  transition: border-color .15s, background .15s;
-}
-.ghost:hover:not(:disabled) { border-color: var(--muted); background: rgba(255,255,255,.03); }
-.primary {
-  background: linear-gradient(92deg, var(--accent), #34d399); color: #06281c;
-  padding: 11px 18px; border-radius: 11px; font-weight: 800; font-size: 15px;
-}
-.primary:hover:not(:disabled) { filter: brightness(1.06); }
+.status{font-size:13.5px;color:var(--muted);min-height:20px;margin-bottom:10px;line-height:1.35}
+.status.warn{color:var(--red);font-weight:600}
 
-/* ---- Scoreboard ---- */
-.scoreboard { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-.chip {
-  flex: 1 1 0; min-width: 84px;
-  background: linear-gradient(180deg, #222b42, var(--panel));
-  border: 1px solid var(--line);
-  border-radius: 12px; padding: 8px 10px;
-  border-top: 3px solid var(--pc, var(--line));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
-  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
-}
-.chip.on {
-  background: color-mix(in srgb, var(--pc) 14%, var(--panel));
-  box-shadow: 0 0 0 2px var(--pc), 0 8px 24px color-mix(in srgb, var(--pc) 25%, transparent);
-  transform: translateY(-2px);
-}
-.chip .ctop { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
-.chip .cname { font-weight: 700; font-size: 14px; color: var(--pc); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chip .cscore { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 22px; line-height: 1; }
-.chip .csub { color: var(--muted); font-size: 11px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.statusline { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 13px; }
-.statusline .turnl { font-weight: 700; flex: 0 0 auto; }
-.statusline .lastplay {
-  flex: 1 1 auto; min-width: 0; text-align: center;
-  color: var(--accent2); font-weight: 600;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  opacity: .92;
-}
-.statusline .bagl { color: var(--muted); flex: 0 0 auto; }
-
-/* ---- Board stage: walnut frame + felt ---- */
-.stage {
-  display: flex; justify-content: center;
-  padding: 4px 0 2px;
-}
-.board {
-  --gap: 2px;
-  display: grid;
-  grid-template-columns: repeat(15, 1fr);
-  gap: var(--gap);
-  width: 100%;
-  max-width: 560px;
-  aspect-ratio: 1 / 1;
-  padding: 18px;
-  border-radius: 20px;
-  touch-action: manipulation;
-  position: relative;
+/* board — lacquered walnut tray + felt grid */
+.board{
+  --n:15;--gap:1.5px;
+  display:grid;grid-template-columns:repeat(var(--n),1fr);gap:var(--gap);
+  width:min(96vw,600px);aspect-ratio:1;margin:0 auto 14px;
+  padding:10px;border-radius:18px;position:relative;isolation:isolate;
   background:
-    linear-gradient(145deg, rgba(255,230,180,.14), transparent 38%),
-    repeating-linear-gradient(92deg, rgba(255,200,120,.04) 0 2px, transparent 2px 5px),
-    repeating-linear-gradient(0deg, transparent 0 6px, rgba(0,0,0,.06) 6px 7px),
-    linear-gradient(165deg, #6a4a2a 0%, #3f2a16 40%, #1e140a 100%);
+    linear-gradient(145deg, rgba(230,184,78,.12), transparent 40%),
+    repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,.03) 3px, rgba(0,0,0,.03) 4px),
+    repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(255,255,255,.015) 5px, rgba(255,255,255,.015) 6px),
+    linear-gradient(165deg, #24554c 0%, var(--wood) 28%, var(--wood-2) 72%, var(--wood-3) 100%);
+  border:1px solid rgba(230,184,78,.22);
   box-shadow:
-    var(--shadow),
-    inset 0 2px 0 rgba(255,220,160,.18),
-    inset 0 -3px 10px rgba(0,0,0,.55),
-    0 0 0 1px #120c08,
-    0 0 0 3px rgba(90,60,30,.35);
+    0 28px 50px -22px rgba(0,0,0,.85),
+    0 2px 0 rgba(255,255,255,.06) inset,
+    0 -1px 0 rgba(0,0,0,.35) inset,
+    0 0 0 5px var(--wood-3),
+    0 0 0 6px rgba(230,184,78,.18);
 }
-.board::before {
-  content: "";
-  position: absolute;
-  inset: 12px;
-  border-radius: 11px;
+.board::before{
+  content:"";position:absolute;inset:6px;border-radius:13px;pointer-events:none;z-index:0;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35), inset 0 2px 10px rgba(0,0,0,.25);
+}
+.cell{
   background:
-    radial-gradient(circle at 28% 18%, rgba(110,231,183,.06), transparent 48%),
-    radial-gradient(circle at 72% 82%, rgba(168,77,120,.07), transparent 42%),
-    repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.035) 2px 3px),
-    linear-gradient(180deg, #243652, #101828);
+    linear-gradient(180deg, rgba(255,255,255,.04), transparent 55%),
+    linear-gradient(160deg, var(--felt-2), var(--felt));
+  border-radius:2.5px;
+  display:flex;align-items:center;justify-content:center;position:relative;z-index:1;
+  font-size:calc(min(96vw,600px)/15*.26);cursor:pointer;overflow:hidden;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.18);
+  transition:filter .12s ease, box-shadow .12s ease;
+}
+.cell:hover:not(:has(.tile)){filter:brightness(1.18)}
+.cell.cursor{
+  z-index:3;
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.05),
-    inset 0 10px 32px rgba(0,0,0,.6),
-    0 0 0 1px rgba(0,0,0,.35);
-  pointer-events: none;
-  z-index: 0;
+    inset 0 0 0 2px var(--gold),
+    inset 0 0 10px rgba(230,184,78,.25),
+    0 0 12px rgba(230,184,78,.2);
 }
-.board > .cell { z-index: 1; }
-
-.cell {
-  position: relative;
+.cell .prem{
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+  font-size:calc(min(96vw,600px)/15*.22);line-height:1.05;text-align:center;
+  letter-spacing:.02em;opacity:.92;text-shadow:0 1px 0 rgba(0,0,0,.2);
+  pointer-events:none;user-select:none;
+}
+.cell.tw{
+  background:linear-gradient(160deg, var(--tw), var(--tw-2));
+  color:#f6d5da;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 2px rgba(0,0,0,.3);
+}
+.cell.dw{
+  background:linear-gradient(160deg, var(--dw), var(--dw-2));
+  color:#3a1520;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 2px rgba(0,0,0,.2);
+}
+.cell.tl{
+  background:linear-gradient(160deg, var(--tl), var(--tl-2));
+  color:#d4eef2;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 2px rgba(0,0,0,.3);
+}
+.cell.dl{
+  background:linear-gradient(160deg, var(--dl), var(--dl-2));
+  color:#0d2a30;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 2px rgba(0,0,0,.18);
+}
+.cell.center{
   background:
-    linear-gradient(180deg, rgba(255,255,255,.04), transparent 40%),
-    var(--felt);
-  border-radius: 3px;
-  display: flex; align-items: center; justify-content: center;
-  min-width: 0;
-  user-select: none;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.28);
-}
-.cell:nth-child(odd) {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.035), transparent 40%),
-    #1c2a44;
-}
-.cell .plab {
-  color: rgba(255,255,255,.78);
-  font-size: clamp(6px, 1.5vw, 9px);
-  font-weight: 700;
-  letter-spacing: .02em;
-  text-align: center;
-  line-height: 1.05;
-  text-shadow: 0 1px 1px rgba(0,0,0,.35);
-  pointer-events: none;
-}
-
-/* Premium squares — richer, with soft shimmer */
-.cell.p2l, .cell.p3l, .cell.p2w, .cell.p3w, .cell.pc {
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), inset 0 -6px 12px rgba(0,0,0,.2);
-}
-.cell.p2l {
-  background:
-    linear-gradient(160deg, rgba(255,255,255,.14), transparent 50%),
-    linear-gradient(180deg, #4a82bc, var(--p2l));
-}
-.cell.p3l {
-  background:
-    linear-gradient(160deg, rgba(255,255,255,.12), transparent 50%),
-    linear-gradient(180deg, #3268a8, var(--p3l));
-}
-.cell.p2w {
-  background:
-    linear-gradient(160deg, rgba(255,255,255,.14), transparent 50%),
-    linear-gradient(180deg, #c45f8e, var(--p2w));
-}
-.cell.p3w {
-  background:
-    linear-gradient(160deg, rgba(255,255,255,.12), transparent 50%),
-    linear-gradient(180deg, #c03a58, var(--p3w));
-}
-.cell.pc {
-  background:
-    linear-gradient(160deg, rgba(255,255,255,.2), transparent 45%),
-    linear-gradient(180deg, #e0bc55, var(--center));
-}
-.cell.pc .plab {
-  color: #3a2c07;
-  font-size: clamp(11px, 2.6vw, 15px);
-  text-shadow: 0 1px 0 rgba(255,255,255,.25);
-}
-.cell.p2l .plab, .cell.p3l .plab, .cell.p2w .plab, .cell.p3w .plab {
-  animation: premShimmer 4.5s ease-in-out infinite;
-}
-@keyframes premShimmer {
-  0%, 100% { opacity: .78; }
-  50% { opacity: 1; }
-}
-
-.cell.last {
-  box-shadow: inset 0 0 0 2px var(--last, var(--accent)), 0 0 10px color-mix(in srgb, var(--last, var(--accent)) 35%, transparent);
-}
-.cell.pend { box-shadow: inset 0 0 0 2px var(--accent2); }
-.cell.hintcell { box-shadow: inset 0 0 0 1.5px rgba(250, 220, 120, .85); }
-.cell.hintcell .plab { opacity: 0; } /* kerroinmerkintä piiloon vihjeen alta */
-
-.cell.cursor {
-  outline: 2px solid rgba(248,250,252,.92);
-  outline-offset: -2px;
+    radial-gradient(circle at 50% 42%, #f3d78a 0%, var(--gold) 42%, var(--gold-dim) 78%, #8a6a24 100%);
   box-shadow:
-    inset 0 0 0 2px rgba(255,255,255,.28),
-    0 0 0 2px rgba(110,231,183,.5),
-    0 0 14px rgba(110,231,183,.25);
-  z-index: 2;
-  animation: cursorPulse 1.6s ease-in-out infinite;
+    inset 0 1px 0 rgba(255,255,255,.45),
+    inset 0 -2px 4px rgba(0,0,0,.25),
+    0 0 14px rgba(230,184,78,.2);
 }
-.cell.cursor.pend {
-  box-shadow: inset 0 0 0 2px var(--accent2), 0 0 0 2px rgba(110,231,183,.5);
+.cell.center .prem{
+  color:#3a2600;font-size:calc(min(96vw,600px)/15*.48);
+  text-shadow:0 1px 0 rgba(255,255,255,.35);opacity:1;
 }
-@keyframes cursorPulse {
-  0%, 100% { box-shadow: inset 0 0 0 2px rgba(255,255,255,.28), 0 0 0 2px rgba(110,231,183,.45), 0 0 10px rgba(110,231,183,.18); }
-  50% { box-shadow: inset 0 0 0 2px rgba(255,255,255,.35), 0 0 0 2px rgba(110,231,183,.75), 0 0 18px rgba(110,231,183,.35); }
-}
-.cell.cursor::after {
-  content: "";
-  position: absolute;
-  width: 0; height: 0;
-  border: 5px solid transparent;
-  filter: drop-shadow(0 0 3px rgba(110,231,183,.7));
-  pointer-events: none;
-  z-index: 3;
-}
-.cell.cursor.dir-e::after { right: 0; top: 50%; margin-top: -5px; border-left-color: var(--accent); border-right-width: 0; }
-.cell.cursor.dir-w::after { left: 0; top: 50%; margin-top: -5px; border-right-color: var(--accent); border-left-width: 0; }
-.cell.cursor.dir-s::after { bottom: 0; left: 50%; margin-left: -5px; border-top-color: var(--accent); border-bottom-width: 0; }
-.cell.cursor.dir-n::after { top: 0; left: 50%; margin-left: -5px; border-bottom-color: var(--accent); border-top-width: 0; }
 
-.ctrls kbd {
-  display: inline-block; margin-left: 6px; padding: 1px 5px;
-  font-size: 10px; font-weight: 600; font-family: ui-monospace, Menlo, monospace;
-  color: var(--muted); background: rgba(0,0,0,.25); border: 1px solid var(--line);
-  border-radius: 4px; vertical-align: 1px;
-}
-.ctrls .primary kbd { color: #064e3b; background: rgba(255,255,255,.35); border-color: rgba(6,78,59,.2); }
-
-/* ---- Tiles — tactile ivory ---- */
-.tile {
-  position: absolute; inset: 1px;
+/* tiles — bone ivory */
+.tile{
+  width:100%;height:100%;border-radius:3px;
   background:
-    linear-gradient(155deg, rgba(255,255,255,.65) 0%, rgba(255,255,255,.12) 38%, transparent 55%),
-    linear-gradient(180deg, #fbf4e6, #e8d5b0 55%, #dcc79a);
-  border: 1px solid #b89a6c;
-  border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--tile-ink);
+    linear-gradient(145deg, rgba(255,255,255,.55) 0%, transparent 42%),
+    linear-gradient(165deg, #fff8e8 0%, var(--tile) 45%, var(--tile-2) 100%);
+  color:var(--tile-ink);
+  display:flex;align-items:center;justify-content:center;position:relative;
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
   box-shadow:
-    0 2px 4px rgba(0,0,0,.45),
-    0 1px 0 rgba(255,255,255,.7) inset,
-    0 -2px 4px rgba(80,50,15,.22) inset,
-    1px 0 0 rgba(255,255,255,.25) inset;
+    inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -2px 0 rgba(120,90,40,.22),
+    0 1px 2px rgba(0,0,0,.35),
+    0 2px 4px -1px rgba(0,0,0,.25);
+  animation:tileIn .22s ease;
 }
-.tile .let {
-  font-family: "Bricolage Grotesque", sans-serif;
-  font-weight: 800;
-  font-size: clamp(11px, 2.4vw, 20px);
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: -.03em;
+.tile .l{font-size:calc(min(96vw,600px)/15*.52);line-height:1;letter-spacing:-.03em}
+.tile .v{
+  position:absolute;bottom:1px;right:2px;
+  font-size:calc(min(96vw,600px)/15*.2);font-weight:700;
+  opacity:.7;font-variant-numeric:tabular-nums;
 }
-.tile .pts {
-  position: absolute; right: 2px; bottom: 1px;
-  font-size: 8px; font-weight: 700; opacity: .65;
-  font-variant-numeric: tabular-nums;
-}
-.tile.blank {
-  background: linear-gradient(165deg, #fff, #ebe4f5);
-  border-color: #c9b8de;
-}
-.tile.blank .let { color: #6b4a9a; }
-.tile.ptile {
-  outline: 1.5px dashed rgba(240,171,252,.75);
-  outline-offset: -1px;
-  filter: saturate(1.05) brightness(1.03);
-}
-.tile.ghost {
-  /* Peittävä tausta: premium-väri ei näy kirjaimen läpi */
+.tile.tent{
   background:
-    linear-gradient(160deg, rgba(255, 236, 170, .22), transparent 55%),
-    linear-gradient(180deg, #2a2418, #1a1610);
-  border: 1.5px dashed #f0d278;
+    linear-gradient(145deg, rgba(255,255,255,.5) 0%, transparent 40%),
+    linear-gradient(165deg, #fff3c8, #f0c85a);
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, .55),
-    inset 0 0 0 1px rgba(240, 210, 120, .25);
-  opacity: 1;
-  z-index: 2;
+    0 0 0 2px var(--gold),
+    inset 0 1px 0 rgba(255,255,255,.7),
+    inset 0 -2px 0 rgba(120,90,40,.2),
+    0 0 14px rgba(230,184,78,.35);
 }
-.tile.ghost .let {
-  color: #ffe9a0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .85), 0 0 8px rgba(240, 210, 120, .35);
-}
-.tile.ghost .pts {
-  color: rgba(255, 233, 160, .7);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, .8);
-}
-.tile.ghost.blank .let { color: #e8d4ff; }
+.tile.blank .l{color:var(--tl);opacity:.85}
+@keyframes tileIn{from{transform:scale(.86);opacity:.4}to{transform:scale(1);opacity:1}}
 
-/* Tile settle motion */
-.tile.settle {
-  animation: tileSettle .32s cubic-bezier(.2,1.2,.3,1) both;
-}
-@keyframes tileSettle {
-  0% { transform: translateY(-7px) scale(1.08); opacity: .55; }
-  100% { transform: none; opacity: 1; }
-}
-
-/* score pop-up */
-.scorepop {
-  position: absolute; left: 50%; top: 40%; transform: translate(-50%, 0);
-  font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 18px;
-  text-shadow: 0 2px 6px rgba(0,0,0,.6); pointer-events: none; z-index: 5;
-  animation: popup 1.4s ease-out forwards;
-}
-@keyframes popup {
-  0% { opacity: 0; transform: translate(-50%, 6px) scale(.7); }
-  20% { opacity: 1; transform: translate(-50%, -6px) scale(1.1); }
-  100% { opacity: 0; transform: translate(-50%, -34px) scale(1); }
-}
-
-.bingo {
-  position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%) scale(.6);
-  z-index: 60; padding: 14px 26px; border-radius: 16px;
-  background: color-mix(in srgb, var(--pc) 22%, #10162a);
-  border: 2px solid var(--pc); color: #fff;
-  font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 26px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.5); pointer-events: none;
-  animation: bingoIn .35s cubic-bezier(.2,1.4,.4,1) forwards;
-}
-.bingo.out { animation: bingoOut .5s ease-in forwards; }
-@keyframes bingoIn { to { transform: translate(-50%, -50%) scale(1); } }
-@keyframes bingoOut { to { opacity: 0; transform: translate(-50%, -70%) scale(1); } }
-
-/* ---- Rack: wooden ledge ---- */
-.rack {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px;
-  max-width: min(420px, 100%); margin: 18px auto 12px;
-  padding: 12px 11px 14px;
-  border-radius: 16px;
+/* rack */
+.rackwrap{
   background:
-    linear-gradient(180deg, rgba(255,220,160,.1), transparent 35%),
-    repeating-linear-gradient(95deg, transparent 0 4px, rgba(0,0,0,.05) 4px 5px),
-    linear-gradient(180deg, #4a3420, #2a1c10);
-  border: 1px solid #5c4428;
-  box-shadow:
-    var(--shadow),
-    inset 0 1px 0 rgba(255,220,160,.14),
-    inset 0 -3px 8px rgba(0,0,0,.45);
+    linear-gradient(180deg, rgba(255,255,255,.04), transparent),
+    var(--panel);
+  border:1px solid rgba(230,184,78,.14);
+  border-radius:16px;padding:12px;margin-bottom:10px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 8px 24px -16px #000;
 }
-.rslot {
-  position: relative; aspect-ratio: 1/1; border-radius: 6px;
-  background: rgba(0,0,0,.28);
-  box-shadow: inset 0 2px 5px rgba(0,0,0,.45);
+.rack{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:400px;margin:0 auto}
+.rslot{
+  aspect-ratio:1;border-radius:6px;
+  background:linear-gradient(160deg, rgba(0,0,0,.28), rgba(0,0,0,.18));
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.35);
+  display:flex;align-items:center;justify-content:center;
 }
-.rslot .tile { position: relative; inset: auto; width: 100%; height: 100%; }
-.rslot .tile .let { font-size: clamp(16px, 5vw, 24px); }
-.rslot .tile .pts { font-size: 10px; right: 3px; bottom: 2px; }
-.rslot.sel .tile {
-  transform: translateY(-8px);
-  box-shadow: 0 10px 18px rgba(0,0,0,.45), 0 0 0 2px var(--accent);
-  transition: transform .15s ease;
+.rslot.empty{background:rgba(0,0,0,.1);border:1px dashed rgba(238,244,240,.12);box-shadow:none}
+.rack .tile{cursor:pointer;transition:transform .14s ease, box-shadow .14s ease;border-radius:5px}
+.rack .tile .l{font-size:min(7vw,26px)}
+.rack .tile .v{font-size:min(3vw,12px)}
+.rack .tile:hover{transform:translateY(-4px)}
+.rack .tile.sel{
+  transform:translateY(-7px);
+  box-shadow:0 0 0 2px var(--gold),0 10px 18px -8px rgba(230,184,78,.55),inset 0 1px 0 rgba(255,255,255,.85);
 }
-.rslot.empty { background: rgba(0,0,0,.35); }
-.rslot.xsel { outline: 2px solid var(--accent2); border-radius: 8px; outline-offset: 1px; }
+.rack .tile.exsel{box-shadow:0 0 0 2px var(--red);transform:translateY(-3px)}
 
-/* ---- Controls ---- */
-.ctrls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.ctrls button {
-  background: linear-gradient(180deg, #222b42, var(--panel));
-  color: var(--ink); border: 1px solid var(--line);
-  padding: 11px 16px; border-radius: 11px; font-weight: 700; font-size: 14px;
-  transition: border-color .15s, transform .12s;
-}
-.ctrls button:hover:not(:disabled) { border-color: var(--muted); }
-.ctrls .primary { background: linear-gradient(92deg, var(--accent), #34d399); color: #06281c; border: 0; }
+/* controls */
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ctrls button{font:inherit;border-radius:11px;padding:10px 15px;font-size:14px;font-weight:600;cursor:pointer;
+  background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--ink);transition:.15s}
+.ctrls button:hover:not(:disabled){border-color:var(--gold);color:var(--gold)}
+.ctrls button:disabled{opacity:.4;cursor:not-allowed}
+.ctrls .go{background:linear-gradient(180deg,#f0cf6f,var(--gold));color:#2a1c00;border:none;font-weight:800;font-family:"Bricolage Grotesque",sans-serif}
+.ctrls .go:hover:not(:disabled){filter:brightness(1.06);color:#2a1c00}
+.ctrls .go:disabled{filter:grayscale(.3)}
 
-/* ---- Ribbon / toast ---- */
-.ribbon { min-height: 30px; display: flex; justify-content: center; margin: 8px 0; }
-.toast {
-  opacity: 0; transform: translateY(-4px); transition: .2s;
-  font-size: 14px; font-weight: 600; padding: 6px 14px;
-  border-radius: 999px; border: 1px solid transparent;
-}
-.toast.show { opacity: 1; transform: none; }
-.toast.ok { background: rgba(110,231,183,.12); color: var(--accent); border-color: rgba(110,231,183,.3); }
-.toast.warn { background: rgba(252,165,165,.12); color: var(--cpu); border-color: rgba(252,165,165,.3); }
-.toast.cpu { background: rgba(165,180,252,.12); color: #a5b4fc; border-color: rgba(165,180,252,.3); }
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(6,14,13,.82);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:18px;z-index:40;animation:fade .2s ease}
+.panel{background:linear-gradient(180deg,#123a34,#0d2824);border:1px solid var(--line);border-radius:20px;padding:24px 22px;max-width:420px;width:100%;box-shadow:0 30px 70px -22px #000;max-height:92dvh;overflow:auto}
+.panel.sm{max-width:340px}
+.panel h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:25px;margin-bottom:8px}
+.panel p{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:14px}
+.primary{width:100%;background:linear-gradient(180deg,#f0cf6f,var(--gold));color:#2a1c00;border:none;border-radius:12px;padding:13px;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:16px;cursor:pointer;margin-top:6px}
+.primary:hover{filter:brightness(1.05)}
+.rules-list{font-size:13.5px;line-height:1.5;list-style:none}
+.rules-list li{margin-bottom:8px;padding-left:16px;position:relative}
+.rules-list li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.rules-list b{color:var(--gold)}
+.blgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.bl{font:inherit;font-weight:800;font-family:"Bricolage Grotesque",sans-serif;background:var(--tile);color:var(--tile-ink);border:none;border-radius:8px;padding:10px 0;cursor:pointer;font-size:16px}
+.bl:hover{background:var(--gold)}
+.endrow{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;margin-bottom:7px;font-size:15px}
+.endrow b{font-family:"Bricolage Grotesque",sans-serif;font-size:22px}
 
-/* ---- Overlay ---- */
-#ov {
-  position: fixed; inset: 0; background: rgba(6,9,18,.72); backdrop-filter: blur(8px);
-  display: none; align-items: center; justify-content: center; padding: 18px; z-index: 50;
-}
-#ov.on { display: flex; }
-.card {
-  background: linear-gradient(180deg, #1a2238, var(--bg2));
-  border: 1px solid var(--line); border-radius: 18px; padding: 22px;
-  max-width: 460px; width: 100%; box-shadow: var(--shadow);
-}
-.card h1.big {
-  font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 40px; margin: 0 0 6px;
-  background: linear-gradient(92deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-.card h2 { font-family: "Bricolage Grotesque", sans-serif; margin: 0 0 12px; font-size: 24px; }
-.card .lead { color: var(--muted); font-size: 15px; line-height: 1.5; margin: 0 0 16px; }
-.opt { margin: 8px 0 18px; }
-.optlab { color: var(--muted); font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .06em; }
-.seg { display: flex; gap: 6px; }
-.seg.dim { opacity: .45; pointer-events: none; }
-.seg button { flex: 1; background: var(--panel); border: 1px solid var(--line); color: var(--ink); padding: 10px; border-radius: 10px; font-weight: 700; }
-.seg button.on {
-  background: linear-gradient(92deg, rgba(110,231,183,.18), rgba(240,171,252,.16));
-  border-color: var(--accent); color: var(--ink);
-}
-.row { display: flex; gap: 10px; margin-top: 8px; }
-.row .primary, .row .ghost { flex: 1; text-align: center; }
-.kbdhint { color: var(--muted); font-size: 12px; margin: 14px 0 0; line-height: 1.4; }
-.rules p { color: #cdd6ee; font-size: 14px; line-height: 1.55; margin: 0 0 10px; }
-.rules b { color: var(--ink); }
-.final { display: flex; gap: 12px; margin: 4px 0 18px; }
-.final > div { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; text-align: center; }
-.final span { display: block; color: var(--muted); font-size: 13px; }
-.final b { font-family: "Bricolage Grotesque", sans-serif; font-size: 30px; }
+.loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;z-index:60;background:var(--bg-0)}
 
-.ranklist { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 14px; }
-.rrow {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--panel); border: 1px solid var(--line);
-  border-left: 4px solid var(--pc, var(--line)); border-radius: 10px; padding: 10px 12px;
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.hidden{display:none}
+@media (max-width:420px){
+  .ctrls button{padding:9px 11px;font-size:13px}
+  .hud{grid-template-columns:1fr 1fr;gap:6px}
+  .bagbox{grid-column:1 / -1;flex-direction:row;gap:8px;justify-content:center}
 }
-.rrow.me { background: color-mix(in srgb, var(--pc) 12%, var(--panel)); }
-.rrow .rk { color: var(--muted); font-weight: 700; width: 22px; }
-.rrow .rn { flex: 1; font-weight: 700; color: var(--pc); }
-.rrow b { font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; }
-.near {
-  color: #cdd6ee; font-size: 13px; line-height: 1.5; margin: 0 0 10px;
-  background: rgba(202,166,60,.08); border: 1px solid rgba(202,166,60,.25);
-  border-radius: 10px; padding: 8px 12px;
-}
-.near b { color: var(--center); }
-
-.tipcard .lead { margin-bottom: 16px; }
-.tipcard h2 { margin-bottom: 8px; }
-
-.blankcard .letters { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 14px; }
-.lettercard { max-width: 520px; max-height: min(92vh, 720px); overflow: auto; }
-.lettercard .letters { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 12px; }
-.lettercard .racklets { margin-bottom: 14px; }
-.lettercard .lbtn.on {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  filter: brightness(1.08);
-}
-.wordlist {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  margin: 0 0 14px; max-height: 180px; overflow-y: auto;
-  padding: 4px 2px;
-}
-.wordlist.playable { max-height: 120px; }
-.wchip {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--panel); border: 1px solid var(--line);
-  color: var(--ink); border-radius: 8px; padding: 6px 10px;
-  font-size: 13px; font-weight: 600; letter-spacing: .02em;
-}
-button.wchip.play {
-  cursor: pointer; font-family: inherit;
-  border-color: rgba(110, 231, 183, .35);
-  background: rgba(110, 231, 183, .08);
-}
-button.wchip.play:hover { border-color: var(--accent); background: rgba(110, 231, 183, .16); }
-.wchip .wp { color: var(--accent); font-weight: 800; font-size: 12px; }
-.wordlist .empty { color: var(--muted); font-size: 13px; }
-.lbtn {
-  background: linear-gradient(180deg, var(--tile-hi), var(--tile));
-  color: var(--tile-ink); border: 1px solid var(--tile-edge);
-  padding: 10px 0; border-radius: 8px; font-weight: 800; font-size: 16px;
-}
-.lbtn:hover { filter: brightness(1.05); }
-
-.loading { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); color: var(--muted); font-size: 13px; z-index: 40; }
-
-@media (max-width: 480px) {
-  .brand h1 { font-size: 24px; }
-  .board { padding: 10px; border-radius: 14px; }
-  .board::before { inset: 7px; }
-  .ctrls button { padding: 10px 12px; font-size: 13px; }
-  .ctrls kbd { display: none; }
-  .chip .cscore { font-size: 18px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tile.settle, .cell.cursor, .cell.p2l .plab, .cell.p3l .plab, .cell.p2w .plab, .cell.p3w .plab,
-  .scorepop, .bingo, .bingo.out { animation: none !important; }
-}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">
-      <h1>Sanaseppä</h1>
-      <div class="tag">Ladö kirjaimista sanoja</div>
-    </div>
+    <div class="brand"><h1>Sanapalat</h1><div class="tag">Ladö sanat laudalle</div></div>
     <div class="hbtns">
       <button class="ghost" id="btnRules">Säännöt</button>
       <button class="ghost" id="btnNew">Uusi peli</button>
@@ -554,27 +269,22 @@ button.wchip.play:hover { border-color: var(--accent); background: rgba(110, 231
   </header>
 
   <div id="game" class="hidden">
-    <div class="scoreboard" id="scoreboard"></div>
-    <div class="statusline">
-      <span class="turnl" id="turnLab">–</span>
-      <span class="lastplay" id="lastPlay"></span>
-      <span class="bagl" id="bagLab">Pussi: 0</span>
+    <div class="hud">
+      <div class="pscore" id="hudP0"><div class="nm"><span id="s0name">Sinä</span></div><div class="pt" id="s0">0</div><div class="lm" id="last0"></div></div>
+      <div class="pscore" id="hudP1"><div class="nm"><span id="s1name">Tietokone</span></div><div class="pt" id="s1">0</div><div class="lm" id="last1"></div></div>
+      <div class="bagbox"><div class="nm">Pussi</div><div class="pt" id="bag">0</div></div>
     </div>
 
-    <div class="stage"><div class="board" id="board" aria-label="Pelilauta"></div></div>
+    <div class="status" id="status"></div>
+    <div class="board" id="board"></div>
 
-    <div class="ribbon"><span class="toast" id="toast"></span></div>
-
-    <div class="rack" id="rack"></div>
-
+    <div class="rackwrap"><div class="rack" id="rack"></div></div>
     <div class="ctrls">
-      <button id="btnPlay" class="primary">Pelaa sana <kbd>Enter</kbd></button>
-      <button id="btnHint">Vihje <kbd>F1</kbd></button>
-      <button id="btnLetter">Kirjain <kbd>F6</kbd></button>
-      <button id="btnRecall">Palauta <kbd>F2</kbd></button>
-      <button id="btnShuffle">Sekoita <kbd>F3</kbd></button>
-      <button id="btnExchange">Vaihda <kbd>F4</kbd></button>
-      <button id="btnPass">Ohita <kbd>F5</kbd></button>
+      <button class="go" id="btnPlay">Pelaa</button>
+      <button id="btnRecall">Palauta</button>
+      <button id="btnShuffle">Sekoita</button>
+      <button id="btnExchange">Vaihda</button>
+      <button id="btnPass">Ohita vuoro</button>
     </div>
   </div>
 </div>
@@ -96304,36 +96014,28 @@ zulu
 öylätti
 </script>
 <script>
-// Sanaseppä — pelin puhdas ydin (ei DOM:ia).
+// Sanapalat — pelin puhdas ydin (ei DOM:ia).
 //
-// Sama tiedosto ajetaan sekä selaimessa (build.js upottaa tämän index.html:ään)
-// että Nodessa (test/run_tests.js require:aa sen). Lopussa on pieni UMD-häntä:
-// funktiot tarjotaan global.SanaseppaEngine-oliona ja module.exports:na.
+// Scrabble-tyylinen laudanladontapeli, mutta oma toteutus: oma bonusruutukartta,
+// oma palasarja ja oma nimi. Lauta on 15×15 ja keskiruudusta saa kaksinkertaiset
+// sanapisteet (aloitussiirto peittää keskiruudun).
 //
-// Sanaseppä on laattojenasettelupeli: pelaaja nostaa kirjainlaattoja pussista ja
-// muodostaa niistä ristikkomaisia sanoja 15×15-laudalle. Ydin sisältää: pussin
-// kirjainjakauman ja pistearvot, kerroinruutujen asettelun, trien sanastolle,
-// siirron laillisuustarkistuksen + pisteytyksen (sama koodi pelaajalle ja
-// tekoälylle) sekä tekoälyn siirtogeneraattorin (ankkuri + ristikkotarkistus).
-//
-// HUOM: tämä ei ole Scrabble eikä yhteensopiva sen kanssa — oma kirjainjakauma,
-// omat pistearvot ja oma kerroinruutujen asettelu.
-
+// Ajetaan sekä selaimessa (build.js upottaa) että Nodessa (testit). UMD-häntä.
 (function (root) {
   "use strict";
+
+  var SIZE = 15;
 
   // ---- Siemenellinen RNG (mulberry32) -------------------------------------
   function makeRNG(seed) {
     var a = seed >>> 0;
     return function () {
-      a |= 0;
-      a = (a + 0x6d2b79f5) | 0;
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
       var t = Math.imul(a ^ (a >>> 15), 1 | a);
       t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
-
   function shuffle(arr, rng) {
     for (var i = arr.length - 1; i > 0; i--) {
       var j = Math.floor(rng() * (i + 1));
@@ -96342,113 +96044,67 @@ zulu
     return arr;
   }
 
-  // ---- Vakiot --------------------------------------------------------------
-  var SIZE = 15;
-  var RACK = 7;
-  var CENTER = 7; // (7,7)
-  var BLANK = "_";
-  var BINGO_BONUS = 50; // kaikki 7 laattaa kerralla
-
-  // Kirjainten pistearvot (oma asteikko, ei Scrabblesta). Tyhjä = 0.
-  var LETTER_VALUES = {
-    a: 1, e: 1, i: 1, n: 1, s: 1, t: 1,
-    o: 2, u: 2, k: 2, l: 2,
-    "ä": 3, r: 3, m: 3,
-    p: 4, v: 4, h: 4, y: 4,
-    j: 6,
-    d: 7,
-    g: 8, "ö": 8,
-    // harvinaiset (mahdollisia vain tyhjällä laatalla): korkea arvo
-    b: 8, c: 8, f: 8, q: 8, w: 8, x: 8, z: 8, "å": 8,
-  };
-
-  // Pussin kokoonpano: yhteensä 100 laattaa (98 kirjainta + 2 tyhjää).
-  var BAG_COUNTS = {
-    a: 10, i: 9, e: 7, o: 5, u: 6, "ä": 5, y: 2, "ö": 1,          // vokaalit 45
-    t: 9, s: 7, k: 7, n: 7, l: 5, r: 4, p: 3, m: 3, v: 2, h: 2, j: 2, d: 1, g: 1, // konsonantit 53
-  };
-  var BLANK_COUNT = 2;
-
-  // Aakkosto ristikkotarkistuksen kirjainkokeiluja varten (kattaa myös
-  // lainakirjaimet, jotta tyhjän laatan kaikki sanat kelpaavat).
-  var ALPHABET = "abcdefghijklmnopqrstuvwxyzäöå".split("");
-
-  // ---- Kerroinruutujen asettelu (15×15, oma layout) ------------------------
-  // Tunnukset: '.' tavallinen, '2' tuplasana, '3' kolmesana,
-  //            'd' tuplakirjain, 't' kolmekirjain, '*' keskusruutu (tuplasana).
-  // Symmetrinen molempien akselien suhteen.
-  //
-  // Tuplasanat (5): keskus + vinot (4,4)/(4,10)/(10,4)/(10,10) — mid-game-
-  // laajennus; eivät ole avausakseleilla (ei ×4 tavallisella avauksella).
-  //
-  // Kolmekirjaimet (8): "toisen kehän" paikat (1,5)/(1,9)/(5,1)/(5,13) ja
-  // peilaukset. Logiikka:
-  //  • Tarpeeksi lähellä keskustaa, jotta rinnakkaiset sanat / koukut
-  //    mid-gamessa osuvat — ei reunakuolleita ruutuja.
-  //  • Poissa avausriviltä/-sarakkeelta 7, joten avaus ei nappaa 3×K.
-  //  • Eivät vierekkäin 2×S-vinojen kanssa → ei automaattista 3×K+2×S
-  //    samaan lyhyeen sanaan.
-  //  • Eivät reunalla 3×S-kulmien kanssa samalla reunaviivalla yhtä tiiviisti
-  //    kuin vanha asettelu (0,3)+(0,0) — hillitsee reunojen ylilyöntejä.
-  var PREMIUM_LAYOUT = [
-    "3.............3",
-    ".d...t...t...d.",
-    "..d.........d..",
-    "...d.......d...",
-    "....2.d.d.2....",
-    ".t...d...d...t.",
-    "......d.d......",
-    ".......*.......",
-    "......d.d......",
-    ".t...d...d...t.",
-    "....2.d.d.2....",
-    "...d.......d...",
-    "..d.........d..",
-    ".d...t...t...d.",
-    "3.............3",
+  // ---- Palasarja (oma jakauma, 100 palaa + 2 jokeria) ---------------------
+  // [kirjain, määrä, pisteet]. '?' = jokeri (0 p, edustaa mitä tahansa kirjainta).
+  var TILE_BAG = [
+    ["a", 10, 1], ["i", 10, 1], ["t", 9, 1], ["n", 9, 1], ["e", 8, 1],
+    ["s", 7, 1], ["l", 5, 1], ["o", 5, 1], ["k", 5, 1], ["u", 5, 1],
+    ["ä", 5, 2], ["m", 3, 2], ["v", 2, 2], ["r", 2, 2], ["j", 2, 3],
+    ["h", 2, 3], ["y", 2, 3], ["p", 2, 3], ["d", 1, 4],
+    ["ö", 1, 4], ["g", 1, 5], ["b", 1, 6], ["f", 1, 8], ["?", 2, 0],
   ];
+  // Kirjainten pistearvot (myös harvinaisille varmuuden vuoksi; jokerit 0).
+  var VALUES = {};
+  TILE_BAG.forEach(function (t) { VALUES[t[0]] = t[2]; });
+  var RARE = { c: 8, w: 8, z: 10, x: 10, q: 10, "å": 10 };
+  for (var rk in RARE) if (VALUES[rk] == null) VALUES[rk] = RARE[rk];
 
-  // Palauttaa "", "2L", "3L", "2W" tai "3W" ruudulle (r,c).
-  function premiumAt(r, c) {
-    if (r < 0 || c < 0 || r >= SIZE || c >= SIZE) return "";
-    switch (PREMIUM_LAYOUT[r].charAt(c)) {
-      case "2": return "2W";
-      case "3": return "3W";
-      case "d": return "2L";
-      case "t": return "3L";
-      case "*": return "2W"; // keskusruutu
-      default: return "";
+  function letterValue(letter, blank) { return blank ? 0 : (VALUES[letter] || 0); }
+
+  function buildBag(rng) {
+    var bag = [];
+    TILE_BAG.forEach(function (t) { for (var i = 0; i < t[1]; i++) bag.push(t[0]); });
+    return shuffle(bag, rng);
+  }
+
+  // ---- Bonusruudukko (oma, 4-kertainen symmetria) -------------------------
+  // Neljännes 8×8 (r,c = 0..7); täysi lauta peilataan tästä. Merkit:
+  //   T=kolminkert. sana, D=kaksinkert. sana, t=kolminkert. kirjain,
+  //   d=kaksinkert. kirjain, .=tavallinen, *=keskiruutu (kaksinkert. sana).
+  var QUAD = [
+    "T..d...D",
+    ".D...t..",
+    "..D...d.",
+    "d..D....",
+    "....t..d",
+    ".t...D..",
+    "..d...t.",
+    "D...d..*",
+  ];
+  function buildPremium() {
+    var g = [];
+    for (var r = 0; r < SIZE; r++) {
+      var row = [];
+      for (var c = 0; c < SIZE; c++) {
+        var qr = Math.min(r, SIZE - 1 - r);
+        var qc = Math.min(c, SIZE - 1 - c);
+        row.push(QUAD[qr][qc]);
+      }
+      g.push(row);
     }
+    return g;
   }
+  var PREMIUM = buildPremium();
+  function premiumAt(r, c) { return PREMIUM[r][c]; }
+  function letterMult(p) { return p === "t" ? 3 : p === "d" ? 2 : 1; }
+  function wordMult(p) { return p === "T" ? 3 : (p === "D" || p === "*") ? 2 : 1; }
 
-  function letterValue(ch) { return LETTER_VALUES[ch] || 0; }
-
-  // ---- Pussi ---------------------------------------------------------------
-  // Palauttaa sekoitetun taulukon laattoja (kirjain tai BLANK).
-  function createBag(rng) {
-    var tiles = [];
-    for (var ch in BAG_COUNTS) {
-      if (!BAG_COUNTS.hasOwnProperty(ch)) continue;
-      for (var i = 0; i < BAG_COUNTS[ch]; i++) tiles.push(ch);
-    }
-    for (var b = 0; b < BLANK_COUNT; b++) tiles.push(BLANK);
-    return shuffle(tiles, rng);
-  }
-
-  // Nostaa telineen täyteen pussista (muokkaa molempia taulukoita).
-  // size: tavoitekoko (oletus RACK = 7).
-  function refill(rack, bag, size) {
-    var target = size == null ? RACK : size;
-    while (rack.length < target && bag.length > 0) rack.push(bag.pop());
-    return rack;
-  }
-
-  // ---- Trie sanastolle -----------------------------------------------------
+  // ---- Sanasto: trie ------------------------------------------------------
   function buildTrie(words) {
     var root = { c: {} };
     for (var i = 0; i < words.length; i++) {
       var w = words[i];
-      if (!w) continue;
+      if (w.length < 2) continue;
       var node = root;
       for (var k = 0; k < w.length; k++) {
         var ch = w[k];
@@ -96460,1609 +96116,777 @@ zulu
     }
     return root;
   }
-
-  function trieNode(trie, word) {
-    var node = trie;
-    for (var i = 0; i < word.length; i++) {
-      node = node.c[word[i]];
-      if (!node) return null;
-    }
-    return node;
-  }
-
   function trieHas(trie, word) {
-    var node = trieNode(trie, word);
-    return !!(node && node.w);
+    var node = trie;
+    for (var i = 0; i < word.length; i++) { node = node.c[word[i]]; if (!node) return false; }
+    return !!node.w;
   }
 
-  // ---- Lauta ---------------------------------------------------------------
-  // Lauta = taulukko, jonka pituus SIZE*SIZE. Kukin ruutu null tai
-  // { ch: "a", blank: false }.
+  // ---- Lauta --------------------------------------------------------------
+  // Ruutu: null tai { l:"a", blank:false }.
   function emptyBoard() {
-    var b = new Array(SIZE * SIZE);
-    for (var i = 0; i < b.length; i++) b[i] = null;
+    var b = [];
+    for (var r = 0; r < SIZE; r++) { b.push(new Array(SIZE).fill(null)); }
     return b;
   }
-  function idx(r, c) { return r * SIZE + c; }
-  function cellAt(board, r, c) {
-    if (r < 0 || c < 0 || r >= SIZE || c >= SIZE) return null;
-    return board[idx(r, c)];
-  }
-  function isBoardEmpty(board) {
-    for (var i = 0; i < board.length; i++) if (board[i]) return false;
+  function isEmptyBoard(bd) {
+    for (var r = 0; r < SIZE; r++) for (var c = 0; c < SIZE; c++) if (bd[r][c]) return false;
     return true;
   }
+  function cloneBoard(bd) { return bd.map(function (row) { return row.slice(); }); }
 
-  // ---- Siirron laillisuus & pisteytys --------------------------------------
-  // placed: taulukko { r, c, ch, blank }. opts: { rackSize } bingolle (oletus RACK).
-  // Palauttaa { ok:true, score, words:[..], main, bingo } tai { ok:false, reason }.
-  function validateMove(board, placed, trie, opts) {
-    opts = opts || {};
-    var rackSize = opts.rackSize == null ? RACK : opts.rackSize;
-    if (!placed || placed.length === 0) return { ok: false, reason: "Aseta ainakin yksi laatta." };
+  // ---- Sanan keräys laudalta ----------------------------------------------
+  function collectWord(bd, r, c, dr, dc) {
+    // palaa alkuun
+    var sr = r, sc = c;
+    while (inb(sr - dr, sc - dc) && bd[sr - dr][sc - dc]) { sr -= dr; sc -= dc; }
+    var cells = [];
+    var rr = sr, cc = sc;
+    while (inb(rr, cc) && bd[rr][cc]) { cells.push([rr, cc]); rr += dr; cc += dc; }
+    return cells;
+  }
+  function inb(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
+  function wordStr(bd, cells) { return cells.map(function (p) { return bd[p[0]][p[1]].l; }).join(""); }
 
-    var first = isBoardEmpty(board);
-    var overlay = {}; // idx -> {ch,blank}
-    var i, p;
-    var rows = {}, cols = {};
-    for (i = 0; i < placed.length; i++) {
-      p = placed[i];
-      if (p.r < 0 || p.c < 0 || p.r >= SIZE || p.c >= SIZE)
-        return { ok: false, reason: "Laatta laudan ulkopuolella." };
-      var k = idx(p.r, p.c);
-      if (overlay[k]) return { ok: false, reason: "Kaksi laattaa samassa ruudussa." };
-      if (board[k]) return { ok: false, reason: "Ruutu on jo käytössä." };
-      overlay[k] = { ch: p.ch, blank: !!p.blank, placed: true };
-      rows[p.r] = 1; cols[p.c] = 1;
+  // ---- Siirron tarkistus ja pisteytys -------------------------------------
+  // placements: [{r,c,l,blank}]. Palauttaa {ok, score, words:[{word,cells}], error}.
+  function validateAndScore(bd, placements, trie) {
+    if (!placements.length) return { ok: false, error: "Ei asetettuja paloja." };
+    // 1) samalla rivillä tai sarakkeella?
+    var rows = placements.map(function (p) { return p.r; });
+    var cols = placements.map(function (p) { return p.c; });
+    var sameRow = rows.every(function (v) { return v === rows[0]; });
+    var sameCol = cols.every(function (v) { return v === cols[0]; });
+    if (!sameRow && !sameCol) return { ok: false, error: "Palat on asetettava yhteen riviin tai sarakkeeseen." };
+
+    // 2) ruudut vapaat & ei päällekkäisiä
+    var seen = {};
+    for (var i = 0; i < placements.length; i++) {
+      var p = placements[i];
+      if (!inb(p.r, p.c)) return { ok: false, error: "Pala laudan ulkopuolella." };
+      if (bd[p.r][p.c]) return { ok: false, error: "Ruutu on jo varattu." };
+      var key = p.r + "," + p.c;
+      if (seen[key]) return { ok: false, error: "Kaksi palaa samaan ruutuun." };
+      seen[key] = true;
     }
 
-    var rowKeys = Object.keys(rows), colKeys = Object.keys(cols);
-    var horiz;
-    if (placed.length === 1) horiz = true; // suunta selviää muodostuvista sanoista
-    else if (rowKeys.length === 1) horiz = true;
-    else if (colKeys.length === 1) horiz = false;
-    else return { ok: false, reason: "Laatat yhdelle riville tai sarakkeelle." };
+    // 3) väliaikainen lauta
+    var tmp = cloneBoard(bd);
+    placements.forEach(function (p) { tmp[p.r][p.c] = { l: p.l, blank: !!p.blank }; });
 
-    function get(r, c) {
-      var k = idx(r, c);
-      if (r < 0 || c < 0 || r >= SIZE || c >= SIZE) return null;
-      return overlay[k] || board[k] || null;
+    // suunta: usea pala määrää; yksittäinen pala päätellään naapureista
+    var dr, dc;
+    if (placements.length === 1) {
+      var p0 = placements[0];
+      var horiz = (inb(p0.r, p0.c - 1) && tmp[p0.r][p0.c - 1]) || (inb(p0.r, p0.c + 1) && tmp[p0.r][p0.c + 1]);
+      dr = horiz ? 0 : 1; dc = horiz ? 1 : 0;
+    } else { dr = sameRow ? 0 : 1; dc = sameRow ? 1 : 0; }
+
+    // 4) pääsana yhtenäinen (ei aukkoja asetettujen välissä)
+    var line = placements.map(function (p) { return dr === 0 ? p.c : p.r; }).sort(function (a, b) { return a - b; });
+    var fixedIdx = dr === 0 ? placements[0].r : placements[0].c;
+    for (var q = line[0]; q <= line[line.length - 1]; q++) {
+      var rr = dr === 0 ? fixedIdx : q;
+      var cc = dr === 0 ? q : fixedIdx;
+      if (!tmp[rr][cc]) return { ok: false, error: "Sanassa on aukko." };
     }
 
-    // Kokoaa maksimaalisen sanan (r,c):n läpi suuntaan (dr,dc).
-    function gatherRun(r, c, dr, dc) {
-      var hr = r, hc = c;
-      while (get(hr - dr, hc - dc)) { hr -= dr; hc -= dc; }
-      var cells = [];
-      var word = "";
-      var cr = hr, cc = hc;
-      var cell = get(cr, cc);
-      while (cell) {
-        cells.push({ r: cr, c: cc, ch: cell.ch, blank: cell.blank, placed: !!cell.placed });
-        word += cell.ch;
-        cr += dr; cc += dc;
-        cell = get(cr, cc);
-      }
-      return { word: word, cells: cells };
-    }
+    var isFirst = isEmptyBoard(bd);
+    var newSet = {};
+    placements.forEach(function (p) { newSet[p.r + "," + p.c] = true; });
 
+    // 5) kerää kaikki muodostuneet sanat: pääsana + ristisanat
     var words = [];
-    if (placed.length >= 2) {
-      var mainRun = gatherRun(placed[0].r, placed[0].c, horiz ? 0 : 1, horiz ? 1 : 0);
-      // Kaikkien asetettujen laattojen on oltava samassa yhtenäisessä sanassa.
-      var inMain = {};
-      for (i = 0; i < mainRun.cells.length; i++) inMain[idx(mainRun.cells[i].r, mainRun.cells[i].c)] = 1;
-      for (i = 0; i < placed.length; i++) {
-        if (!inMain[idx(placed[i].r, placed[i].c)])
-          return { ok: false, reason: "Laattojen väliin jää tyhjä ruutu." };
-      }
-      words.push(mainRun);
-      for (i = 0; i < placed.length; i++) {
-        var cross = gatherRun(placed[i].r, placed[i].c, horiz ? 1 : 0, horiz ? 0 : 1);
-        if (cross.cells.length >= 2) words.push(cross);
-      }
+    var main = collectWord(tmp, placements[0].r, placements[0].c, dr, dc);
+    if (main.length >= 2) words.push(main);
+    // ristisanat kohtisuoraan jokaisesta uudesta palasta
+    placements.forEach(function (p) {
+      var cross = collectWord(tmp, p.r, p.c, dc, dr); // kohtisuora suunta
+      if (cross.length >= 2) words.push(cross);
+    });
+    if (words.length === 0) return { ok: false, error: "Sana on liian lyhyt (väh. 2 kirjainta)." };
+
+    // 6) kytkentä: ensisiirto keskiruudun kautta; muuten kosketus vanhoihin
+    if (isFirst) {
+      var touchesCenter = placements.some(function (p) { return p.r === 7 && p.c === 7; });
+      if (!touchesCenter) return { ok: false, error: "Aloitussana on asetettava keskiruudun kautta." };
     } else {
-      var h = gatherRun(placed[0].r, placed[0].c, 0, 1);
-      var v = gatherRun(placed[0].r, placed[0].c, 1, 0);
-      if (h.cells.length >= 2) words.push(h);
-      if (v.cells.length >= 2) words.push(v);
+      var touches = false;
+      // jokin muodostettu sana sisältää vanhan palan, TAI ristisanoja syntyi
+      if (words.length > 1) touches = true;
+      main.forEach(function (cell) { if (!newSet[cell[0] + "," + cell[1]]) touches = true; });
+      if (!touches) return { ok: false, error: "Sanan on liityttävä aiempiin paloihin." };
     }
 
-    if (words.length === 0) return { ok: false, reason: "Sana on liian lyhyt." };
-
-    // Yhteys: ensisiirron oltava keskiruudun kautta; muuten sanassa oltava
-    // vähintään yksi laudalla jo ollut laatta.
-    if (first) {
-      var onCenter = false;
-      for (i = 0; i < placed.length; i++) if (placed[i].r === CENTER && placed[i].c === CENTER) onCenter = true;
-      if (!onCenter) return { ok: false, reason: "Ensimmäisen sanan on kuljettava keskiruudun kautta." };
-    } else {
-      var connected = false;
-      for (i = 0; i < words.length && !connected; i++) {
-        var cs = words[i].cells;
-        for (var j = 0; j < cs.length; j++) if (!cs[j].placed) { connected = true; break; }
-      }
-      if (!connected) return { ok: false, reason: "Sanan on liityttävä laudalla oleviin laattoihin." };
-    }
-
-    // Sanaston tarkistus.
-    for (i = 0; i < words.length; i++) {
-      if (!trieHas(trie, words[i].word))
-        return { ok: false, reason: "\u201c" + words[i].word.toUpperCase() + "\u201d ei ole sanalistassa.", badWord: words[i].word };
-    }
-
-    // Pisteytys: kerroinruudut vain uusille laatoille.
+    // 7) validointi + pisteytys
     var total = 0;
-    for (i = 0; i < words.length; i++) {
-      var wcells = words[i].cells;
-      var sum = 0, wordMult = 1;
-      for (var m = 0; m < wcells.length; m++) {
-        var cc2 = wcells[m];
-        var base = cc2.blank ? 0 : letterValue(cc2.ch);
-        if (cc2.placed) {
-          var pr = premiumAt(cc2.r, cc2.c);
-          if (pr === "2L") base *= 2;
-          else if (pr === "3L") base *= 3;
-          else if (pr === "2W") wordMult *= 2;
-          else if (pr === "3W") wordMult *= 3;
+    var wordInfos = [];
+    for (var wi = 0; wi < words.length; wi++) {
+      var cells = words[wi];
+      var str = wordStr(tmp, cells);
+      if (!trieHas(trie, str)) return { ok: false, error: '"' + str.toUpperCase() + '" ei ole sanalistalla.' };
+      var wScore = 0, wMult = 1;
+      for (var ci = 0; ci < cells.length; ci++) {
+        var rc = cells[ci], cell = tmp[rc[0]][rc[1]];
+        var isNew = newSet[rc[0] + "," + rc[1]];
+        var base = letterValue(cell.l, cell.blank);
+        if (isNew) {
+          var pr = premiumAt(rc[0], rc[1]);
+          wScore += base * letterMult(pr);
+          wMult *= wordMult(pr);
+        } else {
+          wScore += base;
         }
-        sum += base;
       }
-      total += sum * wordMult;
+      wScore *= wMult;
+      total += wScore;
+      wordInfos.push({ word: str, cells: cells, score: wScore });
     }
-    if (placed.length === rackSize) total += BINGO_BONUS;
+    if (placements.length === 7) total += 50; // kaikki 7 palaa = bonus
 
-    return {
-      ok: true,
-      score: total,
-      words: words.map(function (w) { return w.word; }),
-      main: words[0].word,
-      bingo: placed.length === rackSize,
-    };
+    return { ok: true, score: total, words: wordInfos, dir: (dr === 0 ? "H" : "V") };
   }
 
-  // ---- Tekoälyn siirtogeneraattori -----------------------------------------
-  // Ankkuripohjainen: käy rivit (vaaka) ja sarakkeet (pysty, transponoituna).
-  // Jokaiselle ankkurille laajennetaan sanaa trien läpi, ristikkotarkistus
-  // rajaa mahdolliset kirjaimet. Palauttaa siirtoehdokkaat (placed-listat).
+  // ---- Ristintarkistukset (AI:lle) ----------------------------------------
+  // Vaakasiirroille: kullekin tyhjälle ruudulle sallitut kirjaimet (pystysana
+  // pysyy laillisena) sekä pystysuoran olemassaolevan sanan pistesumma.
+  var ALPHA = "abcdefghijklmnoprstuvyäö".split("");
+  function crossChecks(bd, trie) {
+    var allowed = [], cross = [];
+    for (var r = 0; r < SIZE; r++) {
+      allowed.push(new Array(SIZE));
+      cross.push(new Array(SIZE).fill(0));
+      for (var c = 0; c < SIZE; c++) {
+        if (bd[r][c]) { allowed[r][c] = null; continue; }
+        var up = "", down = "", sc = 0;
+        var rr = r - 1;
+        while (inb(rr, c) && bd[rr][c]) { up = bd[rr][c].l + up; sc += letterValue(bd[rr][c].l, bd[rr][c].blank); rr--; }
+        rr = r + 1;
+        while (inb(rr, c) && bd[rr][c]) { down += bd[rr][c].l; sc += letterValue(bd[rr][c].l, bd[rr][c].blank); rr++; }
+        cross[r][c] = sc;
+        if (!up && !down) { allowed[r][c] = null; continue; }
+        var set = {};
+        for (var a = 0; a < ALPHA.length; a++) {
+          var w = up + ALPHA[a] + down;
+          if (trieHas(trie, w)) set[ALPHA[a]] = true;
+        }
+        allowed[r][c] = set;
+      }
+    }
+    return { allowed: allowed, cross: cross };
+  }
 
-  function transpose(board) {
+  // ---- Siirtogeneraattori (AI) --------------------------------------------
+  // Palauttaa parhaan siirron { placements, score, words } tai null.
+  // Menetelmä: ankkurit + trie-laajennus (Appel–Jacobson -tyylinen). Vaaka
+  // suoraan, pysty transponoimalla lauta.
+  function bestMove(bd, rack, trie) {
+    var best = null;
+    function consider(placements) {
+      if (!placements.length) return;
+      var res = validateAndScore(bd, placements, trie);
+      if (res.ok && (!best || res.score > best.score)) best = { placements: placements, score: res.score, words: res.words };
+    }
+    genOrientation(bd, rack, trie, false, consider);       // vaaka
+    var tb = transpose(bd);
+    genOrientation(tb, rack, trie, true, function (pl) {
+      // transponoi takaisin
+      consider(pl.map(function (p) { return { r: p.c, c: p.r, l: p.l, blank: p.blank }; }));
+    });
+    return best;
+  }
+
+  function transpose(bd) {
     var t = emptyBoard();
-    for (var r = 0; r < SIZE; r++)
-      for (var c = 0; c < SIZE; c++)
-        t[idx(c, r)] = board[idx(r, c)];
+    for (var r = 0; r < SIZE; r++) for (var c = 0; c < SIZE; c++) t[c][r] = bd[r][c];
     return t;
   }
 
-  function rackState(rack) {
-    var counts = {}, blanks = 0;
-    for (var i = 0; i < rack.length; i++) {
-      if (rack[i] === BLANK) blanks++;
-      else counts[rack[i]] = (counts[rack[i]] || 0) + 1;
-    }
-    return { counts: counts, blanks: blanks };
-  }
-
-  // Ristikkojoukot (pysty) grid-kehyksessä: idx -> {any:true} tai Set(kirjaimet).
-  function crossSets(grid, trie) {
-    var sets = {};
-    for (var r = 0; r < SIZE; r++) {
-      for (var c = 0; c < SIZE; c++) {
-        if (grid[idx(r, c)]) continue; // vain tyhjät
-        var prefix = "", suffix = "";
-        var rr = r - 1;
-        while (rr >= 0 && grid[idx(rr, c)]) { prefix = grid[idx(rr, c)].ch + prefix; rr--; }
-        rr = r + 1;
-        while (rr < SIZE && grid[idx(rr, c)]) { suffix += grid[idx(rr, c)].ch; rr++; }
-        if (!prefix && !suffix) continue; // ei pystynaapureita -> kaikki sallittu
-        var set = {};
-        for (var a = 0; a < ALPHABET.length; a++) {
-          var L = ALPHABET[a];
-          if (trieHas(trie, prefix + L + suffix)) set[L] = 1;
-        }
-        sets[idx(r, c)] = set;
-      }
-    }
-    return sets;
-  }
-
-  // Kerää yhden suunnan siirrot annetusta ruudukosta. transposed=true kääntää
-  // koordinaatit takaisin alkuperäisiin (r,c).
-  function genDir(grid, trie, rack, first, transposed, sink) {
-    var sets = crossSets(grid, trie);
-    var rs = rackState(rack);
-
-    function crossOk(r, c, L) {
-      var set = sets[idx(r, c)];
-      return !set || set[L]; // ei joukkoa = ei pystynaapureita = sallittu
-    }
-
-    function emit(r, placedList, anchorCol) {
-      var covers = false;
-      for (var i = 0; i < placedList.length; i++) if (placedList[i].c === anchorCol) { covers = true; break; }
-      if (!covers) return;
-      var cells = [];
-      for (var k = 0; k < placedList.length; k++) {
-        var pc = placedList[k];
-        cells.push(transposed
-          ? { r: pc.c, c: r, ch: pc.ch, blank: pc.blank }
-          : { r: r, c: pc.c, ch: pc.ch, blank: pc.blank });
-      }
-      sink(cells);
-    }
-
-    // Laajenna sanaa oikealle sarakkeesta col alkaen. placed = tähän mennessä
-    // asetetut (vain uudet laatat). node = trie-solmu luetun sanan jälkeen.
-    function extendRight(r, col, node, placed, anchorCol) {
-      var atFilled = col < SIZE && grid[idx(r, col)];
-      if (!atFilled) {
-        // Oikea reuna: sana voi päättyä tähän.
-        if (node.w && placed.length > 0) emit(r, placed, anchorCol);
-        if (col >= SIZE) return;
-        var set = sets[idx(r, col)];
-        for (var ch in node.c) {
-          if (!node.c.hasOwnProperty(ch)) continue;
-          if (set && !set[ch]) continue; // ristikkotarkistus
-          // Valitse laatta: mieluiten oikea kirjain, muuten tyhjä.
-          if (rs.counts[ch] > 0) {
-            rs.counts[ch]--;
-            placed.push({ c: col, ch: ch, blank: false });
-            extendRight(r, col + 1, node.c[ch], placed, anchorCol);
-            placed.pop();
-            rs.counts[ch]++;
-          } else if (rs.blanks > 0) {
-            rs.blanks--;
-            placed.push({ c: col, ch: ch, blank: true });
-            extendRight(r, col + 1, node.c[ch], placed, anchorCol);
-            placed.pop();
-            rs.blanks++;
-          }
-        }
-      } else {
-        var L = grid[idx(r, col)].ch;
-        var nx = node.c[L];
-        if (nx) extendRight(r, col + 1, nx, placed, anchorCol);
-      }
-    }
+  // Generoi vaakasiirrot annetulle laudalle (transponoituna kutsuja hoitaa pystyn).
+  function genOrientation(bd, rack, trie, transposed, emit) {
+    var cc = crossChecks(bd, trie);
+    var allowed = cc.allowed;
+    var empty = isEmptyBoard(bd);
 
     for (var r = 0; r < SIZE; r++) {
-      // Ankkurit tällä rivillä.
-      var anchors = {};
-      for (var c = 0; c < SIZE; c++) {
-        if (grid[idx(r, c)]) continue;
-        if (first) { if (r === CENTER && c === CENTER) anchors[c] = 1; }
-        else if (cellAt(grid, r - 1, c) || cellAt(grid, r + 1, c) ||
-                 cellAt(grid, r, c - 1) || cellAt(grid, r, c + 1)) anchors[c] = 1;
+      // ankkurit rivillä
+      var anchors = [];
+      if (empty) { if (r === 7) anchors = [7]; }
+      else {
+        for (var c = 0; c < SIZE; c++) {
+          if (bd[r][c]) continue;
+          if ((inb(r, c - 1) && bd[r][c - 1]) || (inb(r, c + 1) && bd[r][c + 1]) ||
+              (inb(r - 1, c) && bd[r - 1][c]) || (inb(r + 1, c) && bd[r + 1][c])) anchors.push(c);
+        }
       }
-      for (var a in anchors) {
-        if (!anchors.hasOwnProperty(a)) continue;
-        var c0 = a | 0;
-        if (c0 > 0 && grid[idx(r, c0 - 1)]) {
-          // Kiinteä vasen osa laudalta.
-          var pc = c0 - 1, prefix = "";
-          while (pc >= 0 && grid[idx(r, pc)]) { prefix = grid[idx(r, pc)].ch + prefix; pc--; }
-          var start = pc + 1;
-          var node = trieNode(trie, prefix);
-          if (node) extendRight(r, c0, node, [], c0);
-          // (start-muuttuja pidetään selvyyden vuoksi; extendRight kulkee c0:sta)
-          void start;
+      for (var ai = 0; ai < anchors.length; ai++) {
+        var anchor = anchors[ai];
+        // jos vasemmalla on jo pala, vasen osa on kiinteä
+        if (inb(r, anchor - 1) && bd[r][anchor - 1]) {
+          var pre = collectWord(bd, r, anchor - 1, 0, 1); // vasemman sanan solut
+          var preStr = pre.map(function (p) { return bd[p[0]][p[1]].l; }).join("");
+          var node = walk(trie, preStr);
+          if (node) extendRight(bd, r, anchor, node, rack.slice(), [], allowed, r, anchor, emit, trie, preStr);
         } else {
-          // Vasen naapuri tyhjä: kokeile eri aloituskohtia (vasen osa telineestä).
-          var limit = 0, cc = c0 - 1;
-          while (cc >= 0 && !grid[idx(r, cc)] && !anchors[cc]) { limit++; cc--; }
-          for (var len = 0; len <= limit; len++) {
-            var s = c0 - len;
-            if (s > 0 && grid[idx(r, s - 1)]) continue; // ei-maksimaalinen vasen reuna
-            extendRight(r, s, trie, [], c0);
-          }
+          // laske vapaa tila vasemmalle (ei ohita toista ankkuria)
+          var limit = 0, cc2 = anchor - 1;
+          while (inb(r, cc2) && !bd[r][cc2] && anchors.indexOf(cc2) < 0) { limit++; cc2--; }
+          leftPart(bd, r, anchor, trie, "", trie, rack.slice(), [], limit, allowed, emit);
         }
       }
     }
   }
-
-  // Palauttaa uniikit lailliset siirrot pisteytettynä, laskevassa järjestyksessä.
-  function generateMoves(board, rack, trie) {
-    var first = isBoardEmpty(board);
-    var seen = {};
-    var moves = [];
-    var rackSize = rack.length;
-    function sink(cells) {
-      // Dedup + pisteytys yhteisellä validoinnilla.
-      var key = cells.map(function (x) { return x.r + "," + x.c + x.ch + (x.blank ? "*" : ""); })
-        .sort().join("|");
-      if (seen[key]) return;
-      seen[key] = 1;
-      var res = validateMove(board, cells, trie, { rackSize: rackSize });
-      if (res.ok) moves.push({ cells: cells, score: res.score, words: res.words, main: res.main, bingo: res.bingo });
+  function walk(node, str) {
+    for (var i = 0; i < str.length; i++) { node = node.c[str[i]]; if (!node) return null; }
+    return node;
+  }
+  // rakenna vasen osa ankkurin vasemmalle (tyhjiin ruutuihin), sitten laajenna oikealle
+  function leftPart(bd, r, anchor, root, partial, node, rack, placed, limit, allowed, emit) {
+    extendRight(bd, r, anchor, node, rack, placed, allowed, r, anchor, emit, root, partial);
+    if (limit <= 0) return;
+    for (var i = 0; i < rack.length; i++) {
+      var tile = rack[i];
+      var letters = tile === "?" ? ALPHA : [tile];
+      for (var li = 0; li < letters.length; li++) {
+        var L = letters[li];
+        var child = node.c[L];
+        if (!child) continue;
+        var col = anchor - partial.length - 1;
+        if (!inb(r, col)) continue;
+        var nr = rack.slice(); nr.splice(i, 1);
+        var np = placed.concat([{ r: r, c: col, l: L, blank: tile === "?" }]);
+        leftPart(bd, r, anchor, root, partial + L, child, nr, np, limit - 1, allowed, emit);
+      }
     }
-    genDir(board, trie, rack, first, false, sink);
-    genDir(transpose(board), trie, rack, first, true, sink);
-    moves.sort(function (x, y) { return y.score - x.score; });
-    return moves;
   }
-
-  // ---- Loppupisteet: jäljelle jääneiden laattojen arvo ---------------------
-  function rackValue(rack) {
-    var s = 0;
-    for (var i = 0; i < rack.length; i++) if (rack[i] !== BLANK) s += letterValue(rack[i]);
-    return s;
+  // laajenna oikealle ankkurista alkaen
+  function extendRight(bd, r, col, node, rack, placed, allowed, aRow, aCol, emit, root, wordSoFar) {
+    if (!inb(r, col)) {
+      if (node.w && placed.length) emit(placed);
+      return;
+    }
+    if (bd[r][col]) {
+      var L = bd[r][col].l;
+      var child = node.c[L];
+      if (child) {
+        if (child.w && placed.length && !(inb(r, col + 1) && bd[r][col + 1]))
+          maybeEmit(bd, r, col, child, placed, emit);
+        extendRight(bd, r, col + 1, child, rack, placed, allowed, aRow, aCol, emit, root, wordSoFar + L);
+      }
+      return;
+    }
+    // tyhjä ruutu: kokeile rackin paloja
+    for (var i = 0; i < rack.length; i++) {
+      var tile = rack[i];
+      var letters = tile === "?" ? ALPHA : [tile];
+      for (var lj = 0; lj < letters.length; lj++) {
+        var Lx = letters[lj];
+        var childx = node.c[Lx];
+        if (!childx) continue;
+        var allow = allowed[r][col];
+        if (allow && !allow[Lx]) continue; // ristisana ei kelpaa
+        var nr = rack.slice(); nr.splice(i, 1);
+        var np = placed.concat([{ r: r, c: col, l: Lx, blank: tile === "?" }]);
+        if (childx.w && np.length && !(inb(r, col + 1) && bd[r][col + 1])) emit(np);
+        extendRight(bd, r, col + 1, childx, nr, np, allowed, aRow, aCol, emit, root, (wordSoFar || "") + Lx);
+      }
+    }
   }
+  function maybeEmit(bd, r, col, node, placed, emit) { if (placed.length) emit(placed); }
 
   var API = {
-    SIZE: SIZE, RACK: RACK, CENTER: CENTER, BLANK: BLANK, BINGO_BONUS: BINGO_BONUS,
-    LETTER_VALUES: LETTER_VALUES, BAG_COUNTS: BAG_COUNTS, BLANK_COUNT: BLANK_COUNT,
-    PREMIUM_LAYOUT: PREMIUM_LAYOUT,
+    SIZE: SIZE,
     makeRNG: makeRNG, shuffle: shuffle,
-    premiumAt: premiumAt, letterValue: letterValue,
-    createBag: createBag, refill: refill,
-    buildTrie: buildTrie, trieHas: trieHas, trieNode: trieNode,
-    emptyBoard: emptyBoard, cellAt: cellAt, idx: idx, isBoardEmpty: isBoardEmpty,
-    validateMove: validateMove, generateMoves: generateMoves,
-    transpose: transpose, rackValue: rackValue,
+    TILE_BAG: TILE_BAG, VALUES: VALUES, letterValue: letterValue, buildBag: buildBag,
+    PREMIUM: PREMIUM, premiumAt: premiumAt, letterMult: letterMult, wordMult: wordMult,
+    buildTrie: buildTrie, trieHas: trieHas,
+    emptyBoard: emptyBoard, isEmptyBoard: isEmptyBoard, cloneBoard: cloneBoard,
+    validateAndScore: validateAndScore, bestMove: bestMove, crossChecks: crossChecks,
   };
-
   if (typeof module !== "undefined" && module.exports) module.exports = API;
-  root.SanaseppaEngine = API;
+  root.SanapalatEngine = API;
 })(typeof globalThis !== "undefined" ? globalThis : this);
 
 </script>
 <script>
-// Sanaseppä — selainsovellus (DOM). Ydin: globalThis.SanaseppaEngine (engine.js).
+// Sanapalat — selainsovellus (DOM). Ydin: globalThis.SanapalatEngine.
 // Sanasto luetaan <script id="sanat" type="text/plain"> -lohkosta.
-//
-// 1 ihminen + 0–3 tietokonevastustajaa yhdellä jaetulla laudalla ja pussilla.
-// Vuorojärjestys: Sinä → Kone 1 → … → takaisin. Laatat asetetaan napauttamalla:
-// valitse laatta telineeltä, napauta tyhjää ruutua; napauta asetettua (ei vielä
-// vahvistettua) laattaa palauttaaksesi sen.
-//
-// Suunnittelu nojaa pelaajien arvostamiin asioihin (SDT, flow, epävarmuus/
-// läheltä piti, ESA:n motivaatioklusterit) — ks. README.md tutkimustaulukko.
 (function () {
   "use strict";
-  var E = globalThis.SanaseppaEngine;
+  var E = globalThis.SanapalatEngine;
   var el = function (id) { return document.getElementById(id); };
   var ov = el("ov");
+  var SIZE = E.SIZE;
+  function inb(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
 
   var WORDS = el("sanat").textContent.split("\n").filter(Boolean);
   var TRIE = null;
 
-  var SIZE = E.SIZE, BLANK = E.BLANK;
-  function rackSize() { return (S && S.cfg && S.cfg.rackSize) || E.RACK; }
-  var CH_LETTERS = "abcdefghijklmnopqrstuvwxyzäö".split("");
-
-  var HUMAN_COLOR = "#6ee7b7";
-  // Nimetyt vastustajat, joilla omat värit ja kevyet luonteet (relatedness).
-  var CPU_PROFILES = [
-    { key: "aapo", name: "Aapo", color: "#fca5a5", flavor: "pelaa varman p\u00e4\u00e4lle", quip: "varman p\u00e4\u00e4lle" },
-    { key: "bea", name: "Bea", color: "#fcd34d", flavor: "rakastaa pitki\u00e4 sanoja", quip: "pitk\u00e4ll\u00e4 sanalla" },
-    { key: "cesar", name: "Cesar", color: "#a5b4fc", flavor: "ottaa riskej\u00e4", quip: "rohkeasti" },
-  ];
-
-  var LS_SETTINGS = "sanaseppa.settings";
-  var LS_TIP = "sanaseppa.tip.v1";
-
-  function lsGet(k, d) {
-    try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; }
-  }
-  function lsSet(k, v) {
-    try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {}
-  }
-
-  var S = null;      // pelin tila
-  var busy = false;  // syöte lukossa (tietokoneen vuoro / animaatio)
-
-  // ---- Apurit --------------------------------------------------------------
-  function tileValue(ch, blank) { return blank ? 0 : E.letterValue(ch); }
-  function idx(r, c) { return r * SIZE + c; }
-  function human() { return S.players[0]; }
-  function current() { return S.players[S.turnIdx]; }
-  function isHumanTurn() { return S && !S.finished && !busy && current().isHuman; }
-
-  function premiumClass(r, c) {
-    if (r === E.CENTER && c === E.CENTER) return "pc";
-    return { "3W": "p3w", "2W": "p2w", "3L": "p3l", "2L": "p2l" }[E.premiumAt(r, c)] || "";
-  }
-  function premiumLabel(r, c) {
-    if (r === E.CENTER && c === E.CENTER) return "\u2605";
-    return { "3W": "3\u00d7S", "2W": "2\u00d7S", "3L": "3\u00d7K", "2L": "2\u00d7K" }[E.premiumAt(r, c)] || "";
-  }
+  var G = null; // pelitila
+  var AI_DELAY = 550;
+  var NAMES = ["Sinä", "Tietokone"];
 
   // ---- Pelin aloitus -------------------------------------------------------
-  function newGame(cfg) {
-    cfg = cfg || {};
-    cfg.computers = cfg.computers | 0;
-    cfg.rackSize = cfg.rackSize || E.RACK;
-    cfg.level = cfg.level || "normaali";
-    lsSet(LS_SETTINGS, { level: cfg.level, computers: cfg.computers, rackSize: cfg.rackSize });
-
-    var seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    var rng = E.makeRNG(seed);
-    var bag = E.createBag(rng);
-
-    var players = [{ isHuman: true, name: "Sinä", color: HUMAN_COLOR, rack: [], score: 0 }];
-    for (var i = 0; i < cfg.computers; i++) {
-      var pr = CPU_PROFILES[i];
-      players.push({ isHuman: false, name: pr.name, color: pr.color, key: pr.key, flavor: pr.flavor, quip: pr.quip, rack: [], score: 0 });
-    }
-    for (var j = 0; j < players.length; j++) E.refill(players[j].rack, bag, cfg.rackSize);
-
-    S = {
-      cfg: cfg,
-      board: E.emptyBoard(),
-      bag: bag,
-      players: players,
-      turnIdx: 0,
-      pending: [],
-      selected: null,
-      exchange: null,
-      hint: null,
-      cursor: { r: E.CENTER, c: E.CENTER },
-      placeDir: null,
-      awaitBlank: false,
-      lastMove: [], lastBy: 0,
-      lastPlayText: "",
-      scoreless: 0,
-      finished: false,
-      bestMissed: null,
+  function newGame(seed) {
+    var rng = E.makeRNG((seed >>> 0) || ((Math.random() * 1e9) | 0));
+    var bag = E.buildBag(rng);
+    G = {
+      bag: bag, board: E.emptyBoard(), rng: rng,
+      racks: [drawTiles(bag, 7), drawTiles(bag, 7)],
+      scores: [0, 0], turn: 0,
+      tentative: [], selRack: null, exchangeMode: false, exchangeSel: {},
+      passes: 0, over: false, lastMove: [null, null],
+      cursor: { r: 7, c: 7 }, dir: { dr: 0, dc: 1 },
     };
-    closeOverlay();
-    ovMode = null;
     el("game").classList.remove("hidden");
-    buildBoard();
+    closeOverlay();
     render();
-    if (cfg.computers === 0) {
-      toast("Harjoittelu yksin \u2014 kirjoita sanat laudalle omaan tahtiin.", "ok");
-    } else {
-      var names = players.slice(1).map(function (p) { return p.name; }).join(", ");
-      toast("Sin\u00e4 aloitat \u2014 ensimm\u00e4inen sana keskiruudun kautta. Vastassa: " + names + ".", "ok");
-    }
-    maybeShowTip();
+    setStatus("Sinun vuorosi \u2014 lad\u00f6 sana laudalle (n\u00e4pp\u00e4imist\u00f6 tai hiiri).");
   }
-
-  function maybeShowTip() {
-    if (lsGet(LS_TIP, false)) return;
-    setTimeout(function () {
-      if (!S || S.finished || ov.classList.contains("on")) return;
-      ovMode = "tip";
-      openOverlay(
-        '<div class="card tipcard" data-mode="tip">' +
-        "<h2>Pikaohje</h2>" +
-        "<p class=\"lead\">Vie kursori nuolilla ruutuun ja <b>kirjoita sana</b> \u2014 jokainen kirjain asettaa laatan ja etenee. <b>Enter</b> pelaa, <b>Askelpalautin</b> peruu.</p>" +
-        '<div class="row"><button class="primary" id="tipOk">Selv\u00e4</button></div></div>'
-      );
-      el("tipOk").addEventListener("click", function () {
-        lsSet(LS_TIP, true);
-        ovMode = null;
-        closeOverlay();
-      });
-      el("tipOk").focus();
-    }, 450);
-  }
-
-  // ---- Laudan rakennus (kerran) -------------------------------------------
-  function buildBoard() {
-    var board = el("board");
-    board.innerHTML = "";
-    for (var r = 0; r < SIZE; r++) {
-      for (var c = 0; c < SIZE; c++) {
-        var d = document.createElement("div");
-        d.className = "cell " + premiumClass(r, c);
-        d.dataset.r = r; d.dataset.c = c;
-        var lab = premiumLabel(r, c);
-        if (lab) { var s = document.createElement("span"); s.className = "plab"; s.textContent = lab; d.appendChild(s); }
-        d.addEventListener("click", onCellClick);
-        board.appendChild(d);
-      }
-    }
+  function drawTiles(bag, n) {
+    var out = [];
+    for (var i = 0; i < n && bag.length; i++) out.push(bag.pop());
+    return out;
   }
 
   // ---- Renderöinti ---------------------------------------------------------
-  function pendingAt(r, c) {
-    for (var i = 0; i < S.pending.length; i++)
-      if (S.pending[i].r === r && S.pending[i].c === c) return S.pending[i];
-    return null;
-  }
-  function usedRackIndices() {
-    var u = {};
-    for (var i = 0; i < S.pending.length; i++) u[S.pending[i].ri] = 1;
-    return u;
-  }
-
   function render() {
-    var cells = el("board").children;
-    for (var r = 0; r < SIZE; r++) {
-      for (var c = 0; c < SIZE; c++) {
-        var d = cells[idx(r, c)];
-        var old = d.querySelector(".tile");
-        if (old) d.removeChild(old);
-        d.classList.remove("last", "pend", "hintcell", "cursor");
-        d.style.removeProperty("--last");
-        var committed = S.board[idx(r, c)];
-        var pend = pendingAt(r, c);
-        var hintC = S.hint && S.hint.map[idx(r, c)];
-        if (committed) {
-          d.appendChild(makeTile(committed.ch, committed.blank, false, !!(S.justPlaced && S.justPlaced[idx(r, c)])));
-          if (isLast(r, c)) { d.classList.add("last"); d.style.setProperty("--last", S.players[S.lastBy].color); }
-        } else if (pend) {
-          d.appendChild(makeTile(pend.ch, pend.blank, true, !!(S.justPlaced && S.justPlaced[idx(r, c)])));
-          d.classList.add("pend");
-        } else if (hintC) {
-          var g = makeTile(hintC.ch, hintC.blank, false);
-          g.classList.add("ghost");
-          d.appendChild(g);
-          d.classList.add("hintcell");
-        }
-        if (S.cursor && S.cursor.r === r && S.cursor.c === c) {
-          d.classList.add("cursor");
-          var dir = effectiveDir();
-          if (dir) d.classList.add(dirClass(dir));
-        }
-      }
-    }
+    renderBoard();
     renderRack();
-    renderScoreboard();
-    el("bagLab").textContent = "Pussi: " + S.bag.length;
-    var lp = el("lastPlay");
-    if (lp) lp.textContent = S.lastPlayText || "";
-    var tl = el("turnLab");
-    if (S.finished) tl.textContent = "Peli p\u00e4\u00e4ttyi";
-    else if (current().isHuman) tl.textContent = "Sinun vuorosi";
-    else tl.textContent = current().name + " miettii\u2026";
-    tl.style.color = S.finished ? "" : current().color;
-
-    var ht = isHumanTurn();
-    el("btnPlay").disabled = !(ht && S.pending.length > 0 && !S.exchange);
-    el("btnHint").disabled = !(ht && !S.exchange && S.pending.length === 0);
-    el("btnLetter").disabled = !TRIE;
-    el("btnRecall").disabled = !(ht && S.pending.length > 0 && !S.exchange);
-    el("btnShuffle").disabled = !(ht && !S.exchange);
-    el("btnPass").disabled = !ht;
-    el("btnExchange").innerHTML = S.exchange ? "Vahvista" : 'Vaihda <kbd>F4</kbd>';
-    el("btnExchange").disabled = !ht || (!S.exchange && S.bag.length === 0);
-    S.justPlaced = null;
+    renderHud();
+    renderControls();
   }
 
-  function makeTile(ch, blank, pending, settle) {
-    var t = document.createElement("div");
-    t.className = "tile" + (blank ? " blank" : "") + (pending ? " ptile" : "") + (settle ? " settle" : "");
-    var l = document.createElement("span"); l.className = "let"; l.textContent = ch.toUpperCase();
-    t.appendChild(l);
-    var v = document.createElement("span"); v.className = "pts"; v.textContent = tileValue(ch, blank);
-    t.appendChild(v);
-    return t;
+  function renderBoard() {
+    var host = el("board");
+    if (!host._built) {
+      host.style.setProperty("--n", SIZE);
+      host.innerHTML = "";
+      for (var r = 0; r < SIZE; r++) for (var c = 0; c < SIZE; c++) {
+        var d = document.createElement("div");
+        d.className = "cell";
+        d.dataset.r = r; d.dataset.c = c;
+        host.appendChild(d);
+      }
+      host._built = true;
+      host.addEventListener("click", onBoardClick);
+    }
+    var tentMap = {};
+    G.tentative.forEach(function (t) { tentMap[t.r + "," + t.c] = t; });
+    var cells = host.children;
+    for (var i = 0; i < cells.length; i++) {
+      var cell = cells[i];
+      var r = +cell.dataset.r, c = +cell.dataset.c;
+      var pr = E.premiumAt(r, c);
+      var tile = G.board[r][c];
+      var tent = tentMap[r + "," + c];
+      cell.className = "cell" + premClass(pr);
+      if (G.cursor && G.cursor.r === r && G.cursor.c === c && G.turn === 0 && !G.over)
+        cell.classList.add("cursor");
+      cell.innerHTML = "";
+      if (tile) cell.appendChild(tileEl(tile.l, tile.blank, false));
+      else if (tent) { var te = tileEl(tent.l, tent.blank, true); cell.appendChild(te); }
+      else if (pr !== ".") { var s = document.createElement("span"); s.className = "prem"; s.textContent = premLabel(pr); cell.appendChild(s); }
+    }
+  }
+  function premClass(p) {
+    return p === "T" ? " tw" : p === "D" ? " dw" : p === "t" ? " tl" : p === "d" ? " dl" : p === "*" ? " center" : "";
+  }
+  function premLabel(p) {
+    return p === "T" ? "3\u00d7S" : p === "D" ? "2\u00d7S" : p === "t" ? "3\u00d7K" : p === "d" ? "2\u00d7K" : p === "*" ? "\u2605" : "";
+  }
+  function tileEl(letter, blank, tentative) {
+    var d = document.createElement("div");
+    d.className = "tile" + (blank ? " blank" : "") + (tentative ? " tent" : "");
+    d.innerHTML = '<span class="l">' + letter.toUpperCase() + '</span><span class="v">' + E.letterValue(letter, blank) + "</span>";
+    return d;
   }
 
   function renderRack() {
-    var rack = el("rack");
-    rack.innerHTML = "";
-    rack.style.gridTemplateColumns = "repeat(" + rackSize() + ", 1fr)";
-    var used = usedRackIndices();
-    var hr = human().rack;
-    for (var i = 0; i < hr.length; i++) {
+    var host = el("rack");
+    host.innerHTML = "";
+    var used = {};
+    G.tentative.forEach(function (t) { used[t.rackIdx] = true; });
+    for (var i = 0; i < G.racks[0].length; i++) {
+      var letter = G.racks[0][i];
       var slot = document.createElement("div");
       slot.className = "rslot";
-      var isUsed = used[i];
-      var isBlank = hr[i] === BLANK;
-      if (S.exchange) {
-        if (S.exchange[i]) slot.classList.add("xsel");
-      } else if (S.selected === i && !isUsed) slot.classList.add("sel");
-      if (isUsed && !S.exchange) {
-        slot.classList.add("empty");
-      } else {
-        var t = document.createElement("div");
-        t.className = "tile" + (isBlank ? " blank" : "");
-        var l = document.createElement("span"); l.className = "let";
-        l.textContent = isBlank ? "" : hr[i].toUpperCase();
-        t.appendChild(l);
-        if (!isBlank) { var v = document.createElement("span"); v.className = "pts"; v.textContent = tileValue(hr[i], false); t.appendChild(v); }
-        slot.appendChild(t);
-      }
-      slot.dataset.ri = i;
-      slot.addEventListener("click", onRackClick);
-      rack.appendChild(slot);
+      if (used[i]) { slot.classList.add("empty"); host.appendChild(slot); continue; }
+      var t = tileEl(letter === "?" ? " " : letter, letter === "?", false);
+      if (letter === "?") t.querySelector(".l").textContent = "";
+      if (G.exchangeMode && G.exchangeSel[i]) t.classList.add("exsel");
+      if (!G.exchangeMode && G.selRack === i) t.classList.add("sel");
+      (function (idx) { t.onclick = function () { onRackClick(idx); }; })(i);
+      slot.appendChild(t);
+      host.appendChild(slot);
     }
   }
 
-  function renderScoreboard() {
-    var sb = el("scoreboard");
-    sb.innerHTML = "";
-    var ranked = ranking();
-    var placeOf = {};
-    for (var k = 0; k < ranked.length; k++) placeOf[ranked[k].i] = ranked[k].rank;
-    var h = human();
-    var above = null, leaderGap = null;
-    for (k = 0; k < S.players.length; k++) {
-      var pp = S.players[k];
-      if (pp.isHuman) continue;
-      if (pp.score > h.score) {
-        var g = pp.score - h.score;
-        if (above == null || g < above) above = g;
-      }
+  function renderHud() {
+    el("s0name").textContent = NAMES[0];
+    el("s1name").textContent = NAMES[1];
+    el("s0").textContent = G.scores[0];
+    el("s1").textContent = G.scores[1];
+    el("hudP0").classList.toggle("turn", G.turn === 0 && !G.over);
+    el("hudP1").classList.toggle("turn", G.turn === 1 && !G.over);
+    el("bag").textContent = G.bag.length;
+    el("last0").textContent = G.lastMove[0] || "";
+    el("last1").textContent = G.lastMove[1] || "";
+  }
+
+  function renderControls() {
+    var myTurn = G.turn === 0 && !G.over;
+    el("btnPlay").disabled = !myTurn || G.tentative.length === 0 || G.exchangeMode;
+    el("btnRecall").disabled = G.tentative.length === 0;
+    el("btnShuffle").disabled = !myTurn;
+    el("btnExchange").disabled = !myTurn || (G.tentative.length > 0 && !G.exchangeMode) || G.bag.length === 0;
+    el("btnPass").disabled = !myTurn || G.exchangeMode;
+    el("btnExchange").textContent = G.exchangeMode
+      ? ("Vaihda valitut (" + Object.keys(G.exchangeSel).length + ")")
+      : "Vaihda";
+    el("btnPass").textContent = G.exchangeMode ? "Peruuta" : "Ohita vuoro";
+  }
+
+  // ---- Vuorovaikutus -------------------------------------------------------
+  function onRackClick(i) {
+    if (G.turn !== 0 || G.over) return;
+    if (G.exchangeMode) {
+      if (G.exchangeSel[i]) delete G.exchangeSel[i]; else G.exchangeSel[i] = true;
+      renderRack(); renderControls(); return;
     }
-    var topScore = ranked[0] ? ranked[0].p.score : 0;
-    if (placeOf[0] > 1) leaderGap = topScore - h.score;
-
-    for (var i = 0; i < S.players.length; i++) {
-      var p = S.players[i];
-      var place = placeOf[i] || (i + 1);
-      var chip = document.createElement("div");
-      chip.className = "chip" + (i === S.turnIdx && !S.finished ? " on" : "") + (p.isHuman ? " me" : "");
-      chip.style.setProperty("--pc", p.color);
-      var top = document.createElement("div"); top.className = "ctop";
-      var nm = document.createElement("span"); nm.className = "cname";
-      nm.textContent = place + ". " + p.name;
-      var sc = document.createElement("span"); sc.className = "cscore"; sc.textContent = p.score;
-      top.appendChild(nm); top.appendChild(sc);
-      chip.appendChild(top);
-      var sub = document.createElement("div"); sub.className = "csub";
-      if (p.isHuman) {
-        if (S.players.length === 1) sub.textContent = "harjoittelu";
-        else if (place === 1) sub.textContent = "k\u00e4rjess\u00e4";
-        else if (leaderGap != null) sub.textContent = "+" + leaderGap + " k\u00e4rkeen";
-        else sub.textContent = (above == null ? "k\u00e4rjess\u00e4" : "+" + above + " seuraavaan");
-      } else sub.textContent = p.flavor;
-      chip.appendChild(sub);
-      sb.appendChild(chip);
-    }
-  }
-
-  function isLast(r, c) {
-    for (var i = 0; i < S.lastMove.length; i++) if (S.lastMove[i].r === r && S.lastMove[i].c === c) return true;
-    return false;
-  }
-
-  // ---- Syöte: teline & lauta ----------------------------------------------
-  function effectiveDir() {
-    return S.placeDir || { dr: 0, dc: 1 }; // oletus: vaakasuora oikealle
-  }
-  function dirClass(dir) {
-    if (!dir) return "";
-    if (dir.dr === 0 && dir.dc === 1) return "dir-e";
-    if (dir.dr === 0 && dir.dc === -1) return "dir-w";
-    if (dir.dr === 1 && dir.dc === 0) return "dir-s";
-    if (dir.dr === -1 && dir.dc === 0) return "dir-n";
-    return "";
-  }
-
-  function paintCursor() {
-    if (!S || !S.cursor) return;
-    var cells = el("board").children;
-    for (var i = 0; i < cells.length; i++) {
-      cells[i].classList.remove("cursor", "dir-e", "dir-w", "dir-s", "dir-n");
-    }
-    var d = cells[idx(S.cursor.r, S.cursor.c)];
-    if (!d) return;
-    d.classList.add("cursor");
-    var dir = effectiveDir();
-    var dc = dirClass(dir);
-    if (dc) d.classList.add(dc);
-  }
-
-  function onRackClick(e) {
-    if (!isHumanTurn()) return;
-    var ri = e.currentTarget.dataset.ri | 0;
-    if (S.exchange) {
-      if (S.exchange[ri]) delete S.exchange[ri]; else S.exchange[ri] = 1;
-      renderRack();
-      return;
-    }
-    if (usedRackIndices()[ri]) return;
-    S.selected = (S.selected === ri) ? null : ri;
-    S.awaitBlank = false;
+    G.selRack = (G.selRack === i ? null : i);
     renderRack();
   }
 
-  function onCellClick(e) {
-    if (!isHumanTurn() || S.exchange) return;
-    var r = e.currentTarget.dataset.r | 0, c = e.currentTarget.dataset.c | 0;
-    S.cursor = { r: r, c: c };
-    // Hiiri: jos telineessä valinta, aseta/palauta; muuten vain synkronoi kursori.
-    if (S.selected != null || pendingAt(r, c)) interactAt(r, c);
-    else { S.awaitBlank = false; paintCursor(); }
+  function onBoardClick(e) {
+    if (G.turn !== 0 || G.over || G.exchangeMode) return;
+    var cell = e.target.closest(".cell");
+    if (!cell) return;
+    var r = +cell.dataset.r, c = +cell.dataset.c;
+    G.cursor = { r: r, c: c };
+    // klikkaa väliaikaista palaa -> palauta rackiin
+    var ti = G.tentative.findIndex(function (t) { return t.r === r && t.c === c; });
+    if (ti >= 0) { G.tentative.splice(ti, 1); render(); return; }
+    if (G.board[r][c]) { render(); return; } // varattu — vain kursori
+    if (G.selRack == null) { render(); setStatus("Valitse pala telineest\u00e4 tai kirjoita kirjain."); return; }
+    placeRackAt(G.selRack, r, c);
   }
 
-  // Hiiriasetus (valittu teline-laatta + klikattu ruutu).
-  function interactAt(r, c) {
-    if (S.hint) { S.hint = null; }
-    var pend = pendingAt(r, c);
-    if (pend) {
-      S.pending = S.pending.filter(function (p) { return !(p.r === r && p.c === c); });
-      if (S.pending.length < 2) { /* suunta säilyy nuolilukituksena */ }
-      render();
-      return;
-    }
-    if (S.board[idx(r, c)]) { render(); return; }
-    if (S.selected == null) { toast("Valitse laatta telineest\u00e4 tai kirjoita kirjain.", "warn"); render(); return; }
-    var ch = human().rack[S.selected];
-    if (ch === BLANK) {
-      openBlankPicker(r, c, S.selected);
-    } else {
-      placeTile(r, c, ch, false, S.selected);
-    }
+  function usedRack() {
+    var used = {};
+    G.tentative.forEach(function (t) { used[t.rackIdx] = true; });
+    return used;
   }
 
-  // Seuraava tyhj\u00e4 ruutu suuntaan (hyppää vahvistettujen yli).
-  function nextEmptyFrom(r, c, dir) {
-    var nr = r + dir.dr, nc = c + dir.dc;
-    while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
-      if (!S.board[idx(nr, nc)]) return { r: nr, c: nc };
-      nr += dir.dr; nc += dir.dc;
-    }
-    return null;
-  }
-
-  function advanceCursor() {
-    var dir = effectiveDir();
-    var n = nextEmptyFrom(S.cursor.r, S.cursor.c, dir);
-    if (n) S.cursor = n;
-  }
-
-  function ensurePlaceableCell() {
-    // Jos kursori on vahvistetulla laatalla, hyppää eteenpäin tyhjään.
-    if (S.board[idx(S.cursor.r, S.cursor.c)]) {
-      var n = nextEmptyFrom(S.cursor.r, S.cursor.c, effectiveDir());
-      if (n) S.cursor = n;
-      else return false;
-    }
-    return true;
-  }
-
-  function findUnusedRackIndex(want) {
-    var used = usedRackIndices(), hr = human().rack;
-    for (var i = 0; i < hr.length; i++) {
-      if (!used[i] && hr[i] === want) return i;
+  function findRackIdx(letter) {
+    var used = usedRack();
+    for (var i = 0; i < G.racks[0].length; i++) {
+      if (!used[i] && G.racks[0][i] === letter) return i;
     }
     return -1;
   }
 
-  function placeTile(r, c, ch, blank, ri) {
-    S.pending.push({ r: r, c: c, ch: ch, blank: blank, ri: ri });
-    S.selected = null;
-    S.awaitBlank = false;
-    if (!S.placeDir && S.pending.length >= 2) {
-      var a = S.pending[S.pending.length - 2], b = S.pending[S.pending.length - 1];
-      var dr = Math.sign(b.r - a.r), dc = Math.sign(b.c - a.c);
-      if ((dr === 0) !== (dc === 0)) S.placeDir = { dr: dr, dc: dc };
+  function cellOccupied(r, c) {
+    if (G.board[r][c]) return true;
+    return G.tentative.some(function (t) { return t.r === r && t.c === c; });
+  }
+
+  function advanceCursor() {
+    var r = G.cursor.r + G.dir.dr, c = G.cursor.c + G.dir.dc;
+    // ohita jo täytetyt ruudut (kiinteät + väliaikaiset) saman rivin/sarakkeen suuntaan
+    while (inb(r, c) && cellOccupied(r, c)) {
+      r += G.dir.dr; c += G.dir.dc;
     }
-    S.cursor = { r: r, c: c };
-    S.justPlaced = {};
-    S.justPlaced[idx(r, c)] = 1;
+    if (inb(r, c)) G.cursor = { r: r, c: c };
+  }
+
+  function placeRackAt(rackIdx, r, c) {
+    if (rackIdx == null || rackIdx < 0) return false;
+    if (!inb(r, c) || cellOccupied(r, c)) return false;
+    var letter = G.racks[0][rackIdx];
+    if (letter === "?") { pickBlank(rackIdx, r, c); return true; }
+    G.tentative.push({ r: r, c: c, l: letter, blank: false, rackIdx: rackIdx });
+    G.selRack = null;
+    G.cursor = { r: r, c: c };
     advanceCursor();
     render();
-  }
-
-  // Kirjoitusasettelu: kirjain = aseta + etene.
-  function typePlaceLetter(L) {
-    if (!ensurePlaceableCell()) { toast("Ei tyhj\u00e4\u00e4 ruutua t\u00e4ss\u00e4 suunnassa.", "warn"); return; }
-    var r = S.cursor.r, c = S.cursor.c;
-    if (pendingAt(r, c)) {
-      toast("Ruudussa on jo asettamasi laatta \u2014 Askelpalautin poistaa.", "warn");
-      return;
-    }
-    var ri = findUnusedRackIndex(L);
-    if (ri < 0) {
-      toast("Ei kirjainta \u201c" + L.toUpperCase() + "\u201d telineess\u00e4.", "warn");
-      return;
-    }
-    placeTile(r, c, L, false, ri);
-  }
-
-  function typePlaceBlankAs(L) {
-    if (!ensurePlaceableCell()) { toast("Ei tyhj\u00e4\u00e4 ruutua t\u00e4ss\u00e4 suunnassa.", "warn"); return; }
-    var r = S.cursor.r, c = S.cursor.c;
-    if (pendingAt(r, c)) {
-      toast("Ruudussa on jo asettamasi laatta \u2014 Askelpalautin poistaa.", "warn");
-      return;
-    }
-    var ri = findUnusedRackIndex(BLANK);
-    if (ri < 0) { toast("Ei tyhj\u00e4\u00e4 laattaa telineess\u00e4.", "warn"); S.awaitBlank = false; return; }
-    placeTile(r, c, L, true, ri);
-  }
-
-  function undoLastPending() {
-    if (!S.pending.length) return;
-    var last = S.pending.pop();
-    S.cursor = { r: last.r, c: last.c };
-    S.awaitBlank = false;
-    render();
-  }
-
-  var blankCtx = null; // { r, c, ri } kun tyhjän laatan valitsin auki (hiiri)
-
-  function openBlankPicker(r, c, ri) {
-    blankCtx = { r: r, c: c, ri: ri };
-    var html = '<div class="card blankcard" data-mode="blank"><h2>Valitse tyhj\u00e4n laatan kirjain</h2>' +
-      '<p class="lead" style="margin-bottom:10px">Kirjoita kirjain, tai nuolet + Enter. Esc peruu.</p><div class="letters">';
-    for (var i = 0; i < CH_LETTERS.length; i++)
-      html += '<button class="lbtn" data-l="' + CH_LETTERS[i] + '" tabindex="0">' + CH_LETTERS[i].toUpperCase() + "</button>";
-    html += '</div><div class="row"><button class="ghost" id="blankCancel">Peruuta</button></div></div>';
-    openOverlay(html);
-    ov.querySelectorAll(".lbtn").forEach(function (b) {
-      b.addEventListener("click", function () { assignBlank(b.dataset.l); });
-    });
-    el("blankCancel").addEventListener("click", function () { blankCtx = null; closeOverlay(); });
-    var first = ov.querySelector(".lbtn");
-    if (first) first.focus();
-  }
-
-  function assignBlank(L) {
-    if (!blankCtx) return;
-    var ctx = blankCtx; blankCtx = null;
-    closeOverlay();
-    placeTile(ctx.r, ctx.c, L, true, ctx.ri);
-  }
-
-  function recall() {
-    S.pending = []; S.selected = null; S.hint = null; S.placeDir = null; S.awaitBlank = false;
-    if (E.isBoardEmpty(S.board)) S.cursor = { r: E.CENTER, c: E.CENTER };
-    render();
-  }
-
-  function shuffleRack() {
-    recall();
-    E.shuffle(human().rack, E.makeRNG((Math.random() * 1e9) >>> 0));
-    render();
-  }
-
-  function moveCursor(dr, dc) {
-    if (!S || !S.cursor) return;
-    // Lukitse asettelusuunta nuolella (vaaka/pysty).
-    if ((dr === 0) !== (dc === 0)) S.placeDir = { dr: dr, dc: dc };
-    var nr = Math.max(0, Math.min(SIZE - 1, S.cursor.r + dr));
-    var nc = Math.max(0, Math.min(SIZE - 1, S.cursor.c + dc));
-    S.cursor = { r: nr, c: nc };
-    S.awaitBlank = false;
-    paintCursor();
-  }
-
-  // ---- Vihje (epävarmuus / läheltä piti) -----------------------------------
-  function showHint() {
-    if (!isHumanTurn() || S.pending.length) return;
-    var moves = E.generateMoves(S.board, human().rack, TRIE);
-    if (!moves.length) { toast("Ei laillista siirtoa \u2014 vaihda tai ohita.", "warn"); return; }
-    var best = moves[0];
-    var map = {};
-    for (var i = 0; i < best.cells.length; i++) { var c = best.cells[i]; map[idx(c.r, c.c)] = c; }
-    S.hint = { map: map, word: best.main, score: best.score, cells: best.cells };
-    render();
-    toast("Vihje: \u201c" + best.main.toUpperCase() + "\u201d toisi " + best.score + " p. Napauta lautaa piilottaaksesi.", "ok");
-  }
-
-  // ---- Kirjaimen sisältävät sanat ------------------------------------------
-  var LETTER_BROWSER_LIMIT = 80;
-  var letterBrowserCh = null;
-
-  function wordsContainingLetter(ch, limit) {
-    ch = String(ch).toLowerCase();
-    var hits = [];
-    for (var i = 0; i < WORDS.length; i++) {
-      if (WORDS[i].indexOf(ch) >= 0) hits.push(WORDS[i]);
-    }
-    hits.sort(function (a, b) {
-      function band(w) { return (w.length >= 4 && w.length <= 8) ? 0 : (w.length < 4 ? 2 : 1); }
-      var ba = band(a), bb = band(b);
-      if (ba !== bb) return ba - bb;
-      if (a.length !== b.length) return a.length - b.length;
-      return a < b ? -1 : (a > b ? 1 : 0);
-    });
-    return { total: hits.length, words: hits.slice(0, limit) };
-  }
-
-  function playableMovesWithLetter(ch) {
-    if (!S || !isHumanTurn()) return [];
-    ch = String(ch).toLowerCase();
-    var moves = E.generateMoves(S.board, human().rack, TRIE);
-    var out = [], seen = {};
-    for (var i = 0; i < moves.length; i++) {
-      var m = moves[i];
-      var uses = false;
-      for (var j = 0; j < m.cells.length; j++) if (m.cells[j].ch === ch) { uses = true; break; }
-      if (!uses) continue;
-      var key = m.main + ":" + m.score;
-      if (seen[key]) continue;
-      seen[key] = 1;
-      out.push(m);
-      if (out.length >= 24) break;
-    }
-    return out;
-  }
-
-  function showLetterBrowser(initialCh) {
-    if (!TRIE) { toast("Sanasto latautuu viel\u00e4\u2026", "warn"); return; }
-    letterBrowserCh = initialCh || letterBrowserCh || null;
-    // Jos telineessä on valittu kirjain, käytä sitä oletuksena
-    if (!letterBrowserCh && S && S.selected != null && human()) {
-      var sel = human().rack[S.selected];
-      if (sel && sel !== BLANK) letterBrowserCh = sel;
-    }
-    renderLetterBrowser();
-  }
-
-  function renderLetterBrowser() {
-    ovMode = "letter";
-    var ch = letterBrowserCh;
-    var html = '<div class="card lettercard" data-mode="letter"><h2>Kirjaimen sanat</h2>' +
-      '<p class="lead">Valitse kirjain \u2014 n\u00e4et sanalistan osumat' +
-      (S && isHumanTurn() ? " ja mahdolliset siirtosi, joissa kirjainta k\u00e4ytet\u00e4\u00e4n" : "") +
-      ".</p>";
-
-    // Telineen kirjaimet pikavalintana
-    if (S && human()) {
-      var rackLetters = [], seenR = {};
-      human().rack.forEach(function (t) {
-        if (t === BLANK || seenR[t]) return;
-        seenR[t] = 1; rackLetters.push(t);
-      });
-      if (rackLetters.length) {
-        html += '<div class="optlab">Telineest\u00e4si</div><div class="letters racklets">';
-        rackLetters.forEach(function (L) {
-          html += '<button type="button" class="lbtn' + (ch === L ? " on" : "") + '" data-l="' + L + '">' + L.toUpperCase() + "</button>";
-        });
-        html += "</div>";
-      }
-    }
-
-    html += '<div class="optlab">Aakkoset</div><div class="letters">';
-    for (var i = 0; i < CH_LETTERS.length; i++) {
-      var L = CH_LETTERS[i];
-      html += '<button type="button" class="lbtn' + (ch === L ? " on" : "") + '" data-l="' + L + '">' + L.toUpperCase() + "</button>";
-    }
-    html += "</div>";
-
-    if (ch) {
-      var playable = playableMovesWithLetter(ch);
-      if (playable.length) {
-        html += '<div class="optlab">Pelattavissa nyt (' + playable.length + (playable.length >= 24 ? "+" : "") + ")</div>" +
-          '<div class="wordlist playable">';
-        playable.forEach(function (m, ix) {
-          html += '<button type="button" class="wchip play" data-pi="' + ix + '">' +
-            m.main.toUpperCase() + ' <span class="wp">' + m.score + " p</span></button>";
-        });
-        html += "</div>";
-        // stash for click handlers
-        showLetterBrowser._playable = playable;
-      } else {
-        showLetterBrowser._playable = [];
-      }
-
-      var res = wordsContainingLetter(ch, LETTER_BROWSER_LIMIT);
-      html += '<div class="optlab">Sanalistassa \u201c' + ch.toUpperCase() + "\u201d (" +
-        Math.min(res.total, LETTER_BROWSER_LIMIT) + (res.total > LETTER_BROWSER_LIMIT ? " / " + res.total : "") +
-        ")</div><div class=\"wordlist dict\">";
-      if (!res.words.length) html += '<span class="empty">Ei osumia.</span>';
-      else res.words.forEach(function (w) {
-        html += '<span class="wchip">' + w.toUpperCase() + "</span>";
-      });
-      html += "</div>";
-    } else {
-      html += '<p class="lead" style="margin-top:8px">Valitse kirjain yllä.</p>';
-    }
-
-    html += '<div class="row"><button class="primary" id="letterClose">Sulje</button></div></div>';
-    openOverlay(html);
-
-    ov.querySelectorAll(".lbtn").forEach(function (b) {
-      b.addEventListener("click", function () {
-        letterBrowserCh = b.dataset.l;
-        renderLetterBrowser();
-      });
-    });
-    ov.querySelectorAll(".wchip.play").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var m = showLetterBrowser._playable[b.dataset.pi | 0];
-        if (!m || !S) return;
-        var map = {};
-        for (var i = 0; i < m.cells.length; i++) { var c = m.cells[i]; map[idx(c.r, c.c)] = c; }
-        S.hint = { map: map, word: m.main, score: m.score, cells: m.cells };
-        ovMode = null; closeOverlay();
-        render();
-        toast("N\u00e4ytet\u00e4\u00e4n \u201c" + m.main.toUpperCase() + "\u201d (+" + m.score + "). Napauta lautaa piilottaaksesi.", "ok");
-      });
-    });
-    el("letterClose").addEventListener("click", function () { ovMode = null; closeOverlay(); });
-  }
-
-  // ---- Pelaajan siirto -----------------------------------------------------
-  function playWord() {
-    if (!isHumanTurn() || S.pending.length === 0) return;
-    var placed = S.pending.map(function (p) { return { r: p.r, c: p.c, ch: p.ch, blank: p.blank }; });
-    var res = E.validateMove(S.board, placed, TRIE, { rackSize: rackSize() });
-    if (!res.ok) { toast(res.reason, "warn"); return; }
-    // läheltä piti: paras mahdollinen siirto tällä telineellä vs. pelattu
-    var best = E.generateMoves(S.board, human().rack, TRIE)[0];
-    if (best && best.score > res.score) {
-      var gap = best.score - res.score;
-      if (!S.bestMissed || gap > S.bestMissed.gap)
-        S.bestMissed = { word: best.main, score: best.score, got: res.score, gap: gap };
-    }
-    S.pending = []; S.selected = null; S.hint = null; S.placeDir = null; S.awaitBlank = false;
-    commitMove(0, placed, res);
-    afterMove();
-  }
-
-  function commitMove(pi, placed, res) {
-    var p = S.players[pi];
-    for (var i = 0; i < placed.length; i++) {
-      var pc = placed[i];
-      S.board[idx(pc.r, pc.c)] = { ch: pc.ch, blank: !!pc.blank };
-      var want = pc.blank ? BLANK : pc.ch;
-      var at = p.rack.indexOf(want);
-      if (at >= 0) p.rack.splice(at, 1);
-    }
-    E.refill(p.rack, S.bag, rackSize());
-    p.score += res.score;
-    S.lastMove = placed.map(function (x) { return { r: x.r, c: x.c }; });
-    S.lastBy = pi;
-    S.scoreless = 0;
-    S.justPlaced = {};
-    for (i = 0; i < placed.length; i++) S.justPlaced[idx(placed[i].r, placed[i].c)] = 1;
-    var wordsLabel = (res.words && res.words.length > 1)
-      ? res.words.map(function (w) { return w.toUpperCase(); }).join(" + ")
-      : res.main.toUpperCase();
-    var who = p.isHuman ? "Sinä" : p.name;
-    S.lastPlayText = who + ": " + wordsLabel + " +" + res.score + (res.bingo ? " BINGO" : "");
-    var msg;
-    if (p.isHuman) {
-      msg = "Pelasit \u201c" + wordsLabel + "\u201d (+" + res.score + ")";
-      if (res.bingo) msg += " \u2014 BINGO! +" + E.BINGO_BONUS;
-      else if (placed.length === rackSize() - 1) msg += " \u2014 yksi laatta bingosta!";
-    } else {
-      msg = p.name + " pelasi " + (p.quip && Math.random() < 0.35 ? p.quip + " " : "") + "\u201c" + res.main.toUpperCase() + "\u201d (+" + res.score + ")";
-      if (res.bingo) msg += " \u2014 BINGO!";
-    }
-    toast(msg, p.isHuman ? "ok" : "cpu");
-    scorePop(placed, res.score, p.color);
-    if (res.bingo) celebrate((p.isHuman ? "Sinä" : p.name) + " \u2014 BINGO! +" + E.BINGO_BONUS, p.color);
-  }
-
-  // ---- Vuorologiikka -------------------------------------------------------
-  function afterMove() {
-    if (checkGameOver()) { render(); showGameOver(); return; }
-    S.turnIdx = (S.turnIdx + 1) % S.players.length;
-    beginTurn();
-  }
-
-  function beginTurn() {
-    if (S.finished) return;
-    S.hint = null;
-    if (current().isHuman) { busy = false; render(); }
-    else { busy = true; render(); setTimeout(cpuTurn, 850); }
-  }
-
-  function cpuTurn() {
-    if (S.finished) return;
-    var p = current();
-    var moves = E.generateMoves(S.board, p.rack, TRIE);
-    if (moves.length > 0) {
-      var pick = chooseMove(moves, p);
-      commitMove(S.turnIdx, pick.cells, pick);
-    } else if (S.bag.length > 0) {
-      var n = Math.min(p.rack.length, S.bag.length);
-      for (var i = 0; i < n; i++) S.bag.push(p.rack.pop());
-      E.shuffle(S.bag, E.makeRNG((Math.random() * 1e9) >>> 0));
-      E.refill(p.rack, S.bag, rackSize());
-      S.scoreless++;
-      toast(p.name + " vaihtoi laattoja.", "cpu");
-    } else {
-      S.scoreless++;
-      toast(p.name + " ohitti vuoron.", "cpu");
-    }
-    afterMove();
-  }
-
-  // Vaikeustaso + luonne. Aapo=varma, Bea=pitkät sanat, Cesar=riskit/vaihtelu.
-  function chooseMove(moves, p) {
-    var n = moves.length, lvl = S.cfg.level;
-    if (p.key === "bea") {
-      var slice = moves.slice(0, Math.max(1, Math.ceil(n * (lvl === "helppo" ? 0.5 : lvl === "normaali" ? 0.3 : 0.12))));
-      slice.sort(function (a, b) { return b.cells.length - a.cells.length || b.score - a.score; });
-      return slice[0];
-    }
-    if (lvl === "kova") return p.key === "cesar" ? moves[Math.floor(Math.random() * Math.min(4, n))] : moves[0];
-    if (lvl === "normaali") {
-      var top = Math.max(1, Math.ceil(n * (p.key === "cesar" ? 0.45 : 0.22)));
-      return moves[Math.floor(Math.random() * top)];
-    }
-    var lo = Math.floor(n * (p.key === "cesar" ? 0.4 : 0.55));
-    return moves[lo + Math.floor(Math.random() * (n - lo))];
-  }
-
-  // ---- Vaihto / ohitus -----------------------------------------------------
-  function toggleExchange() {
-    if (!isHumanTurn()) return;
-    if (S.exchange) {
-      var indices = Object.keys(S.exchange).map(Number).sort(function (a, b) { return b - a; });
-      if (indices.length === 0) { S.exchange = null; render(); return; }
-      if (indices.length > S.bag.length) { toast("Pussissa ei ole tarpeeksi laattoja.", "warn"); return; }
-      var hr = human().rack;
-      for (var i = 0; i < indices.length; i++) S.bag.push(hr[indices[i]]);
-      for (i = 0; i < indices.length; i++) hr.splice(indices[i], 1);
-      E.shuffle(S.bag, E.makeRNG((Math.random() * 1e9) >>> 0));
-      E.refill(hr, S.bag, rackSize());
-      S.exchange = null;
-      S.scoreless++;
-      toast("Vaihdoit " + indices.length + " laattaa.", "ok");
-      afterMove();
-    } else {
-      recall();
-      S.exchange = {};
-      render();
-      toast("Valitse vaihdettavat (kirjaimet) ja paina Enter / Vahvista. Esc peruu.", "warn");
-    }
-  }
-
-  function passTurn() {
-    if (!isHumanTurn()) return;
-    recall();
-    S.scoreless++;
-    toast("Ohitit vuoron.", "warn");
-    afterMove();
-  }
-
-  // ---- Pelin loppu ---------------------------------------------------------
-  function checkGameOver() {
-    var anyEmpty = false;
-    for (var i = 0; i < S.players.length; i++) if (S.players[i].rack.length === 0) anyEmpty = true;
-    var out = anyEmpty && S.bag.length === 0;
-    var stuck = S.scoreless >= 2 * S.players.length;
-    if (!out && !stuck) return false;
-    S.finished = true;
-    var goneOut = null, sumRemaining = 0;
-    for (i = 0; i < S.players.length; i++) {
-      var p = S.players[i];
-      p.remaining = E.rackValue(p.rack);
-      p.score -= p.remaining;
-      sumRemaining += p.remaining;
-      if (out && p.rack.length === 0 && !goneOut) goneOut = p;
-    }
-    if (goneOut) goneOut.score += sumRemaining; // omansa oli 0
     return true;
   }
 
-  function ranking() {
-    var arr = S.players.map(function (p, i) { return { p: p, i: i }; });
-    arr.sort(function (a, b) { return b.p.score - a.p.score; });
-    var rank = 0, prev = null;
-    for (var k = 0; k < arr.length; k++) {
-      if (prev == null || arr[k].p.score !== prev) { rank = k + 1; prev = arr[k].p.score; }
-      arr[k].rank = rank;
+  function pickBlank(rackIdx, r, c) {
+    var alpha = "abcdefghijklmnoprstuvyäö".split("");
+    var grid = alpha.map(function (L) { return '<button class="bl" data-l="' + L + '">' + L.toUpperCase() + "</button>"; }).join("");
+    openOverlay('<div class="panel sm"><h2>Jokerin kirjain</h2><p>Valitse mit\u00e4 kirjainta jokeri edustaa (0 p). Voit my\u00f6s kirjoittaa kirjaimen.</p><div class="blgrid">' + grid + "</div></div>");
+    function choose(L) {
+      G._blankPick = null;
+      G.tentative.push({ r: r, c: c, l: L, blank: true, rackIdx: rackIdx });
+      G.selRack = null; G.cursor = { r: r, c: c }; advanceCursor();
+      closeOverlay(); render();
     }
-    return arr;
-  }
-
-  function shareText() {
-    var arr = ranking();
-    var lines = ["Sanaseppä \u2014 tulos:"];
-    for (var k = 0; k < arr.length; k++) lines.push(arr[k].rank + ". " + arr[k].p.name + " " + arr[k].p.score);
-    if (S.cfg) {
-      var n = S.cfg.computers | 0;
-      lines.push(n === 0 ? "Harjoittelu yksin" : (n + " vastustajaa · " + (S.cfg.level || "normaali")));
-      lines.push("Teline: " + (S.cfg.rackSize || E.RACK));
-    }
-    return lines.join("\n");
-  }
-
-  function showGameOver() {
-    ovMode = "gameover";
-    var arr = ranking();
-    var solo = S.players.length === 1;
-    var winners = arr.filter(function (x) { return x.rank === 1; });
-    var humanFirst = winners.some(function (x) { return x.p.isHuman; });
-    var title;
-    if (solo) title = "Harjoittelu p\u00e4\u00e4ttyi";
-    else if (winners.length > 1)
-      title = humanFirst ? "Tasapeli k\u00e4rjess\u00e4!" : "Tasapeli: " + winners.map(function (x) { return x.p.name; }).join(" & ");
-    else title = winners[0].p.isHuman ? "Voitit!" : winners[0].p.name + " voitti.";
-
-    var rows = arr.map(function (x) {
-      return '<div class="rrow' + (x.p.isHuman ? " me" : "") + '" style="--pc:' + x.p.color + '">' +
-        '<span class="rk">' + x.rank + ".</span><span class=\"rn\">" + x.p.name + "</span><b>" + x.p.score + "</b></div>";
-    }).join("");
-
-    // läheltä piti -tieto (epävarmuuden hallinta, kannustaa uuteen yritykseen)
-    var near = "";
-    var h = human();
-    var top = arr[0].p.score;
-    if (!solo && !winners.some(function (x) { return x.p.isHuman; })) {
-      near += "<p class=\"near\">Voittoon olisi tarvittu viel\u00e4 <b>+" + (top - h.score) + "</b> pistett\u00e4.</p>";
-    }
-    if (S.bestMissed) {
-      near += "<p class=\"near\">Paras ohittamasi siirto: \u201c" + S.bestMissed.word.toUpperCase() +
-        "\u201d (" + S.bestMissed.score + " p) \u2014 j\u00e4it <b>" + S.bestMissed.gap + "</b> p siit\u00e4.</p>";
-    }
-
-    var cfg = S.cfg || { level: "normaali", computers: 1, rackSize: 7 };
-    var html = '<div class="card" data-mode="gameover"><h2>' + title + '</h2>' +
-      '<div class="ranklist">' + rows + "</div>" + near +
-      '<div class="row"><button class="primary" id="goAgain">Sama asetus</button>' +
-      '<button class="ghost" id="goNew">Uusi peli</button>' +
-      '<button class="ghost" id="goShare">Kopioi tulos</button></div></div>';
-    openOverlay(html);
-    el("goAgain").addEventListener("click", function () {
-      if (!TRIE) { toast("Sanasto latautuu viel\u00e4\u2026", "warn"); return; }
-      ovMode = null;
-      newGame({ level: cfg.level, computers: cfg.computers, rackSize: cfg.rackSize });
+    ov.querySelectorAll(".bl").forEach(function (b) {
+      b.onclick = function () { choose(b.dataset.l); };
     });
-    el("goNew").addEventListener("click", startScreen);
-    el("goShare").addEventListener("click", function () {
-      var txt = shareText();
-      var done = function () { toast("Tulos kopioitu leikep\u00f6yd\u00e4lle.", "ok"); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () { fallbackCopy(txt); done(); });
-      else { fallbackCopy(txt); done(); }
-    });
-    el("goAgain").focus();
+    G._blankPick = choose;
   }
 
-  function fallbackCopy(txt) {
-    try {
-      var ta = document.createElement("textarea");
-      ta.value = txt; document.body.appendChild(ta); ta.select();
-      document.execCommand("copy"); document.body.removeChild(ta);
-    } catch (e) {}
+  function recall() { G.tentative = []; G.selRack = null; render(); }
+
+  function removeAtCursor() {
+    var ti = G.tentative.findIndex(function (t) { return t.r === G.cursor.r && t.c === G.cursor.c; });
+    if (ti < 0 && G.tentative.length) {
+      var last = G.tentative[G.tentative.length - 1];
+      G.cursor = { r: last.r, c: last.c };
+      ti = G.tentative.length - 1;
+    }
+    if (ti < 0) return;
+    G.tentative.splice(ti, 1);
+    G.selRack = null;
+    render();
   }
 
-  // ---- Palaute-animaatiot (pätevyys + välitön palaute) ---------------------
-  function scorePop(placed, score, color) {
-    if (!placed.length) return;
-    var mid = placed[Math.floor(placed.length / 2)];
-    var cell = el("board").children[idx(mid.r, mid.c)];
-    if (!cell) return;
-    var s = document.createElement("span");
-    s.className = "scorepop"; s.textContent = "+" + score; s.style.color = color;
-    cell.appendChild(s);
-    setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 1500);
+  function onKey(e) {
+    if (!G || G.over) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+
+    // jokerivalinta overlayssa: kirjain valitsee
+    if (G._blankPick && ov.innerHTML) {
+      if (k === "Escape") { e.preventDefault(); G._blankPick = null; closeOverlay(); return; }
+      if (k.length === 1) {
+        var bl = k.toLowerCase();
+        if (/^[a-zäöå]$/.test(bl)) { e.preventDefault(); var fn = G._blankPick; G._blankPick = null; fn(bl === "å" ? "a" : bl); }
+      }
+      return;
+    }
+    if (ov.innerHTML !== "") {
+      if (k === "Escape") { e.preventDefault(); closeOverlay(); }
+      return;
+    }
+    if (G.turn !== 0) return;
+
+    if (k === "Enter") { e.preventDefault(); if (G.exchangeMode) doExchange(); else if (G.tentative.length) submit(); return; }
+    if (k === "Escape") {
+      e.preventDefault();
+      if (G.exchangeMode) { G.exchangeMode = false; G.exchangeSel = {}; render(); setStatus("Vaihto peruttu."); }
+      else if (G.tentative.length) recall();
+      return;
+    }
+    if (k === "Backspace") { e.preventDefault(); removeAtCursor(); return; }
+    if (k === " " || k === "Spacebar") { e.preventDefault(); if (!G.tentative.length && !G.exchangeMode) shuffleRack(); return; }
+
+    if (k === "ArrowLeft" || k === "ArrowRight" || k === "ArrowUp" || k === "ArrowDown") {
+      e.preventDefault();
+      var dr = k === "ArrowUp" ? -1 : k === "ArrowDown" ? 1 : 0;
+      var dc = k === "ArrowLeft" ? -1 : k === "ArrowRight" ? 1 : 0;
+      // Suunta vaihtuu vasta kun sanaa on jo alettu latoa (tai Shift painettuna).
+      // Muuten nuoli vain siirtää kursoria — muuten vasemmalle meneminen
+      // kääntäisi kirjoituksen väärään suuntaan.
+      if (G.tentative.length > 0 || e.shiftKey) G.dir = { dr: dr, dc: dc };
+      var nr = G.cursor.r + dr, nc = G.cursor.c + dc;
+      if (inb(nr, nc)) G.cursor = { r: nr, c: nc };
+      renderBoard();
+      return;
+    }
+
+    if (k.length !== 1) return;
+    var ch = k.toLowerCase();
+    if (ch === "å") ch = "a";
+
+    // vaihto-tila: kirjain merkitsee telineestä
+    if (G.exchangeMode) {
+      e.preventDefault();
+      var want = (k === "?" || ch === "?") ? "?" : ch;
+      if (want !== "?" && !/^[a-zäö]$/.test(want)) return;
+      var usedX = usedRack();
+      for (var xi = 0; xi < G.racks[0].length; xi++) {
+        if (usedX[xi]) continue;
+        if (G.racks[0][xi] === want) {
+          if (G.exchangeSel[xi]) delete G.exchangeSel[xi]; else G.exchangeSel[xi] = true;
+          renderRack(); renderControls(); return;
+        }
+      }
+      return;
+    }
+
+    if (ch === "?" || k === "?") {
+      e.preventDefault();
+      var bi = findRackIdx("?");
+      if (bi < 0) { setStatus("Ei jokeria telineess\u00e4.", true); return; }
+      if (!placeRackAt(bi, G.cursor.r, G.cursor.c))
+        setStatus("Ruutu on varattu \u2014 siirr\u00e4 kursoria nuolin\u00e4pp\u00e4imill\u00e4.", true);
+      return;
+    }
+    if (!/^[a-zäö]$/.test(ch)) return;
+    e.preventDefault();
+    var idx = findRackIdx(ch);
+    if (idx < 0) {
+      setStatus("Ei palaa \"" + ch.toUpperCase() + "\" telineess\u00e4.", true);
+      return;
+    }
+    if (!placeRackAt(idx, G.cursor.r, G.cursor.c)) {
+      setStatus("Ruutu on varattu \u2014 siirr\u00e4 kursoria nuolin\u00e4pp\u00e4imill\u00e4.", true);
+    }
   }
 
-  function celebrate(text, color) {
-    var b = document.createElement("div");
-    b.className = "bingo"; b.textContent = text; b.style.setProperty("--pc", color || "#fff");
-    document.body.appendChild(b);
-    setTimeout(function () { b.classList.add("out"); }, 1100);
-    setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1700);
+  function shuffleRack() {
+    E.shuffle(G.racks[0], G.rng);
+    // väliaikaisten rackIdx viittaukset menevät sekaisin -> palauta ne
+    G.tentative = []; G.selRack = null; render();
   }
 
-  // ---- Overlayt ------------------------------------------------------------
-  function openOverlay(html) { ov.innerHTML = html; ov.classList.add("on"); }
-  function closeOverlay() { ov.classList.remove("on"); ov.innerHTML = ""; blankCtx = null; }
-
-  function segControl(id, label, opts, def) {
-    var h = '<div class="opt"><div class="optlab">' + label + '</div><div class="seg" id="' + id + '">';
-    for (var i = 0; i < opts.length; i++)
-      h += '<button data-v="' + opts[i].v + '"' + (opts[i].v === def ? ' class="on"' : "") + ">" + opts[i].t + "</button>";
-    return h + "</div></div>";
+  function submit() {
+    var placements = G.tentative.map(function (t) { return { r: t.r, c: t.c, l: t.l, blank: t.blank }; });
+    var res = E.validateAndScore(G.board, placements, TRIE);
+    if (!res.ok) { setStatus("\u26a0\ufe0f " + res.error, true); return; }
+    applyMove(0, placements, res);
+    // täydennä käsi
+    var usedIdx = G.tentative.map(function (t) { return t.rackIdx; }).sort(function (a, b) { return b - a; });
+    usedIdx.forEach(function (idx) { G.racks[0].splice(idx, 1); });
+    G.racks[0] = G.racks[0].concat(drawTiles(G.bag, 7 - G.racks[0].length));
+    G.tentative = []; G.selRack = null; G.passes = 0;
+    G.lastMove[0] = res.words.map(function (w) { return w.word.toUpperCase(); }).join(", ") + " (+" + res.score + ")";
+    render();
+    if (checkEnd()) return;
+    G.turn = 1; render();
+    setStatus("Tietokone miettii\u2026");
+    setTimeout(aiTurn, AI_DELAY);
   }
 
-  // Overlay-tila näppäimistölle: "start" | "rules" | "blank" | "gameover" | "letter" | null
-  var ovMode = null;
-  var startState = { level: "normaali", count: 2, rackSize: 7 };
+  function applyMove(pi, placements, res) {
+    placements.forEach(function (p) { G.board[p.r][p.c] = { l: p.l, blank: p.blank }; });
+    G.scores[pi] += res.score;
+  }
 
-  function startScreen() {
-    ovMode = "start";
-    var saved = lsGet(LS_SETTINGS, null) || {};
-    var defCount = (saved.computers != null ? saved.computers : 2) | 0;
-    if (defCount < 0) defCount = 0;
-    if (defCount > 3) defCount = 3;
-    var defRack = (saved.rackSize != null ? saved.rackSize : 7) | 0;
-    if (defRack < 5 || defRack > 8) defRack = 7;
-    var defLevel = saved.level || "normaali";
-    if (defLevel !== "helppo" && defLevel !== "normaali" && defLevel !== "kova") defLevel = "normaali";
-    startState = { level: defLevel, count: defCount, rackSize: defRack };
-
-    var html = '<div class="card" data-mode="start"><h1 class="big">Sanaseppä</h1>' +
-      '<p class="lead">Muodosta sanoja kirjainlaatoista 15\u00d715-laudalle. Sanat ristikoituvat kuten sanaristikossa. Keskiruudusta saa kaksinkertaiset sanapisteet. Valitse vastustajat (tai harjoittelu yksin), telineen koko ja taso \u2014 sinun pelisi, sinun s\u00e4\u00e4nt\u00f6si.</p>' +
-      segControl("cpuCount", "Vastustajia", [{ v: "0", t: "0" }, { v: "1", t: "1" }, { v: "2", t: "2" }, { v: "3", t: "3" }], String(defCount)) +
-      segControl("rackSize", "Laattoja telineess\u00e4", [{ v: "5", t: "5" }, { v: "6", t: "6" }, { v: "7", t: "7" }, { v: "8", t: "8" }], String(defRack)) +
-      segControl("lvl", "Vastustajien taso", [{ v: "helppo", t: "Helppo" }, { v: "normaali", t: "Normaali" }, { v: "kova", t: "Kova" }], defLevel) +
-      '<div class="row"><button class="primary" id="startBtn">Aloita peli</button>' +
-      '<button class="ghost" id="rulesBtn2">S\u00e4\u00e4nn\u00f6t</button></div>' +
-      '<p class="kbdhint">0 = harjoittelu yksin \u00b7 1\u20133 vastustajat \u00b7 5\u20138 teline \u00b7 Nuolet / Tab / Enter</p></div>';
-    openOverlay(html);
-    function wire(id, set) {
-      ov.querySelectorAll("#" + id + " button").forEach(function (b) {
-        b.addEventListener("click", function () {
-          ov.querySelectorAll("#" + id + " button").forEach(function (x) { x.classList.remove("on"); });
-          b.classList.add("on"); set(b.dataset.v);
-        });
+  function aiTurn() {
+    if (G.over) return;
+    var mv = E.bestMove(G.board, G.racks[1], TRIE);
+    if (mv) {
+      applyMove(1, mv.placements, { score: mv.score });
+      // poista käytetyt palat AI:n telineestä
+      mv.placements.forEach(function (p) {
+        var want = p.blank ? "?" : p.l;
+        var idx = G.racks[1].indexOf(want);
+        if (idx >= 0) G.racks[1].splice(idx, 1);
       });
+      G.racks[1] = G.racks[1].concat(drawTiles(G.bag, 7 - G.racks[1].length));
+      G.passes = 0;
+      G.lastMove[1] = mv.words.map(function (w) { return w.word.toUpperCase(); }).join(", ") + " (+" + mv.score + ")";
+      setStatus("Tietokone pelasi: " + G.lastMove[1] + ". Sinun vuorosi.");
+    } else {
+      // ei siirtoa: vaihda paloja jos pussissa on, muuten ohita
+      if (G.bag.length > 0) {
+        var n = Math.min(G.racks[1].length, G.bag.length);
+        var giveBack = G.racks[1].splice(0, n);
+        G.racks[1] = G.racks[1].concat(drawTiles(G.bag, n));
+        giveBack.forEach(function (t) { G.bag.unshift(t); });
+        E.shuffle(G.bag, G.rng);
+        G.lastMove[1] = "vaihtoi paloja";
+        setStatus("Tietokone vaihtoi paloja. Sinun vuorosi.");
+      } else {
+        G.passes++;
+        G.lastMove[1] = "ohitti";
+        setStatus("Tietokone ohitti vuoron. Sinun vuorosi.");
+      }
     }
-    wire("lvl", function (v) { startState.level = v; });
-    wire("cpuCount", function (v) { startState.count = v | 0; syncLevelSeg(); });
-    wire("rackSize", function (v) { startState.rackSize = v | 0; });
-    function syncLevelSeg() {
-      var lvl = ov.querySelector("#lvl");
-      if (!lvl) return;
-      lvl.classList.toggle("dim", startState.count === 0);
-    }
-    syncLevelSeg();
-    el("startBtn").addEventListener("click", function () {
-      if (!TRIE) { toast("Sanasto latautuu viel\u00e4\u2026", "warn"); return; }
-      ovMode = null;
-      newGame({ level: startState.level, computers: startState.count, rackSize: startState.rackSize });
-    });
-    el("rulesBtn2").addEventListener("click", showRules);
-    el("startBtn").focus();
+    G.turn = 0; render();
+    checkEnd();
   }
 
-  function showRules() {
-    ovMode = "rules";
-    var html = '<div class="card" data-mode="rules"><h2>S\u00e4\u00e4nn\u00f6t</h2><div class="rules">' +
-      '<p><b>Tavoite.</b> Ker\u00e4\u00e4 enemm\u00e4n pisteit\u00e4 kuin vastustajasi. Voit pelata 1\u20133 nimetty\u00e4 tietokonevastustajaa vastaan (Aapo, Bea, Cesar) tai harjoitella yksin ilman vastustajia.</p>' +
-      '<p><b>Vuorot.</b> Pelaajat pelaavat vuorotellen kiinte\u00e4ss\u00e4 j\u00e4rjestyksess\u00e4: Sin\u00e4 \u2192 vastustajat \u2192 takaisin. Jokaisella on oma teline (valittavissa 5\u20138 laattaa); lauta ja pussi ovat yhteiset.</p>' +
-      '<p><b>Laattojen asettaminen.</b> Valitse laatta telineest\u00e4 ja aseta se tyhj\u00e4\u00e4n ruutuun (hiiri tai n\u00e4pp\u00e4imist\u00f6). Yhden vuoron laatat menev\u00e4t samalle riville tai sarakkeelle ja muodostavat yhten\u00e4isen sanan.</p>' +
-      '<p><b>Vain koko pelin ensimm\u00e4inen sana</b> kulkee keskiruudun (\u2605) kautta.</p>' +
-      '<p><b>Liittyminen.</b> My\u00f6hemm\u00e4t sanat koskettavat laudalla olevia laattoja, ja kaikkien muodostuvien sanojen (my\u00f6s ristiin) on l\u00f6ydytt\u00e4v\u00e4 sanalistasta.</p>' +
-      '<p><b>Kerroinruudut.</b> 2\u00d7K / 3\u00d7K kaksin-/kolminkertaistavat yhden kirjaimen, 2\u00d7S / 3\u00d7S koko sanan. Kerroin p\u00e4tee vain kun laatta juuri asetetaan.</p>' +
-      '<p><b>Koko teline</b> kerralla (kaikki laatat) tuo <b>+' + E.BINGO_BONUS + '</b> bonuspistett\u00e4. <b>Tyhj\u00e4 laatta</b> on mik\u00e4 tahansa kirjain (0 pistett\u00e4).</p>' +
-      '<p><b>Vihje</b> paljastaa telineesi parhaan siirron. <b>Vaihda</b> palauttaa valitut laatat pussiin, <b>Ohita</b> luovuttaa vuoron.</p>' +
-      '<p>Peli p\u00e4\u00e4ttyy, kun pussi on tyhj\u00e4 ja jonkun teline tyhjenee (tai kun kukaan ei etene). J\u00e4ljelle j\u00e4\u00e4neiden laattojen arvo v\u00e4hennet\u00e4\u00e4n pisteist\u00e4; ulos p\u00e4\u00e4ssyt saa muiden j\u00e4\u00e4nn\u00f6kset.</p>' +
-      '<p><b>Nopea n\u00e4pp\u00e4imist\u00f6.</b> Vie kursori nuolilla aloitusruutuun (nuoli lukitsee suunnan; oletus on oikealle). Kirjoita sana: jokainen kirjain asettaa telineen laatan ja etenee automaattisesti (hyppää jo pelattujen yli). <b>Askelpalautin</b> peruu viimeksi asetetun, <b>Enter</b> pelaa sanan, <b>Esc</b> palauttaa kaiken. Tyhj\u00e4: <b>.</b> ja sitten kirjain. Toiminnot: <b>F1</b> Vihje, <b>F2</b> Palauta, <b>F3</b> Sekoita, <b>F4</b> Vaihda, <b>F5</b> Ohita, <b>F6</b> Kirjaimen sanat (tai <b>?</b> = Vihje).</p>' +
-      '<p><b>Kirjain.</b> N\u00e4pp\u00e4in <b>F6</b> / nappi <b>Kirjain</b> avaa selain, jossa n\u00e4et valitun kirjaimen sis\u00e4lt\u00e4v\u00e4t sanat sanalistasta. Jos on vuorosi, n\u00e4et my\u00f6s mahdolliset siirtosi joissa kirjainta k\u00e4ytet\u00e4\u00e4n \u2014 napauta siirtoa n\u00e4ytt\u00e4\u00e4ksesi sen laudalla.</p>' +
-      '</div><div class="row"><button class="primary" id="rulesClose">Sulje</button></div></div>';
-    openOverlay(html);
-    el("rulesClose").addEventListener("click", function () {
-      if (S && !S.finished) { ovMode = null; closeOverlay(); }
-      else startScreen();
-    });
-    el("rulesClose").focus();
+  function doExchange() {
+    if (!G.exchangeMode) {
+      G.exchangeMode = true; G.exchangeSel = {}; G.selRack = null;
+      setStatus("Valitse vaihdettavat palat ja paina Vaihda uudelleen.");
+      render(); return;
+    }
+    var idxs = Object.keys(G.exchangeSel).map(Number).sort(function (a, b) { return b - a; });
+    if (idxs.length === 0) { // peruuta
+      G.exchangeMode = false; render(); setStatus("Vaihto peruttu."); return;
+    }
+    var give = [];
+    idxs.forEach(function (idx) { give.push(G.racks[0][idx]); G.racks[0].splice(idx, 1); });
+    G.racks[0] = G.racks[0].concat(drawTiles(G.bag, give.length));
+    give.forEach(function (t) { G.bag.unshift(t); });
+    E.shuffle(G.bag, G.rng);
+    G.exchangeMode = false; G.exchangeSel = {}; G.passes++;
+    G.lastMove[0] = "vaihtoi " + give.length + " palaa";
+    render();
+    if (checkEnd()) return;
+    G.turn = 1; render(); setStatus("Tietokone miettii\u2026"); setTimeout(aiTurn, AI_DELAY);
   }
 
-  // ---- Toast ---------------------------------------------------------------
-  var toastTimer = null;
-  function toast(msg, kind) {
-    var t = el("toast");
-    t.textContent = msg;
-    t.className = "toast show " + (kind || "");
-    clearTimeout(toastTimer);
-    var ms = kind === "warn" ? 2600 : 4200;
-    toastTimer = setTimeout(function () { t.className = "toast"; }, ms);
+  function pass() {
+    if (G.exchangeMode) { G.exchangeMode = false; G.exchangeSel = {}; render(); setStatus("Vaihto peruttu."); return; }
+    G.passes++; G.lastMove[0] = "ohitti"; recall();
+    if (checkEnd()) return;
+    G.turn = 1; render(); setStatus("Tietokone miettii\u2026"); setTimeout(aiTurn, AI_DELAY);
   }
 
-  // ---- Näppäimistö ---------------------------------------------------------
-  function focusableIn(root) {
-    return Array.prototype.slice.call(root.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"))
-      .filter(function (n) { return !n.disabled && n.offsetParent !== null; });
+  // ---- Pelin loppu ---------------------------------------------------------
+  function rackValue(rack) {
+    var s = 0; rack.forEach(function (t) { s += t === "?" ? 0 : (E.VALUES[t] || 0); }); return s;
+  }
+  function checkEnd() {
+    var out = G.bag.length === 0 && (G.racks[0].length === 0 || G.racks[1].length === 0);
+    var stalled = G.passes >= 4;
+    if (!out && !stalled) return false;
+    G.over = true;
+    var r0 = rackValue(G.racks[0]), r1 = rackValue(G.racks[1]);
+    G.scores[0] -= r0; G.scores[1] -= r1;
+    if (G.racks[0].length === 0) G.scores[0] += r1;
+    if (G.racks[1].length === 0) G.scores[1] += r0;
+    var win = G.scores[0] === G.scores[1] ? -1 : (G.scores[0] > G.scores[1] ? 0 : 1);
+    render();
+    var title = win < 0 ? "Tasapeli!" : (win === 0 ? "Voitit! \ud83c\udf89" : "Tietokone voitti");
+    openOverlay('<div class="panel"><h2>' + title + '</h2>' +
+      '<div class="endrow"><span>' + NAMES[0] + '</span><b>' + G.scores[0] + '</b></div>' +
+      '<div class="endrow"><span>' + NAMES[1] + '</span><b>' + G.scores[1] + '</b></div>' +
+      '<p style="margin-top:10px">Jäljelle jääneet palat vähennettiin pisteistä.</p>' +
+      '<button class="primary" id="endNew">Uusi peli</button></div>');
+    el("endNew").onclick = function () { newGame(); };
+    return true;
   }
 
-  function cycleFocus(list, dir) {
-    if (!list.length) return;
-    var i = list.indexOf(document.activeElement);
-    if (i < 0) i = dir > 0 ? -1 : 0;
-    var n = (i + dir + list.length * 10) % list.length;
-    list[n].focus();
+  // ---- Overlayt & status ---------------------------------------------------
+  function openOverlay(html, onBackdrop) {
+    ov.innerHTML = '<div class="overlay">' + html + "</div>";
+    var o = ov.querySelector(".overlay");
+    if (onBackdrop) o.onclick = function (e) { if (e.target === o) onBackdrop(); };
+  }
+  function closeOverlay() { ov.innerHTML = ""; }
+  var statusTimer = null;
+  function setStatus(msg, warn) {
+    var s = el("status"); s.textContent = msg; s.className = "status" + (warn ? " warn" : "");
+    if (warn) { clearTimeout(statusTimer); statusTimer = setTimeout(function () { if (G && G.turn === 0) s.className = "status"; }, 3200); }
   }
 
-  function nudgeSeg(segId, dir) {
-    var btns = Array.prototype.slice.call(ov.querySelectorAll("#" + segId + " button"));
-    if (!btns.length) return;
-    var i = btns.findIndex(function (b) { return b.classList.contains("on"); });
-    i = Math.max(0, Math.min(btns.length - 1, i + dir));
-    btns.forEach(function (b) { b.classList.remove("on"); });
-    btns[i].classList.add("on");
-    btns[i].click();
-    btns[i].focus();
+  function openRules() {
+    openOverlay('<div class="panel"><h2>S\u00e4\u00e4nn\u00f6t</h2><ul class="rules-list">' +
+      "<li>Lad\u00f6 paloja telineest\u00e4 laudalle muodostaen suomen sanoja (vaaka/pysty).</li>" +
+      "<li><b>Aloitussana</b> on asetettava keskiruudun (\u2605) kautta \u2014 se on <b>kaksinkertainen sana</b>.</li>" +
+      "<li>Uusien sanojen on <b>liityt\u00e4v\u00e4</b> laudalla oleviin paloihin. Kaikkien syntyvien sanojen on oltava kelvollisia.</li>" +
+      "<li>Bonusruudut: <b>2\u00d7K/3\u00d7K</b> kaksin-/kolminkertainen kirjain, <b>2\u00d7S/3\u00d7S</b> sana. Bonus vain uusille paloille.</li>" +
+      "<li>Kaikki 7 palaa kerralla = <b>+50 bonus</b>.</li>" +
+      "<li>Jokeri (tyhj\u00e4 pala) on 0 p ja edustaa mit\u00e4 tahansa kirjainta.</li>" +
+      "<li>Voit <b>vaihtaa</b> paloja tai <b>ohittaa</b> vuoron. Peli p\u00e4\u00e4ttyy kun pussi on tyhj\u00e4 ja toisen teline tyhjenee.</li>" +
+      "<li><b>N\u00e4pp\u00e4imist\u00f6:</b> nuolet siirt\u00e4v\u00e4t kursoria, kirjain asettaa palan, Backspace poistaa, Enter pelaa, Esc palauttaa, v\u00e4lily\u00f6nti sekoittaa.</li>" +
+      "</ul><button class=\"primary\" id=\"rClose\">Selv\u00e4</button></div>", closeOverlay);
+    el("rClose").onclick = closeOverlay;
   }
 
-  document.addEventListener("keydown", function (e) {
-    var key = e.key;
-    var overlayOn = ov.classList.contains("on");
+  // ---- Sidonta -------------------------------------------------------------
+  el("btnPlay").onclick = submit;
+  el("btnRecall").onclick = recall;
+  el("btnShuffle").onclick = shuffleRack;
+  el("btnExchange").onclick = doExchange;
+  el("btnPass").onclick = pass;
+  el("btnNew").onclick = function () { newGame(); };
+  el("btnRules").onclick = openRules;
+  document.addEventListener("keydown", onKey);
 
-    // --- Overlayt ---
-    if (overlayOn) {
-      // Tyhjän laatan valitsin: kirjoita kirjain suoraan
-      if (blankCtx || (ov.querySelector && ov.querySelector(".blankcard"))) {
-        if (key === "Escape") { e.preventDefault(); blankCtx = null; closeOverlay(); ovMode = null; return; }
-        if (/^[a-zäö]$/i.test(key)) { e.preventDefault(); assignBlank(key.toLowerCase()); return; }
-        if (key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp" || key === "ArrowDown") {
-          e.preventDefault();
-          var letters = focusableIn(ov.querySelector(".letters") || ov);
-          var cols = 7;
-          var i = letters.indexOf(document.activeElement);
-          if (i < 0) { letters[0] && letters[0].focus(); return; }
-          var d = key === "ArrowLeft" ? -1 : key === "ArrowRight" ? 1 : key === "ArrowUp" ? -cols : cols;
-          var ni = Math.max(0, Math.min(letters.length - 1, i + d));
-          letters[ni].focus();
-          return;
-        }
-        if (key === "Enter" && document.activeElement && document.activeElement.classList.contains("lbtn")) {
-          e.preventDefault(); document.activeElement.click(); return;
-        }
-        return;
-      }
-      if (ovMode === "tip" || ov.querySelector('[data-mode="tip"]')) {
-        if (key === "Escape" || key === "Enter") {
-          e.preventDefault();
-          var tok = el("tipOk"); if (tok) tok.click();
-        }
-        return;
-      }
-      if (ovMode === "letter" || ov.querySelector('[data-mode="letter"]')) {
-        if (key === "Escape") { e.preventDefault(); ovMode = null; closeOverlay(); return; }
-        if (/^[a-zäö]$/i.test(key)) {
-          e.preventDefault();
-          letterBrowserCh = key.toLowerCase();
-          renderLetterBrowser();
-          return;
-        }
-        return;
-      }
-      if (ovMode === "rules" || ov.querySelector('[data-mode="rules"]')) {
-        if (key === "Escape" || key === "Enter") {
-          e.preventDefault();
-          var rc = el("rulesClose"); if (rc) rc.click();
-        }
-        return;
-      }
-      if (ovMode === "gameover" || ov.querySelector(".ranklist")) {
-        if (key === "Escape") { e.preventDefault(); var ga = el("goAgain") || el("goNew"); if (ga) ga.click(); return; }
-        if (key === "ArrowLeft" || key === "ArrowRight" || key === "Tab") {
-          e.preventDefault();
-          cycleFocus(focusableIn(ov), key === "ArrowLeft" || (key === "Tab" && e.shiftKey) ? -1 : 1);
-          return;
-        }
-        if (key === "Enter" && document.activeElement && document.activeElement.tagName === "BUTTON") {
-          e.preventDefault(); document.activeElement.click();
-        }
-        return;
-      }
-      // Aloitusnäyttö
-      if (ovMode === "start" || ov.querySelector('[data-mode="start"]')) {
-        if (key === "ArrowLeft") { e.preventDefault();
-          if (document.activeElement && document.activeElement.closest("#cpuCount")) nudgeSeg("cpuCount", -1);
-          else if (document.activeElement && document.activeElement.closest("#rackSize")) nudgeSeg("rackSize", -1);
-          else if (document.activeElement && document.activeElement.closest("#lvl")) nudgeSeg("lvl", -1);
-          else nudgeSeg("cpuCount", -1);
-          return;
-        }
-        if (key === "ArrowRight") { e.preventDefault();
-          if (document.activeElement && document.activeElement.closest("#cpuCount")) nudgeSeg("cpuCount", 1);
-          else if (document.activeElement && document.activeElement.closest("#rackSize")) nudgeSeg("rackSize", 1);
-          else if (document.activeElement && document.activeElement.closest("#lvl")) nudgeSeg("lvl", 1);
-          else nudgeSeg("cpuCount", 1);
-          return;
-        }
-        if (key === "ArrowUp") { e.preventDefault();
-          var ae = document.activeElement;
-          if (ae && ae.closest("#lvl")) { var rs = ov.querySelector("#rackSize button.on"); (rs || ov.querySelector("#rackSize button")).focus(); }
-          else if (ae && ae.closest("#rackSize")) { var cu = ov.querySelector("#cpuCount button.on"); (cu || ov.querySelector("#cpuCount button")).focus(); }
-          else { var cpuBtns = ov.querySelectorAll("#cpuCount button"); (cpuBtns[0] || el("startBtn")).focus(); }
-          return;
-        }
-        if (key === "ArrowDown") { e.preventDefault();
-          ae = document.activeElement;
-          if (ae && ae.closest("#cpuCount")) { var rso = ov.querySelector("#rackSize button.on"); (rso || ov.querySelector("#rackSize button")).focus(); }
-          else if (ae && ae.closest("#rackSize")) { var lo = ov.querySelector("#lvl button.on"); (lo || ov.querySelector("#lvl button")).focus(); }
-          else { var lvlOn = ov.querySelector("#lvl button.on"); (lvlOn || el("startBtn")).focus(); }
-          return;
-        }
-        if (key === "Tab") {
-          e.preventDefault();
-          cycleFocus(focusableIn(ov), e.shiftKey ? -1 : 1);
-          return;
-        }
-        if (key === "Enter") {
-          e.preventDefault();
-          if (document.activeElement && document.activeElement.tagName === "BUTTON") document.activeElement.click();
-          else { var sb = el("startBtn"); if (sb) sb.click(); }
-          return;
-        }
-        if (key === "0" || key === "1" || key === "2" || key === "3") {
-          e.preventDefault();
-          var cb = ov.querySelector('#cpuCount button[data-v="' + key + '"]');
-          if (cb) cb.click();
-          return;
-        }
-        if (key === "5" || key === "6" || key === "7" || key === "8") {
-          e.preventDefault();
-          var rb = ov.querySelector('#rackSize button[data-v="' + key + '"]');
-          if (rb) rb.click();
-          return;
-        }
-        return;
-      }
-      // Tuntematon overlay: Esc sulkee jos mahdollista
-      if (key === "Escape") { e.preventDefault(); closeOverlay(); ovMode = null; }
-      return;
-    }
-
-    // --- Peli käynnissä ---
-    if (!S || S.finished) return;
-
-    // Vaihtotila
-    if (S.exchange) {
-      if (key === "Escape") { e.preventDefault(); S.exchange = null; render(); toast("Vaihto peruttu.", "warn"); return; }
-      if (key === "Enter") { e.preventDefault(); toggleExchange(); return; }
-      if (/^[a-zäö]$/i.test(key) || key === "." || key === "_") {
-        e.preventDefault();
-        var want = (key === "." || key === "_") ? BLANK : key.toLowerCase();
-        var hr = human().rack;
-        var matches = [];
-        for (var xi = 0; xi < hr.length; xi++) if (hr[xi] === want) matches.push(xi);
-        if (!matches.length) return;
-        var unmarked = -1, lastMarked = -1;
-        for (var mi = 0; mi < matches.length; mi++) {
-          if (S.exchange[matches[mi]]) lastMarked = matches[mi];
-          else if (unmarked < 0) unmarked = matches[mi];
-        }
-        if (unmarked >= 0) S.exchange[unmarked] = 1;
-        else if (lastMarked >= 0) delete S.exchange[lastMarked];
-        renderRack();
-        return;
-      }
-      return;
-    }
-
-    // Kirjainselain toimii myös tietokoneen vuorolla
-    if (key === "F6") { e.preventDefault(); showLetterBrowser(); return; }
-
-    if (!isHumanTurn()) return;
-
-    // F-näppäimet / ? — eivät vie telineen kirjaimia
-    if (key === "F1" || key === "?") { e.preventDefault(); showHint(); return; }
-    if (key === "F2") { e.preventDefault(); recall(); return; }
-    if (key === "F3") { e.preventDefault(); shuffleRack(); return; }
-    if (key === "F4") { e.preventDefault(); toggleExchange(); return; }
-    if (key === "F5") { e.preventDefault(); passTurn(); return; }
-
-    if (key === "ArrowUp") { e.preventDefault(); moveCursor(-1, 0); return; }
-    if (key === "ArrowDown") { e.preventDefault(); moveCursor(1, 0); return; }
-    if (key === "ArrowLeft") { e.preventDefault(); moveCursor(0, -1); return; }
-    if (key === "ArrowRight") { e.preventDefault(); moveCursor(0, 1); return; }
-
-    // Välilyönti: hiiripariteetti — aseta valittu / palauta pending kursorissa
-    if (key === " " || key === "Spacebar") {
-      e.preventDefault();
-      if (pendingAt(S.cursor.r, S.cursor.c) || S.selected != null) interactAt(S.cursor.r, S.cursor.c);
-      return;
-    }
-
-    if (key === "Enter") {
-      e.preventDefault();
-      if (S.pending.length) playWord();
-      return;
-    }
-
-    if (key === "Backspace" || key === "Delete") {
-      e.preventDefault();
-      undoLastPending();
-      return;
-    }
-
-    if (key === "Escape") { e.preventDefault(); recall(); return; }
-
-    if (key === "." || key === "_") {
-      e.preventDefault();
-      if (findUnusedRackIndex(BLANK) < 0) { toast("Ei tyhj\u00e4\u00e4 laattaa telineess\u00e4.", "warn"); return; }
-      S.awaitBlank = true;
-      toast("Tyhj\u00e4: kirjoita seuraavaksi kirjain.", "ok");
-      return;
-    }
-
-    if (/^[a-zäö]$/i.test(key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      e.preventDefault();
-      var L = key.toLowerCase();
-      if (S.awaitBlank) typePlaceBlankAs(L);
-      else typePlaceLetter(L);
-    }
-  });
-
-  // ---- Napit ---------------------------------------------------------------
-  el("btnPlay").addEventListener("click", playWord);
-  el("btnHint").addEventListener("click", showHint);
-  el("btnLetter").addEventListener("click", function () { showLetterBrowser(); });
-  el("btnRecall").addEventListener("click", recall);
-  el("btnShuffle").addEventListener("click", shuffleRack);
-  el("btnExchange").addEventListener("click", toggleExchange);
-  el("btnPass").addEventListener("click", passTurn);
-  el("btnRules").addEventListener("click", showRules);
-  el("btnNew").addEventListener("click", startScreen);
-
-  // ---- Käynnistys: rakenna trie maalauksen jälkeen -------------------------
-  startScreen();
-  el("btnLetter").disabled = true;
   setTimeout(function () {
     TRIE = E.buildTrie(WORDS);
     el("loading").style.display = "none";
-    el("btnLetter").disabled = false;
+    newGame();
   }, 30);
 })();
 
