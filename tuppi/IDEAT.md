@@ -121,6 +121,77 @@ Peilaus (A↔B-kortit) piti otoksen hallittavana.
 ~19 % (ennen ~33 %), ylhäällä ~50 %.
 **Jatko:** erottele pöytäpeli vs vastustaja-nousulla omiksi kynnyksiksi.
 
+## 4. Pluribus-oppien soveltaminen (poker-botti) — ANALYSOITU + KOE
+
+Kysymys: voisiko Mestaria parantaa Pluribuksen (Brown & Sandholm, *Science*
+2019) toimintaperiaatteella? Alla mitä siitä oikeasti kannattaa lainata ja
+mitä ei.
+
+**Mitä Pluribus tekee.**
+1. *Blueprint self-playlla:* laskee offline Monte-Carlo-CFR:llä (abstraktioilla)
+   likimain hyödyntämättömän perusstrategian — ei ihmisdataa, halpa laskea.
+2. *Reaaliaikahaku, syvyysrajattu:* pelin aikana haetaan vain muutama siirto
+   eteenpäin. **Ydinidea:** haun LEHTISOLMUISSA vastustajien EI oleteta jatkavan
+   yhdellä kiinteällä tavalla, vaan he saavat valita usean (Pluribuksella 4)
+   jatkostrategian väliltä. Näin haku ei ylisovita yhteen oletukseen "miten muut
+   pelaavat" → robusti, vaikea ohittaa.
+3. *Ei vastustajamallinnusta:* pelaa kiinteää robustia strategiaa, ei yritä
+   hyödyntää yksittäistä vastustajaa. Robustius > eksploitointi.
+4. *Uskomukset päättelyketjussa:* CFR päättelee **informaatiojoukoista** ja
+   uskomusjakaumista — EI täyden informaation determinoinneista kuten PIMC.
+
+**Miten tämä osuu Mestariin (= PIMC).** Mestari arpoo piilokortit ja ratkaisee
+jokaisen arvonnan täydellä informaatiolla, keskiarvoistaen. Sillä on PIMC:n
+kaksi tunnettua heikkoutta: *strategy fusion* (olettaa voivansa pelata eri
+tavalla maailmoissa jotka ovat sille erottamattomia) ja *ei-lokaalisuus*
+(sivuuttaa miten aiempi peli muokkasi vastustajien uskomuksia). PIMC+ (`Kirjo`n
+emo) jo lainaa Pluribuksen kohtaa 4 kevyesti: ehdollistaa arvonnan julkiseen
+näyttöön (rami/nolo = signaali kädestä, Bayes).
+
+**KOE — jatkostrategioiden monimuotoisuus (Pluribuksen kohta 2).**
+`players/pluribusPlayer.js` ("Kirjo") perii PIMC+:n, mutta rolloutissa JOKAISELLE
+vastustajapaikalle arvotaan jatkotyyli joukosta {greedy, kova, kohina} —
+Mestari sen sijaan olettaa KAIKKIEN pelaavan samaa kiinteää greedy-politiikkaa.
+Lehtiarvo heijastaa siis jakaumaa järkeviä jatkoja. Ajuri: `compare-players.mjs`
+(paritettu, play-to-52).
+
+**Tulos (neutraali):**
+
+| mittari | Kirjo vs Mestari |
+|---|---|
+| paritettu play-to-52 (60 peliä, sims=24) | **48,3 %** (29–31) |
+| pankkivertailu (40 ottelua, sims=60) | **47,5 %**, nousupisteet 2360 vs 2612 |
+
+Laillinen, ei kaatumisia, ~8 ms/siirto. Ero on kohinan sisällä (~60 peliä,
+SE ~6 %). **Johtopäätös:** pelkkä jatkomonimuotoisuus lisättynä nykyheuristiikan
+päälle EI paranna viritettyä Mestaria — todennäköisesti koska "kova"/"kohina"
+ovat lähinnä heikompia/kohinaisempia politiikkoja eivätkä *paremmin kalibroituja
+uskomuksia*. Pluribuksella idea toimii, koska sen jatkostrategiat ovat CFR-
+blueprintin variantteja (kaikki vahvoja), eivät ad hoc -heuristiikkoja.
+
+**Suositukset (tärkeysjärjestys, jos jatketaan):**
+1. **Uskomusten päivitys myös pelin aikana** (Pluribuksen kohta 4, laajenna
+   PIMC+:aa). Nyt tiltti tulee vain aloitusnäytöstä; jatka päivitystä pelin
+   edetessä (matala/korkea aloitus, duckaus, varhainen sakkaus paljastavat
+   jakaumaa kovien voidien lisäksi). Tämä osui jo mitattuun hyötyyn (PIMC+),
+   joten sen syventäminen on lupaavin halpa askel.
+2. **Vahvat jatkostrategiat, ei ad hoc.** Jos kohta 2 halutaan toimivaksi, tyylien
+   pitää olla oikeasti hyviä (esim. `codexPlayer`- / boss-laskentapolitiikat)
+   eikä heikennettyjä. Vasta silloin diversiteetti mittaa robustiutta eikä lisää
+   kohinaa.
+3. **Robustius-mittaus monta vastustajaa vastaan** (Pluribuksen kohta 3). Arvioi
+   ehdokas EI vain Mestari-peiliä vaan koko kirjoa vastaan (heuristic, counting,
+   codex, aggressiivinen/varovainen) — suojaa ylisovitukselta.
+
+**Rehellinen varaus — Tuppi ≠ poker.** Pluribus on *ei-yhteistyöpeli* (6 itsekästä
+pelaajaa, ei pareja). Tuppi on **paripeli**: suurin mallintamaton arvo on parin
+signalointi ja koordinaatio (kuten bridgessä), jota Pluribus ei käsittele
+lainkaan. Täysi MCCFR-blueprint 52 kortin + näytön + soolin peliin on iso urakka
+ja epävarma hyöty selainpeliä varten. Realistisin polku on lainata Pluribukselta
+*uskomusten ehdollistaminen julkiseen peliin* (kohdat 1–2 yllä) ja panostaa
+erikseen **pari-signalointiin** (bridge-tekoälyn oppimäärä), ei koko
+CFR-koneistoon.
+
 ## 3. Muuta
 
 - Selainpelissä paikan valinta poistettu; pelaaja istuu paikalla 0 ja pelaa
