@@ -1,0 +1,127 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: ${{ matrix.game }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        game: [tuppi, sanaseppa, sanapalat, sanasato, rypas, holdem]
+    defaults:
+      run:
+        working-directory: ${{ matrix.game }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm test
+
+  deploy:
+    name: Build & rsync
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: hertta/package-lock.json
+
+      - name: Build games
+        run: |
+          set -euo pipefail
+
+          # Hertta (Vite → dist/, base /hertta/)
+          (cd hertta && npm ci && npm run build)
+
+          # Itsenäiset HTML-niput
+          (cd tuppi && node build.js)
+          (cd sanaseppa && node build.js)
+          (cd sanapalat && node build.js)
+          (cd sanasato && node build.js)
+          (cd rypas && node build.js)
+          (cd holdem && node build.js)
+
+          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/katko
+
+          cp -R hertta/dist/. _site/hertta/
+          cp tuppi/tuppi.html _site/tuppi/index.html
+          cp sanaseppa/index.html _site/sanaseppa/index.html
+          cp sanapalat/index.html _site/sanapalat/index.html
+          cp sanasato/index.html _site/sanasato/index.html
+          cp rypas/index.html _site/rypas/index.html
+          cp holdem/index.html _site/holdem/index.html
+          cp katko/index.html _site/katko/index.html
+
+          cat > _site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="fi">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>selainpelit.fi</title>
+          </head>
+          <body>
+            <h1>selainpelit.fi</h1>
+            <ul>
+              <li><a href="/hertta/">Hertta</a></li>
+              <li><a href="/tuppi/">Tuppi</a></li>
+              <li><a href="/katko/">Katko</a></li>
+              <li><a href="/sanasato/">Sanasato</a></li>
+              <li><a href="/sanaseppa/">Sanaseppä</a></li>
+              <li><a href="/sanapalat/">Sanapalat</a></li>
+              <li><a href="/rypas/">Rypäs</a></li>
+              <li><a href="/holdem/">Hold'em</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+
+      - name: Start ssh-agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add host to known_hosts
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      # Secrets (tuotanto: root@testi2.biitsiareena.fi → /home/selainpelit/public_html):
+      #   DEPLOY_HOST=testi2.biitsiareena.fi
+      #   DEPLOY_USER=root
+      #   DEPLOY_PATH=/home/selainpelit/public_html
+      #   DEPLOY_SSH_KEY=<yksityinen avain>
+      #   DEPLOY_PORT=22 (valinnainen)
+      - name: Rsync to server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${DEPLOY_PORT:-22}"
+          rsync -az --delete \
+            -e "ssh -p $PORT -o StrictHostKeyChecking=yes" \
+            ./_site/ \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"

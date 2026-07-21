@@ -1,0 +1,65 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.game }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - game: tuppi
+            needs_install: false
+          - game: sanaseppa
+            needs_install: false
+          - game: sanapalat
+            needs_install: false
+          - game: sanasato
+            needs_install: false
+          - game: rypas
+            needs_install: false
+          - game: holdem
+            needs_install: false
+    defaults:
+      run:
+        working-directory: ${{ matrix.game }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        if: matrix.needs_install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+  build-hertta:
+    name: hertta (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hertta
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: hertta/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
