@@ -156,6 +156,8 @@ button.ghost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,
 .card.black { color: var(--black); }
 .card.playable { cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,.35), 0 0 0 2px var(--gold); }
 .card.playable:hover { transform: translateY(-8px); box-shadow: 0 12px 22px rgba(0,0,0,.45), 0 0 0 2px var(--gold); }
+.card.got-card { box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(232,193,90,.45); transform: translateY(-6px); }
+.handlabel .exchange-card { display: inline-flex; vertical-align: middle; margin: 0 .15rem; height: 2.4rem; min-width: 1.9rem; font-size: .95rem; }
 .table .card { height: 3.4rem; min-width: 2.5rem; font-size: 1.05rem; }
 
 .seatcell.me .seatname { background: linear-gradient(180deg, #f2d074, var(--gold)); color: #2a1e00; }
@@ -3461,6 +3463,34 @@ function askHumanSooliGift(hand) {
   });
 }
 
+/** Näytä kortinvaihdon tulos: mitä annoit, mitä sait — odota "Jatka". */
+function showSooliExchange(gift, received, handAfter) {
+  return new Promise((resolve) => {
+    const highlight = (c) =>
+      '<span class="card ' +
+      ((c.suit === Suit.DIAMONDS || c.suit === Suit.HEARTS) ? "red" : "black") +
+      ' exchange-card">' + c.name + suitSymbol(c.suit) + "</span>";
+    el("handLabel").innerHTML =
+      "<b>Kortinvaihto</b> — annoit kaverillesi " + highlight(gift) +
+      " ja sait häneltä " + highlight(received) + ".<br>" +
+      "<b>Uusi kätesi</b> (saatu kortti korostettu):";
+    el("hand").innerHTML =
+      sortHand(handAfter).map((c) => {
+        const isNew = c === received || (c.rank === received.rank && c.suit === received.suit);
+        return cardHTML(c, false).replace(
+          'class="card ',
+          'class="card ' + (isNew ? "got-card " : ""),
+        );
+      }).join("") +
+      '<div class="showbtns"><button id="sooliCont">Jatka sooliin</button></div>';
+    el("sooliCont").onclick = () => {
+      el("hand").innerHTML = "";
+      el("handLabel").textContent = "";
+      resolve();
+    };
+  });
+}
+
 // Yhden sooli-jaon interaktiivinen ajo: ihminen (soolaaja) yksin kahta
 // ramaajabottia vastaan. Ässä pienin, soolaaja viimeisenä, pari ei pelaa.
 async function playSooliDeal(humanSeat, hands, players, ramaaja, mstate) {
@@ -3474,6 +3504,7 @@ async function playSooliDeal(humanSeat, hands, players, ramaaja, mstate) {
   hands[soolaaja].splice(hands[soolaaja].indexOf(gift), 1); hands[soolaaja].push(ret);
   hands[soolPartner].splice(hands[soolPartner].indexOf(ret), 1); hands[soolPartner].push(gift);
   log("<b>Sooli!</b> Annoit kaverillesi " + cardStr(gift) + " ja sait " + cardStr(ret) + ". Kaverisi ei pelaa.");
+  await showSooliExchange(gift, ret, hands[soolaaja]);
   el("gametype").innerHTML = '<span class="gt-sooli">SOOLI</span> — sinä yksin ramaajia vastaan (ässä pienin, pelaat viimeisenä)';
 
   const tricksByTeam = { 0: 0, 1: 0 };
