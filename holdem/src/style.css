@@ -204,8 +204,47 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
   font-size: 14px;
   font-weight: 650;
   min-height: 1.4em;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   opacity: 0.92;
+}
+
+.action-banner {
+  text-align: center;
+  min-height: 2.4em;
+  margin: 0 auto 12px;
+  max-width: 420px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(18px, 4.5vw, 24px);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--cream);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+.action-banner:empty { visibility: hidden; }
+.action-banner.raise,
+.action-banner.bet {
+  background: linear-gradient(180deg, rgba(196, 163, 90, 0.35), rgba(168, 132, 58, 0.22));
+  border-color: var(--gold);
+  color: #fff6d8;
+  transform: scale(1.02);
+  animation: action-pop 0.45s ease-out;
+}
+.action-banner.call {
+  border-color: rgba(110, 231, 168, 0.45);
+  background: rgba(30, 100, 70, 0.35);
+}
+.action-banner.fold {
+  opacity: 0.75;
+  border-color: rgba(196, 40, 45, 0.4);
+}
+.action-banner.check { opacity: 0.85; }
+@keyframes action-pop {
+  from { transform: scale(0.94); opacity: 0.5; }
+  to { transform: scale(1.02); opacity: 1; }
 }
 
 /* ---- Table ---- */
@@ -268,6 +307,14 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
   box-shadow: 0 0 0 2px var(--gold), 0 4px 14px rgba(0, 0, 0, 0.35);
   transform: translateY(-2px);
 }
+.seat.just-acted .seat-info {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55), 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.seat.just-raised .seat-info {
+  box-shadow: 0 0 0 3px var(--gold), 0 0 22px rgba(196, 163, 90, 0.55);
+  background: rgba(60, 42, 12, 0.92);
+  transform: translateY(-3px) scale(1.04);
+}
 .seat.folded { opacity: 0.45; }
 .seat.winner .seat-info {
   box-shadow: 0 0 0 2px #6ee7a8, 0 4px 18px rgba(30, 140, 80, 0.45);
@@ -280,8 +327,32 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
   text-align: center;
   min-width: 100px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: box-shadow 0.2s, transform 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
 }
+.action-pill {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--cream);
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.action-pill.raise,
+.action-pill.bet {
+  background: linear-gradient(180deg, #d4b46a, #a8843a);
+  color: #1a1408;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  animation: action-pop 0.4s ease-out;
+}
+.action-pill.call { background: rgba(40, 140, 90, 0.85); }
+.action-pill.fold { background: rgba(180, 40, 45, 0.85); }
+.action-pill.empty { visibility: hidden; min-height: 18px; }
 .seat-info .nm {
   font-size: 12px;
   font-weight: 800;
@@ -351,13 +422,26 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
   font-family: "Fraunces", Georgia, serif;
   font-weight: 700;
   line-height: 1;
-  animation: deal 0.28s ease-out both;
   user-select: none;
 }
+/* Animaatio vain .deal-in kerran — .settled ei animoidu eikä välky */
+.card.settled,
+.card.back {
+  animation: none !important;
+}
+.card.deal-in {
+  animation: deal 0.5s ease-out both;
+}
+.card.sm.deal-in { animation-duration: 0.35s; }
 @keyframes deal {
-  from { opacity: 0; transform: translateY(-8px) scale(0.92); }
+  from { opacity: 0; transform: translateY(-14px) scale(0.88); }
   to { opacity: 1; transform: none; }
 }
+.board .card.deal-in:nth-child(1) { animation-delay: 0.04s; }
+.board .card.deal-in:nth-child(2) { animation-delay: 0.12s; }
+.board .card.deal-in:nth-child(3) { animation-delay: 0.2s; }
+.board .card.deal-in:nth-child(4) { animation-delay: 0.08s; }
+.board .card.deal-in:nth-child(5) { animation-delay: 0.08s; }
 .card .r { font-size: 15px; }
 .card .s { font-size: 16px; margin-top: 1px; }
 .card.red { color: var(--red); }

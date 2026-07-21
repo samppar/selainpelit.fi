@@ -95,6 +95,7 @@ ${css}
     </div>
 
     <div class="status" id="status"></div>
+    <div class="action-banner" id="actionBanner" aria-live="polite"></div>
 
     <div class="table-wrap">
       <div class="felt" id="felt">

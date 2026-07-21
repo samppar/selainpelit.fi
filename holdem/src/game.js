@@ -11,15 +11,45 @@
   var busy = false;
   var raiseAmt = 0;
   var toastTimer = null;
+  var paceTimer = null;
+  var lastStreet = null;
+  var gameGen = 0; // vanhat timerit eivät koske uutta peliä
+  var lastAction = null; // { seat, type, headline, pill }
+
+  // Tahti: pelaaja ehtii nähdä siirrot, kortit ja tilanteen muutokset.
+  var PACE = {
+    afterHuman: 1200,    // tauko oman siirron jälkeen ennen botteja
+    botThink: 1600,      // “miettii” ennen toimintoa
+    botGap: 1800,        // toiminnon jälkeen ennen seuraavaa
+    streetReveal: 2800,  // flop/turn/river — kortit ehtivät näkyä
+    handEnd: 2500,       // viimeinen tilanne näkyviin ennen overlayta
+  };
 
   function el(id) { return document.getElementById(id); }
 
-  function toast(msg) {
+  function clearPace() {
+    if (paceTimer) {
+      clearTimeout(paceTimer);
+      paceTimer = null;
+    }
+  }
+
+  function later(ms, fn) {
+    clearPace();
+    var gen = gameGen;
+    paceTimer = setTimeout(function () {
+      paceTimer = null;
+      if (gen !== gameGen) return;
+      fn();
+    }, ms);
+  }
+
+  function toast(msg, ms) {
     var t = el("toast");
     t.textContent = msg;
     t.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2200);
+    toastTimer = setTimeout(function () { t.classList.remove("show"); }, ms || 2600);
   }
 
   function closeOverlay() {
@@ -43,13 +73,208 @@
   }
 
   function cardHTML(c, cls) {
+    var extra = cls || "";
     if (!c) {
-      return '<div class="card back ' + (cls || "") + '"></div>';
+      return '<div class="card back ' + extra + '"></div>';
     }
     var color = E.SUIT_COLOR[c.suit] || "black";
-    return '<div class="card ' + color + " " + (cls || "") + '">' +
+    return '<div class="card ' + color + " " + extra + '">' +
       '<span class="r">' + E.RANK_LABEL[c.rank] + "</span>" +
       '<span class="s">' + E.SUIT_SYMBOL[c.suit] + "</span></div>";
+  }
+
+  function boardSignature(pub) {
+    return pub.handNumber + ":" + pub.board.map(function (c) { return E.cardKey(c); }).join(",");
+  }
+
+  function renderBoard(pub) {
+    var boardEl = el("board");
+    var sig = boardSignature(pub);
+    if (boardEl.dataset.sig === sig) return;
+
+    var prevHand = boardEl.dataset.hand;
+    var prevLen = +(boardEl.dataset.len || 0);
+    var sameHand = prevHand === String(pub.handNumber);
+
+    boardEl.innerHTML = "";
+    for (var i = 0; i < 5; i++) {
+      if (pub.board[i]) {
+        // Animoitu vain uudet kortit — vanhat eivät välky renderissä
+        var anim = (!sameHand || i >= prevLen) ? "deal-in" : "settled";
+        boardEl.insertAdjacentHTML("beforeend", cardHTML(pub.board[i], anim));
+      } else {
+        boardEl.insertAdjacentHTML("beforeend", '<div class="card slot settled"></div>');
+      }
+    }
+    boardEl.dataset.sig = sig;
+    boardEl.dataset.len = String(pub.board.length);
+    boardEl.dataset.hand = String(pub.handNumber);
+    markSettledAfterDeal(boardEl);
+  }
+
+  function markSettledAfterDeal(root) {
+    if (!root) return;
+    var nodes = root.querySelectorAll(".card.deal-in");
+    for (var i = 0; i < nodes.length; i++) {
+      (function (node) {
+        function done() {
+          node.classList.remove("deal-in");
+          node.classList.add("settled");
+          node.removeEventListener("animationend", done);
+        }
+        node.addEventListener("animationend", done);
+        // varmuus: jos animationend ei tule
+        setTimeout(done, 700);
+      })(nodes[i]);
+    }
+  }
+
+  function renderHero(pub) {
+    var hero = pub.players[0];
+    var heroEl = el("heroCards");
+    var key = pub.handNumber + ":" + (hero.hole[0] ? E.cardKey(hero.hole[0]) + "|" + E.cardKey(hero.hole[1]) : "");
+    if (heroEl.dataset.sig === key) return;
+    var firstDeal = heroEl.dataset.hand !== String(pub.handNumber);
+    heroEl.innerHTML = "";
+    if (hero.hole[0]) {
+      var cls = firstDeal ? "deal-in" : "settled";
+      heroEl.insertAdjacentHTML("beforeend", cardHTML(hero.hole[0], cls));
+      heroEl.insertAdjacentHTML("beforeend", cardHTML(hero.hole[1], cls));
+      if (firstDeal) markSettledAfterDeal(heroEl);
+    }
+    heroEl.dataset.sig = key;
+    heroEl.dataset.hand = String(pub.handNumber);
+  }
+
+  function renderSeats(pub) {
+    var seatsEl = el("seats");
+    var holeSig = pub.players.map(function (p, idx) {
+      if (!p.holeCount) return idx + ":0";
+      if (p.isHuman || pub.phase === "handOver" || pub.street === "showdown") {
+        return idx + ":up:" + (p.hole[0] ? E.cardKey(p.hole[0]) + E.cardKey(p.hole[1]) : "");
+      }
+      return idx + ":back";
+    }).join(";");
+    var metaSig = pub.players.map(function (p) {
+      return [p.chips, p.bet, p.folded ? 1 : 0, p.allIn ? 1 : 0].join(",");
+    }).join("|") + "#" + pub.toAct + "#" + pub.dealer + "#" + (pub.winners || []).join(",");
+
+    var actSig = lastAction
+      ? lastAction.seat + ":" + lastAction.type + ":" + lastAction.pill
+      : "-";
+    metaSig += "@" + actSig;
+
+    // Kortit: rakenna vain jos hole-näkymä muuttuu; meta päivitetään aina kevyesti
+    if (seatsEl.dataset.holeSig !== holeSig) {
+      seatsEl.innerHTML = "";
+      pub.players.forEach(function (p, idx) {
+        var showHole = p.isHuman || pub.phase === "handOver" || pub.street === "showdown";
+        var holes = "";
+        if (p.holeCount) {
+          if (showHole && p.hole[0]) {
+            holes = cardHTML(p.hole[0], "sm settled") + cardHTML(p.hole[1], "sm settled");
+          } else if (!p.isHuman) {
+            holes = cardHTML(null, "sm settled") + cardHTML(null, "sm settled");
+          }
+        }
+        seatsEl.insertAdjacentHTML("beforeend",
+          '<div class="seat" data-pos="' + idx + '" data-seat="' + idx + '">' +
+            (idx === 0 ? "" : '<div class="hole">' + holes + "</div>") +
+            '<div class="action-pill empty"></div>' +
+            '<div class="bet-chip empty">0</div>' +
+            '<div class="seat-info">' +
+              '<div class="nm">' + p.name + "</div>" +
+              '<div class="chips">0</div>' +
+              '<div class="badges"></div>' +
+            "</div>" +
+          "</div>"
+        );
+      });
+      seatsEl.dataset.holeSig = holeSig;
+    }
+
+    if (seatsEl.dataset.metaSig === metaSig) return;
+    seatsEl.dataset.metaSig = metaSig;
+
+    pub.players.forEach(function (p, idx) {
+      var seat = seatsEl.querySelector('[data-seat="' + idx + '"]');
+      if (!seat) return;
+      seat.classList.toggle("to-act", pub.toAct === idx && pub.phase === "playing");
+      seat.classList.toggle("folded", !!p.folded);
+      seat.classList.toggle("winner", !!(pub.winners && pub.winners.indexOf(idx) >= 0));
+      var isLast = lastAction && lastAction.seat === idx;
+      seat.classList.toggle("just-acted", !!isLast);
+      seat.classList.toggle("just-raised", !!(isLast && (lastAction.type === "raise" || lastAction.type === "bet")));
+      var pill = seat.querySelector(".action-pill");
+      if (pill) {
+        if (isLast) {
+          pill.textContent = lastAction.pill;
+          pill.className = "action-pill " + lastAction.type;
+        } else {
+          pill.textContent = "";
+          pill.className = "action-pill empty";
+        }
+      }
+      var bet = seat.querySelector(".bet-chip");
+      if (bet) {
+        if (p.bet > 0) {
+          bet.textContent = String(p.bet);
+          bet.classList.remove("empty");
+        } else {
+          bet.textContent = "0";
+          bet.classList.add("empty");
+        }
+      }
+      var chips = seat.querySelector(".chips");
+      if (chips) chips.textContent = String(p.chips);
+      var badges = seat.querySelector(".badges");
+      if (badges) {
+        var html = "";
+        if (idx === pub.dealer) html += '<div class="badge dealer">Dealer</div>';
+        if (p.allIn) html += '<div class="badge">All-in</div>';
+        else if (p.folded) html += '<div class="badge">Luovutti</div>';
+        else if (p.chips === 0) html += '<div class="badge">Ulkona</div>';
+        badges.innerHTML = html;
+      }
+    });
+  }
+
+  function actionWords(act) {
+    if (act.type === "fold") return { verb: "luovuttaa", pill: "Luovutus", headline: "luovuttaa" };
+    if (act.type === "check") return { verb: "passaa", pill: "Pass", headline: "passaa" };
+    if (act.type === "call") {
+      return { verb: "maksaa " + act.amount, pill: "Maksaa " + act.amount, headline: "maksaa " + act.amount };
+    }
+    if (act.type === "bet") {
+      return { verb: "panostaa " + act.amount, pill: "Panos " + act.amount, headline: "PANOSTAA " + act.amount };
+    }
+    if (act.type === "raise") {
+      return { verb: "korottaa " + act.amount, pill: "Korotus " + act.amount, headline: "KOROTTAA " + act.amount };
+    }
+    return { verb: act.type, pill: act.type, headline: act.type };
+  }
+
+  function announceAction(seat, act) {
+    var name = G.players[seat].name;
+    var w = actionWords(act);
+    lastAction = { seat: seat, type: act.type, pill: w.pill, headline: w.headline };
+    var banner = el("actionBanner");
+    if (banner) {
+      banner.textContent = name + " " + w.headline;
+      banner.className = "action-banner " + act.type;
+    }
+    el("status").textContent = name + ": " + w.verb;
+    var hold = (act.type === "raise" || act.type === "bet") ? 3200 : 2200;
+    toast(name + " " + w.headline, hold);
+  }
+
+  function clearLastAction() {
+    lastAction = null;
+    var banner = el("actionBanner");
+    if (banner) {
+      banner.textContent = "";
+      banner.className = "action-banner";
+    }
   }
 
   function startScreen() {
@@ -95,11 +320,25 @@
 
   function newGame(opts) {
     opts = opts || {};
+    clearPace();
+    gameGen++;
+    clearLastAction();
     G = E.newGame(opts);
     opponentBot = Reg.botForDifficulty(opts.difficulty || G.difficulty || "normaali");
     busy = false;
+    lastStreet = G.street;
     el("game").classList.remove("hidden");
     closeOverlay();
+    ["board", "heroCards", "seats", "ctrls"].forEach(function (id) {
+      var node = el(id);
+      if (node) {
+        delete node.dataset.sig;
+        delete node.dataset.len;
+        delete node.dataset.hand;
+        delete node.dataset.holeSig;
+        delete node.dataset.metaSig;
+      }
+    });
     toast("Peli alkaa — voita chipit! (" + (opponentBot.name || "botti") + ")");
     afterStateChange();
   }
@@ -111,7 +350,8 @@
     getState: function () { return G ? E.publicState(G) : null; },
     getBot: function () { return opponentBot; },
     act: function (action) {
-      if (!G || busy) return { ok: false, error: "busy" };
+      if (!G) return { ok: false, error: "no game" };
+      if (busy) return { ok: false, error: "busy" };
       return humanAct(action);
     },
   };
@@ -125,71 +365,168 @@
     startScreen();
   }
 
-  function afterStateChange() {
+  function afterStateChange(opts) {
+    opts = opts || {};
     render();
     if (!G) return;
 
     if (G.phase === "gameOver") {
-      showGameOver();
+      later(PACE.handEnd, showGameOver);
       return;
     }
     if (G.phase === "handOver") {
-      showHandOver();
+      el("status").textContent = G.message || "Jako ohi";
+      later(PACE.handEnd, showHandOver);
       return;
     }
     if (G.phase === "playing" && G.toAct >= 0 && !G.players[G.toAct].isHuman) {
-      runBots();
+      var delay = opts.afterHuman ? PACE.afterHuman : 0;
+      if (delay) {
+        busy = true;
+        render();
+        el("status").textContent = "Vastustajat reagoivat…";
+        later(delay, function () {
+          busy = false;
+          runBots();
+        });
+      } else {
+        runBots();
+      }
     }
+  }
+
+  function streetLabelFi(s) {
+    return ({
+      preflop: "Preflop",
+      flop: "Flop",
+      turn: "Turn",
+      river: "River",
+      showdown: "Showdown",
+    })[s] || s;
   }
 
   function runBots() {
     if (busy) return;
     busy = true;
     render();
-    setTimeout(function step() {
-      if (!G || G.phase !== "playing" || G.toAct < 0 || G.players[G.toAct].isHuman) {
+
+    function scheduleNext(ms) {
+      later(ms, step);
+    }
+
+    function step() {
+      if (!G || G.phase !== "playing") {
         busy = false;
-        render();
         afterStateChange();
         return;
       }
-      var act = E.safeAct(opponentBot, E.botView(G, G.toAct));
-      if (!act) { busy = false; render(); return; }
-      var name = G.players[G.toAct].name;
-      var res = E.applyAction(G, act);
-      if (res.ok) {
-        var label = actionLabel(act);
-        el("status").textContent = name + ": " + label;
+      if (G.toAct < 0 || G.players[G.toAct].isHuman) {
+        busy = false;
+        render();
+        return;
       }
-      render();
-      setTimeout(step, 420);
-    }, 380);
-  }
 
-  function actionLabel(act) {
-    if (act.type === "fold") return "luovuttaa";
-    if (act.type === "check") return "passaa";
-    if (act.type === "call") return "maksaa " + act.amount;
-    if (act.type === "bet") return "panostaa " + act.amount;
-    if (act.type === "raise") return "korottaa → " + act.amount;
-    return act.type;
+      var name = G.players[G.toAct].name;
+      el("status").textContent = name + " miettii…";
+      render();
+
+      later(PACE.botThink, function () {
+        if (!G || G.phase !== "playing" || G.toAct < 0 || G.players[G.toAct].isHuman) {
+          busy = false;
+          render();
+          return;
+        }
+        var seat = G.toAct;
+        var beforeStreet = G.street;
+        var beforeBoard = G.board.length;
+        var act = E.safeAct(opponentBot, E.botView(G, seat));
+        if (!act) {
+          busy = false;
+          render();
+          return;
+        }
+        var res = E.applyAction(G, act);
+        if (res.ok) announceAction(seat, act);
+        render();
+
+        if (G.phase === "handOver" || G.phase === "gameOver") {
+          busy = false;
+          afterStateChange();
+          return;
+        }
+
+        var streetChanged = G.street !== beforeStreet || G.board.length !== beforeBoard;
+        if (streetChanged) {
+          lastStreet = G.street;
+          // Pidä korottaja/toimija näkyvissä hetki ennen uusia kortteja
+          later(Math.max(PACE.botGap, 2000), function () {
+            clearLastAction();
+            el("status").textContent = streetLabelFi(G.street) + " — uudet kortit";
+            var ban = el("actionBanner");
+            if (ban) {
+              ban.textContent = streetLabelFi(G.street) + " — uudet kortit";
+              ban.className = "action-banner";
+            }
+            toast(streetLabelFi(G.street), 2200);
+            render();
+            scheduleNext(PACE.streetReveal);
+          });
+        } else {
+          var gap = (act.type === "raise" || act.type === "bet")
+            ? Math.max(PACE.botGap, 2600)
+            : PACE.botGap;
+          scheduleNext(gap);
+        }
+      });
+    }
+
+    step();
   }
 
   function humanAct(action) {
     if (!G || G.phase !== "playing" || G.toAct !== 0 || busy) {
       return { ok: false, error: "ei sinun vuorosi" };
     }
+    var beforeStreet = G.street;
+    var beforeBoard = G.board.length;
     var res = E.applyAction(G, action);
     if (!res.ok) {
       toast(res.error || "Laiton siirto");
       return res;
     }
-    toast(actionLabel(action));
-    afterStateChange();
+    announceAction(0, action);
+    render();
+
+    if (G.phase === "handOver" || G.phase === "gameOver") {
+      afterStateChange();
+      return res;
+    }
+
+    var streetChanged = G.street !== beforeStreet || G.board.length !== beforeBoard;
+    if (streetChanged) {
+      lastStreet = G.street;
+      busy = true;
+      clearLastAction();
+      el("status").textContent = streetLabelFi(G.street) + " — uudet kortit";
+      var ban = el("actionBanner");
+      if (ban) {
+        ban.textContent = streetLabelFi(G.street) + " — uudet kortit";
+        ban.className = "action-banner";
+      }
+      toast(streetLabelFi(G.street), 2200);
+      later(PACE.streetReveal, function () {
+        busy = false;
+        afterStateChange({ afterHuman: true });
+      });
+      return res;
+    }
+
+    afterStateChange({ afterHuman: true });
     return res;
   }
 
   function showHandOver() {
+    if (!G || G.phase !== "handOver") return;
     var lh = G.lastHand;
     var title = G.message || "Jako ohi";
     var body = "";
@@ -219,12 +556,16 @@
     );
     el("btnNext").onclick = function () {
       closeOverlay();
+      clearPace();
       if (alive < 2) {
         E.nextHand(G);
+        lastStreet = G.street;
         afterStateChange();
         return;
       }
       E.nextHand(G);
+      lastStreet = G.street;
+      clearLastAction();
       toast("Uusi jako");
       afterStateChange();
     };
@@ -259,76 +600,21 @@
     if (pub.phase === "gameOver") goal = pub.message || "Peli ohi";
     el("goal").textContent = goal;
 
-    if (pub.phase === "playing" && pub.toAct === 0) {
-      el("status").textContent = "Sinun vuorosi — valitse toiminto";
-    } else if (pub.phase === "playing" && pub.toAct > 0) {
-      el("status").textContent = pub.players[pub.toAct].name + " miettii…";
-    } else if (pub.phase === "playing") {
-      el("status").textContent = "";
-    }
-
-    // Board
-    var boardEl = el("board");
-    boardEl.innerHTML = "";
-    for (var i = 0; i < 5; i++) {
-      if (pub.board[i]) {
-        boardEl.insertAdjacentHTML("beforeend", cardHTML(pub.board[i]));
-      } else {
-        boardEl.insertAdjacentHTML("beforeend", '<div class="card slot"></div>');
+    // Älä ylikirjoita bottien status-viestiä kesken animaation
+    if (!busy) {
+      if (pub.phase === "playing" && pub.toAct === 0) {
+        el("status").textContent = "Sinun vuorosi — valitse toiminto";
+      } else if (pub.phase === "playing" && pub.toAct > 0) {
+        el("status").textContent = pub.players[pub.toAct].name + " miettii…";
+      } else if (pub.phase === "playing") {
+        el("status").textContent = "";
       }
     }
 
-    // Seats
-    var seatsEl = el("seats");
-    seatsEl.innerHTML = "";
-    pub.players.forEach(function (p, idx) {
-      var badges = [];
-      if (idx === pub.dealer) badges.push('<div class="badge dealer">Dealer</div>');
-      if (p.allIn) badges.push('<div class="badge">All-in</div>');
-      else if (p.folded) badges.push('<div class="badge">Luovutti</div>');
-      else if (p.chips === 0) badges.push('<div class="badge">Ulkona</div>');
-
-      var showHole = p.isHuman || pub.phase === "handOver" || pub.street === "showdown";
-      var holes = "";
-      if (p.holeCount) {
-        if (showHole && p.hole[0]) {
-          holes = cardHTML(p.hole[0], "sm") + cardHTML(p.hole[1], "sm");
-        } else if (!p.isHuman) {
-          holes = cardHTML(null, "sm") + cardHTML(null, "sm");
-        }
-      }
-
-      var cls = "seat";
-      if (pub.toAct === idx && pub.phase === "playing") cls += " to-act";
-      if (p.folded) cls += " folded";
-      if (pub.winners && pub.winners.indexOf(idx) >= 0) cls += " winner";
-
-      var bet = p.bet > 0
-        ? '<div class="bet-chip">' + p.bet + "</div>"
-        : '<div class="bet-chip empty">0</div>';
-
-      seatsEl.insertAdjacentHTML("beforeend",
-        '<div class="' + cls + '" data-pos="' + idx + '">' +
-          (idx === 0 ? "" : '<div class="hole">' + holes + "</div>") +
-          bet +
-          '<div class="seat-info">' +
-            '<div class="nm">' + p.name + "</div>" +
-            '<div class="chips">' + p.chips + "</div>" +
-            badges.join("") +
-          "</div>" +
-          (idx === 0 ? "" : "") +
-        "</div>"
-      );
-    });
-
-    // Hero cards
+    renderBoard(pub);
+    renderSeats(pub);
+    renderHero(pub);
     var hero = pub.players[0];
-    var heroEl = el("heroCards");
-    heroEl.innerHTML = "";
-    if (hero.hole[0]) {
-      heroEl.insertAdjacentHTML("beforeend", cardHTML(hero.hole[0]));
-      heroEl.insertAdjacentHTML("beforeend", cardHTML(hero.hole[1]));
-    }
     var hn = el("handName");
     if (hero.hole[0] && pub.board.length >= 3) {
       var ev = E.evaluateHand(G.players[0].hole.concat(G.board));
@@ -344,15 +630,20 @@
 
   function renderControls(pub) {
     var box = el("ctrls");
-    box.innerHTML = "";
     var can = pub.phase === "playing" && pub.toAct === 0 && !busy;
+    var legal = pub.legal || [];
+    var ctrlSig = (can ? "1" : "0") + ":" + legal.map(function (a) {
+      return a.type + (a.amount != null ? a.amount : "") + (a.min != null ? a.min : "") + (a.max != null ? a.max : "");
+    }).join(",");
+    if (box.dataset.sig === ctrlSig) return;
+    box.dataset.sig = ctrlSig;
+    box.innerHTML = "";
     if (!can) {
       if (pub.phase === "playing") {
         box.innerHTML = '<button type="button" disabled>Odota…</button>';
       }
       return;
     }
-    var legal = pub.legal || [];
     var by = {};
     legal.forEach(function (a) { by[a.type] = a; });
 
