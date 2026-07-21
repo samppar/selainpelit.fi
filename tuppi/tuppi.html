@@ -123,6 +123,16 @@ button:active { transform: translateY(0); }
 
 .gametype { font-size: .95rem; font-weight: 600; margin-bottom: .7rem; min-height: 1.2em; }
 .gametype:empty { margin: 0; min-height: 0; }
+.gtbanner {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .45rem .7rem;
+  background: var(--glass); border: 1px solid var(--line);
+  border-radius: 12px; padding: .65rem .9rem;
+}
+.gtbanner.rami { border-color: rgba(209,39,75,.45); background: rgba(209,39,75,.12); }
+.gtbanner.nolo { border-color: var(--line); }
+.gtmain { font-size: 1.05rem; font-weight: 700; }
+.gtbanner.rami .gtmain b { color: #ffb3c0; font-size: 1.15rem; }
+.gtsub { width: 100%; font-size: .82rem; font-weight: 500; color: var(--muted); }
 .tricks {
   font-size: .95rem; font-weight: 600; color: var(--ink);
   margin-bottom: .6rem; font-variant-numeric: tabular-nums;
@@ -135,10 +145,10 @@ button:active { transform: translateY(0); }
 }
 .tkgoal { color: var(--muted); font-weight: 400; font-size: .8rem; margin-left: .35rem; }
 .gt-rami, .gt-nolo {
-  font-weight: 800; letter-spacing: .05em; padding: .1rem .5rem;
+  font-weight: 800; letter-spacing: .05em; padding: .15rem .55rem;
   border-radius: 999px; font-size: .82rem;
 }
-.gt-rami { background: rgba(209,39,75,.18); color: #ff6b8a; }
+.gt-rami { background: rgba(209,39,75,.28); color: #ff6b8a; }
 .gt-nolo { background: rgba(255,255,255,.1); color: var(--ink); }
 .gt-sooli { background: rgba(232,193,90,.2); color: var(--gold); }
 button.ghost {
@@ -187,6 +197,15 @@ button.ghost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,
 .seatcell.foe .seatname { color: #ffe0e6; background: rgba(90,30,45,.5); }
 .seatcell.win { filter: drop-shadow(0 0 12px rgba(232,193,90,.55)); }
 .seatcell.win .seatname { background: linear-gradient(180deg, #f2d074, var(--gold)); color: #2a1e00; }
+.seatcell.ramaaja { filter: drop-shadow(0 0 14px rgba(209,39,75,.55)); }
+.seatcell.ramaaja .seatname {
+  background: rgba(209,39,75,.85); color: #fff;
+}
+.ramibadge {
+  display: inline-block; margin-left: .35rem; padding: .05rem .35rem;
+  border-radius: 999px; background: #fff; color: var(--red);
+  font-size: .58rem; font-weight: 800; letter-spacing: .06em; vertical-align: middle;
+}
 .empty {
   width: 2.9rem; height: 4rem; border-radius: 10px;
   border: 1.5px dashed rgba(255,255,255,.22); color: transparent;
@@ -3274,15 +3293,15 @@ function renderTable(trick, ledSuit, winnerSeat) {
   // Oma paikka aina keskellä alhaalla; muut myötäpäivään. CSS asettaa
   // lapset ristiin: [ylä, oikea, ala, vasen] → [kaveri, +3, sinä, +1].
   const order = [(mySeat + 2) % 4, (mySeat + 3) % 4, mySeat, (mySeat + 1) % 4];
-  const nameFor = (s) =>
-    s === mySeat ? "Sinä" : teamOf(s) === teamOf(mySeat) ? "Kaveri" : "Vastustaja";
   const cells = order.map((s) => {
     const found = trick.find((p) => p[0] === s);
     const me = s === mySeat ? " me" : "";
     const ally = teamOf(s) === teamOf(mySeat) ? " ally" : " foe";
     const win = winnerSeat === s ? " win" : "";
-    return '<div class="seatcell' + me + ally + win + '"><div class="seatname">' + nameFor(s) +
-      "</div>" +
+    const rami = currentRamaaja === s ? " ramaaja" : "";
+    const badge = currentRamaaja === s ? '<span class="ramibadge">RAMI</span>' : "";
+    return '<div class="seatcell' + me + ally + win + rami + '"><div class="seatname">' +
+      seatNameShort(s) + badge + "</div>" +
       (found ? cardHTML(found[1], false) : '<span class="empty">·</span>') + "</div>";
   });
   el("table").innerHTML = cells.join("");
@@ -3296,12 +3315,17 @@ function log(msg) {
 
 let yourTeam = 0; // sinun joukkueesi (asetetaan jaon alussa paikan mukaan)
 let mySeat = 0; // oma paikka — piirretään aina keskelle alas
+let currentRamaaja = null; // kuka ramasi tässä jaossa (null = nolo)
 
 // Puhu paikoista ja joukkueista sinuun nähden, ei numeroilla.
 const seatName = (s) =>
   s === mySeat ? "Sinä" :
   s === (mySeat + 2) % 4 ? "Kaveri" :
   s === (mySeat + 1) % 4 ? "Vasen vastustaja" : "Oikea vastustaja";
+const seatNameShort = (s) =>
+  s === mySeat ? "Sinä" :
+  s === (mySeat + 2) % 4 ? "Kaveri" :
+  s === (mySeat + 1) % 4 ? "Vasen" : "Oikea";
 const teamName = (t) => (t === yourTeam ? "Sinun joukkue" : "Vastustajat");
 
 // Elävä kasalaskuri jaon aikana: montako tikkiä kummallakin joukkueella.
@@ -3402,18 +3426,27 @@ function renderPlayed(history, currentTrick) {
   el("played").innerHTML = html;
 }
 
-// Näytä pelimuoto ja kuka ramasi (ja onko se sinä, kaverisi vai vastustaja).
+// Näytä pelimuoto ja kuka ramasi — selkeästi nimellä.
 function renderGameType(gameType, ramaaja, humanSeat) {
+  currentRamaaja = (gameType === "rami" && ramaaja !== null) ? ramaaja : null;
   if (gameType !== "rami" || ramaaja === null) {
     el("gametype").innerHTML =
-      '<span class="gt-nolo">NOLO</span> — vältä kasoja · kaikki nolasivat';
+      '<div class="gtbanner nolo">' +
+      '<span class="gt-nolo">NOLO</span>' +
+      '<span class="gtmain">Kaikki nolasivat — vältä kasoja</span>' +
+      "</div>";
     return;
   }
-  const rel =
-    ramaaja === humanSeat ? "sinä" :
-    teamOf(ramaaja) === teamOf(humanSeat) ? "kaverisi" : "vastustaja";
+  const who = seatName(ramaaja);
+  const side =
+    ramaaja === humanSeat ? "sinun joukkueesi kerää" :
+    teamOf(ramaaja) === teamOf(humanSeat) ? "joukkueesi kerää" : "vastustajat keräävät";
   el("gametype").innerHTML =
-    '<span class="gt-rami">RAMI</span> — kerää kasoja · ramasi: ' + rel;
+    '<div class="gtbanner rami">' +
+    '<span class="gt-rami">RAMI</span>' +
+    '<span class="gtmain"><b>' + who + "</b> ramasi</span>" +
+    '<span class="gtsub">' + side + " — tavoite yli 6 kasaa</span>" +
+    "</div>";
 }
 
 // Pysyvä tilannenäyttö + edistymispalkki (PXI: progress feedback / goals).
@@ -3538,6 +3571,12 @@ async function playInteractiveDeal(humanSeat, level, rng, mstate) {
   }
   log("<b>Näyttö:</b> " + gameType.toUpperCase() + (ramaaja !== null ? " — ramaaja: " + seatName(ramaaja) : "") + ", aloittaa " + seatName(leader));
   renderGameType(gameType, ramaaja, humanSeat);
+  if (ramaaja !== null) {
+    showToast(seatName(ramaaja) + " ramasi", teamOf(ramaaja) === teamOf(humanSeat) ? "good" : "bad");
+    renderTable([], null);
+  } else {
+    showToast("Nolo — kaikki nolasivat", "good");
+  }
 
   // Rami-näytön jälkeen sooli on mahdollinen.
   if (gameType === "rami" && ramaaja !== null) {
@@ -3634,8 +3673,9 @@ function askHumanSooli(hand, mstate, myTeam, oppTeam) {
     const suositus = ev.recommend
       ? '<b style="color:var(--gold)">Sooli näyttää kannattavan.</b>'
       : "Puolustus näyttää turvallisemmalta.";
+    const who = currentRamaaja != null ? seatName(currentRamaaja) : "Vastustaja";
     el("handLabel").innerHTML =
-      "Vastustaja <b>ramasi</b>. Haluatko pelata <b>soolon</b> — yksin heitä vastaan? " +
+      "<b>" + who + "</b> ramasi. Haluatko pelata <b>soolon</b> — yksin heitä vastaan? " +
       "Vaihdat yhden kortin kaverisi kanssa, ässä on pienin ja pelaat aina viimeisenä. " +
       "<b>Et saa ottaa yhtään tikkiä</b>: onnistut → +24p, epäonnistut → vastustajille 24p.<br>" +
       "Arvioitu selviäminen <b>~" + surv + "%</b>. Odotusarvo: sooli <b>" + ev.evSooli.toFixed(1) +
@@ -3881,6 +3921,7 @@ async function startDeal() {
     el("gametype").innerHTML = "";
     el("tricks").innerHTML = "";
     el("played").innerHTML = "";
+    currentRamaaja = null;
     renderVoidsPanel([], []);
     log("<hr><b>— Jako " + matchState.dealNumber + " (jakaja: " + seatName(dealer) + ") —</b>");
     const res = await playInteractiveDeal(humanSeat, level, rng, mstate);

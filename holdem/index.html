@@ -2281,14 +2281,34 @@ module.exports = {
   var gameGen = 0; // vanhat timerit eivät koske uutta peliä
   var lastAction = null; // { seat, type, headline, pill }
 
-  // Tahti: pelaaja ehtii nähdä siirrot, kortit ja tilanteen muutokset.
+  // Tahti — hidasta vain kun pelaaja tarvitsee aikaa lukea / tuntea tilanne.
+  // Hyötyä: uudet kortit, korotus/panos, jaon loppu. Turhaa: check/fold-ketjut.
   var PACE = {
-    afterHuman: 1200,    // tauko oman siirron jälkeen ennen botteja
-    botThink: 1600,      // “miettii” ennen toimintoa
-    botGap: 1800,        // toiminnon jälkeen ennen seuraavaa
-    streetReveal: 2800,  // flop/turn/river — kortit ehtivät näkyä
-    handEnd: 2500,       // viimeinen tilanne näkyviin ennen overlayta
+    afterHuman: 350,       // oma siirto ehti näkyä; bottien ei tarvitse odottaa kauaa
+    thinkQuiet: 280,       // fold/check — nopea “klik”
+    thinkCall: 480,        // call — lyhyt harkinta
+    thinkRaise: 850,       // bet/raise — näyttää harkitulta, ehtii odottaa
+    gapQuiet: 450,         // fold/check jälkeen heti eteenpäin
+    gapCall: 700,          // call ehtii näkyä bannerissa
+    gapRaise: 1700,        // korotus: kuka / kuinka paljon
+    streetHold: 1200,      // toimija näkyviin ennen uusia kortteja
+    streetReveal: 2600,    // flop/turn/river — lukuaika
+    handEnd: 2400,         // tulos ennen overlayta
   };
+
+  function thinkMsFor(act) {
+    if (!act) return PACE.thinkQuiet;
+    if (act.type === "bet" || act.type === "raise") return PACE.thinkRaise;
+    if (act.type === "call") return PACE.thinkCall;
+    return PACE.thinkQuiet;
+  }
+
+  function gapMsFor(act) {
+    if (!act) return PACE.gapQuiet;
+    if (act.type === "bet" || act.type === "raise") return PACE.gapRaise;
+    if (act.type === "call") return PACE.gapCall;
+    return PACE.gapQuiet;
+  }
 
   function el(id) { return document.getElementById(id); }
 
@@ -2550,24 +2570,40 @@ module.exports = {
     });
   }
 
-  function actionWords(act) {
-    if (act.type === "fold") return { verb: "luovuttaa", pill: "Luovutus", headline: "luovuttaa" };
-    if (act.type === "check") return { verb: "passaa", pill: "Pass", headline: "passaa" };
+  function actionWords(act, you) {
+    // 3. persoona bottseille, 2. persoona kun pelaaja on Sinä
+    if (act.type === "fold") {
+      return you
+        ? { verb: "luovutat", pill: "Luovutus", headline: "luovutat" }
+        : { verb: "luovuttaa", pill: "Luovutus", headline: "luovuttaa" };
+    }
+    if (act.type === "check") {
+      return you
+        ? { verb: "passaat", pill: "Pass", headline: "passaat" }
+        : { verb: "passaa", pill: "Pass", headline: "passaa" };
+    }
     if (act.type === "call") {
-      return { verb: "maksaa " + act.amount, pill: "Maksaa " + act.amount, headline: "maksaa " + act.amount };
+      return you
+        ? { verb: "maksat " + act.amount, pill: "Maksat " + act.amount, headline: "maksat " + act.amount }
+        : { verb: "maksaa " + act.amount, pill: "Maksaa " + act.amount, headline: "maksaa " + act.amount };
     }
     if (act.type === "bet") {
-      return { verb: "panostaa " + act.amount, pill: "Panos " + act.amount, headline: "PANOSTAA " + act.amount };
+      return you
+        ? { verb: "panostat " + act.amount, pill: "Panos " + act.amount, headline: "PANOSTAT " + act.amount }
+        : { verb: "panostaa " + act.amount, pill: "Panos " + act.amount, headline: "PANOSTAA " + act.amount };
     }
     if (act.type === "raise") {
-      return { verb: "korottaa " + act.amount, pill: "Korotus " + act.amount, headline: "KOROTTAA " + act.amount };
+      return you
+        ? { verb: "korotat " + act.amount, pill: "Korotus " + act.amount, headline: "KOROTAT " + act.amount }
+        : { verb: "korottaa " + act.amount, pill: "Korotus " + act.amount, headline: "KOROTTAA " + act.amount };
     }
     return { verb: act.type, pill: act.type, headline: act.type };
   }
 
   function announceAction(seat, act) {
     var name = G.players[seat].name;
-    var w = actionWords(act);
+    var you = seat === 0 || /^sinä$/i.test(name);
+    var w = actionWords(act, you);
     lastAction = { seat: seat, type: act.type, pill: w.pill, headline: w.headline };
     var banner = el("actionBanner");
     if (banner) {
@@ -2737,21 +2773,22 @@ module.exports = {
         return;
       }
 
-      var name = G.players[G.toAct].name;
+      var seat = G.toAct;
+      var name = G.players[seat].name;
+      var beforeStreet = G.street;
+      var beforeBoard = G.board.length;
+      // Päätös heti — viive ennen julkaisua skaalautuu siirron merkityksellä
+      var act = E.safeAct(opponentBot, E.botView(G, seat));
+      if (!act) {
+        busy = false;
+        render();
+        return;
+      }
       el("status").textContent = name + " miettii…";
       render();
 
-      later(PACE.botThink, function () {
-        if (!G || G.phase !== "playing" || G.toAct < 0 || G.players[G.toAct].isHuman) {
-          busy = false;
-          render();
-          return;
-        }
-        var seat = G.toAct;
-        var beforeStreet = G.street;
-        var beforeBoard = G.board.length;
-        var act = E.safeAct(opponentBot, E.botView(G, seat));
-        if (!act) {
+      later(thinkMsFor(act), function () {
+        if (!G || G.phase !== "playing" || G.toAct !== seat) {
           busy = false;
           render();
           return;
@@ -2769,8 +2806,8 @@ module.exports = {
         var streetChanged = G.street !== beforeStreet || G.board.length !== beforeBoard;
         if (streetChanged) {
           lastStreet = G.street;
-          // Pidä korottaja/toimija näkyvissä hetki ennen uusia kortteja
-          later(Math.max(PACE.botGap, 2000), function () {
+          // Pidä toimija/korotus luettavana, sitten kortit
+          later(Math.max(gapMsFor(act), PACE.streetHold), function () {
             clearLastAction();
             el("status").textContent = streetLabelFi(G.street) + " — uudet kortit";
             var ban = el("actionBanner");
@@ -2783,10 +2820,7 @@ module.exports = {
             scheduleNext(PACE.streetReveal);
           });
         } else {
-          var gap = (act.type === "raise" || act.type === "bet")
-            ? Math.max(PACE.botGap, 2600)
-            : PACE.botGap;
-          scheduleNext(gap);
+          scheduleNext(gapMsFor(act));
         }
       });
     }
