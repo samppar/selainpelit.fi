@@ -1,0 +1,10 @@
+{
+  "name": "sanaseppa",
+  "version": "1.0.0",
+  "description": "Sanaseppä — suomenkielinen sanalaattapeli (selainpeli, pelaaja vs. tietokone).",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run_tests.js"
+  },
+  "license": "MIT"
+}
