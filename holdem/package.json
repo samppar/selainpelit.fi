@@ -1,0 +1,12 @@
+{
+  "name": "holdem",
+  "version": "1.0.0",
+  "description": "Texas Hold'em — pokeri tietokonetta vastaan (selainpeli).",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run_tests.js",
+    "arena": "node test/arena.js",
+    "tournament": "node test/arena.js"
+  },
+  "license": "MIT"
+}
