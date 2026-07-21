@@ -16,6 +16,7 @@ const B = opt("--b", "players/championPlayer.js");
 const PAIRS = Number(opt("--pairs", 40));
 const SIMS = Number(opt("--sims", 24));
 const MAXD = Number(opt("--maxDeals", 400));
+const ASIG = opt("--asignal", null); // aseta A:n signalBand jos annettu
 
 async function load(spec) {
   const mod = await import(pathToFileURL(path.resolve(spec)).href);
@@ -24,9 +25,14 @@ async function load(spec) {
 const makeA = await load(A);
 const makeB = await load(B);
 // Injektoi sims + siemen jos tehdas tukee (championPlayer-perhe tukee).
-const mk = (make, seed) => {
-  try { const p = make(); if ("sims" in p) p.sims = SIMS; if (p.rng) p.rng = new (p.rng.constructor)(seed); return p; }
-  catch { return make(); }
+const mk = (make, seed, sig = null) => {
+  try {
+    const p = make();
+    if ("sims" in p) p.sims = SIMS;
+    if (p.rng) p.rng = new (p.rng.constructor)(seed);
+    if (sig !== null && "signalBand" in p) p.signalBand = Number(sig);
+    return p;
+  } catch { return make(); }
 };
 
 let aWins = 0, bWins = 0, ties = 0;
@@ -35,13 +41,13 @@ for (let g = 0; g < PAIRS; g++) {
   const seed = 5000 + g * 4;
   // Puoli 1: A joukkueessa 0
   {
-    const players = [mk(makeA, seed), mk(makeB, seed + 1), mk(makeA, seed + 2), mk(makeB, seed + 3)];
+    const players = [mk(makeA, seed, ASIG), mk(makeB, seed + 1), mk(makeA, seed + 2, ASIG), mk(makeB, seed + 3)];
     const res = new TuppiEngine(players, { seed, strict: true }).playMatch({ maxDeals: MAXD });
     if (res.winnerTeam === 0) aWins++; else if (res.winnerTeam === 1) bWins++; else ties++;
   }
   // Puoli 2: A joukkueessa 1 (samat jaot)
   {
-    const players = [mk(makeB, seed), mk(makeA, seed + 1), mk(makeB, seed + 2), mk(makeA, seed + 3)];
+    const players = [mk(makeB, seed), mk(makeA, seed + 1, ASIG), mk(makeB, seed + 2), mk(makeA, seed + 3, ASIG)];
     const res = new TuppiEngine(players, { seed, strict: true }).playMatch({ maxDeals: MAXD });
     if (res.winnerTeam === 1) aWins++; else if (res.winnerTeam === 0) bWins++; else ties++;
   }

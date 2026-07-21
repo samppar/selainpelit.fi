@@ -192,6 +192,55 @@ ja epävarma hyöty selainpeliä varten. Realistisin polku on lainata Pluribukse
 erikseen **pari-signalointiin** (bridge-tekoälyn oppimäärä), ei koko
 CFR-koneistoon.
 
+## 5. Bridge-tekoälyn signalointi — ANALYSOITU + KOE (opettavainen nollatulos)
+
+Jatkoa §4:lle: Pluribus ei kata paripeliä, joten otetaan mallia bridge-boteista.
+
+**Mitä bridge-botit tekevät.** GIB (Ginsberg), Jack, Wbridge5 pelaavat kortit
+Monte-Carlo + double-dummy -haulla ja valitsevat siirron **parhaalla
+keskiarvolla** — eli TÄSMÄLLEEN kuten Mestari (PIMC). Ainoa asia jonka
+bridge-botit tekevät ja poker-botit eivät, on **paridefenssin signalointi**:
+GIB:n vakiot ovat *attitude* (korkea = rohkaisen tätä maata, matala = lannistan)
+ja *count* (korkea-matala = parillinen määrä). Otanta rajataan signaaleihin
+yhteensopivaksi. *(Lähde: Ginsberg, "GIB: Imperfect Information in a
+Computationally Challenging Game", JAIR 2001.)*
+
+**KOE.** `players/bridgePlayer.js` ("Silta") lisää Mestariin kevyen
+signaalikerroksen ramin aloituksissa: lue kaverin signaali (maa jonka kaveri on
+ITSE ALOITTANUT = rohkaistu; maa jonka kaveri on SAKANNUT = lannistettu) ja
+suosi sen mukaista aloitusta — mutta VAIN pehmeänä tie-breakina PIMC:n
+kärkisiirtojen kesken. `signalBand` = kuinka paljon PIMC-keskiarvoa (keskitikkiä)
+aloitus saa olla parasta huonompi ja silti kelvata signaalin mukaan. Ajuri:
+`compare-players.mjs --asignal <band>` (paritettu play-to-52, kortit peilattu).
+
+**Tulos — etu KÄÄNTYY hakutarkkuuden mukaan:**
+
+| signalBand | sims=24 (kohinainen PIMC) | **sims=60 (= oikea peli)** |
+|---|---|---|
+| 0.15 (turvallinen tie-break) | 50,0 % (n=80) | **53,8 %** (43–37, n=80) |
+| 0.6 (ohittaa PIMC:n) | **60,5 %** (121–79, n=200) | **40,0 %** (32–48, n=80) |
+
+**Johtopäätös.** Oikeassa pelivahvuudessa (sims=60, jota selain käyttää ihmistä
+vastaan) eksploitisesta signaloinnista EI ole hyötyä: turvallinen tie-break on
+kohinan sisällä (53,8 %, ~0,7 SE — ei merkitsevä) ja PIMC:n *ohittaminen*
+signaalilla on selvästi HAITALLISTA (40 %). Etu näkyy vain kun PIMC on
+tahallaan heikennetty (sims=24 → leveä kaista +10 pp).
+
+**Miksi.** 60 simulaation PIMC ehdollistaa jo JOKAISEEN julkiseen korttiin,
+joten se tosiasiassa *päättelee jo sen mitä signaali kertoisi*. Ihmispari
+tarvitsee signaaleja koska ei osaa laskea PIMC:tä käsin; tarkka botti ei.
+**Suunnitteluopetus: eksplisiittisen pari-signaloinnin arvo on kääntäen
+verrannollinen siihen, kuinka hyvin hakija jo päättelee julkisesta tiedosta.**
+Sama pätee §4:n Pluribus-diversiteettiin — molemmat auttavat heikkoa hakijaa,
+eivät vahvaa.
+
+**Suositus.** ÄLÄ vaihda selaimen Mestaria Siltaan: parannus ei ole merkitsevä
+mittarin bittiin asti. `signalBand`-oletus pidetty turvallisena (0.15), jottei
+se voi heikentää. Sivuhyöty jos joskus halutaan: kaista 0.15 tekee botin
+aloituksista ihmiselle *luettavampia* (jatkaa kaverin maata) rikkomatta peliä.
+**Mittausmenetelmä (vahvistettu käyttäjän kanssa):** peilatut jaot (samat
+kortit, joukkueet päinvastoin) + sims=60 kuten oikeassa pelissä.
+
 ## 3. Muuta
 
 - Selainpelissä paikan valinta poistettu; pelaaja istuu paikalla 0 ja pelaa
