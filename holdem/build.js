@@ -85,6 +85,7 @@ ${css}
       <div class="goal" id="goal">Kerää chipit</div>
       <div class="potbox">
         <div class="nm">Potti</div>
+        <div class="chip-stack" id="potChips" aria-hidden="true"></div>
         <div class="pt" id="pot">0</div>
       </div>
       <div class="meta">

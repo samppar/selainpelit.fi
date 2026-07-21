@@ -72,6 +72,44 @@
     })[s] || s;
   }
 
+  // Chip-denominations (suurin ensin) — numero säilyy, pino visualisoi määrän
+  var CHIP_DENOMS = [
+    { v: 100, cls: "c100" },
+    { v: 25, cls: "c25" },
+    { v: 10, cls: "c10" },
+    { v: 5, cls: "c5" },
+    { v: 1, cls: "c1" },
+  ];
+
+  function chipStackHTML(amount, maxChips) {
+    maxChips = maxChips || 8;
+    amount = Math.max(0, amount | 0);
+    if (amount === 0) return "";
+    var left = amount;
+    var parts = [];
+    var count = 0;
+    // Kerää denoms; pino rakennetaan alhaalta ylös (--i = 0 pohja)
+    for (var i = 0; i < CHIP_DENOMS.length && count < maxChips; i++) {
+      var d = CHIP_DENOMS[i];
+      var n = Math.floor(left / d.v);
+      left -= n * d.v;
+      while (n-- > 0 && count < maxChips) {
+        parts.push('<span class="chip ' + d.cls + '" style="--i:' + count + '"></span>');
+        count++;
+      }
+    }
+    return parts.join("");
+  }
+
+  function setChipPile(node, amount, maxChips) {
+    if (!node) return;
+    var html = chipStackHTML(amount, maxChips);
+    node.innerHTML = html;
+    var n = node.querySelectorAll(".chip").length;
+    node.style.setProperty("--n", String(n || 1));
+    node.classList.toggle("empty-pile", n === 0);
+  }
+
   function cardHTML(c, cls) {
     var extra = cls || "";
     if (!c) {
@@ -181,10 +219,13 @@
           '<div class="seat" data-pos="' + idx + '" data-seat="' + idx + '">' +
             (idx === 0 ? "" : '<div class="hole">' + holes + "</div>") +
             '<div class="action-pill empty"></div>' +
-            '<div class="bet-chip empty">0</div>' +
+            '<div class="bet-chip empty"><span class="chip c5"></span><span class="bet-amt">0</span></div>' +
             '<div class="seat-info">' +
               '<div class="nm">' + p.name + "</div>" +
-              '<div class="chips">0</div>' +
+              '<div class="stack-row">' +
+                '<div class="chip-stack mini" data-role="stack"></div>' +
+                '<div class="chips">0</div>' +
+              "</div>" +
               '<div class="badges"></div>' +
             "</div>" +
           "</div>"
@@ -218,13 +259,18 @@
       var bet = seat.querySelector(".bet-chip");
       if (bet) {
         if (p.bet > 0) {
-          bet.textContent = String(p.bet);
           bet.classList.remove("empty");
+          var betAmt = bet.querySelector(".bet-amt");
+          if (betAmt) betAmt.textContent = String(p.bet);
+          else bet.innerHTML = '<span class="chip ' + (p.bet >= 100 ? "c100" : p.bet >= 25 ? "c25" : p.bet >= 10 ? "c10" : "c5") + '"></span><span class="bet-amt">' + p.bet + "</span>";
         } else {
-          bet.textContent = "0";
           bet.classList.add("empty");
+          var ba = bet.querySelector(".bet-amt");
+          if (ba) ba.textContent = "0";
         }
       }
+      var stack = seat.querySelector('[data-role="stack"]');
+      setChipPile(stack, p.chips, 7);
       var chips = seat.querySelector(".chips");
       if (chips) chips.textContent = String(p.chips);
       var badges = seat.querySelector(".badges");
@@ -591,6 +637,7 @@
     var pub = E.publicState(G);
 
     el("pot").textContent = String(pub.potTotal);
+    setChipPile(el("potChips"), pub.potTotal, 12);
     el("street").textContent = streetLabel(pub.street);
     el("handNum").textContent = "Jako #" + pub.handNumber;
     el("blinds").textContent = "Blindit " + pub.sb + "/" + pub.bb;

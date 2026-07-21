@@ -186,8 +186,8 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
   background: rgba(0, 0, 0, 0.28);
   border: 1px solid rgba(196, 163, 90, 0.35);
   border-radius: 14px;
-  padding: 8px 18px;
-  min-width: 110px;
+  padding: 8px 18px 10px;
+  min-width: 120px;
 }
 .hud .potbox .nm {
   font-size: 10px;
@@ -196,11 +196,112 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
   text-transform: uppercase;
   color: var(--gold);
 }
+.hud .potbox .chip-stack {
+  margin: 8px auto 4px;
+  --chip-size: 36px;
+  --chip-lift: 4.5px;
+  --chip-thick: 3.5px;
+}
 .hud .potbox .pt {
   font-family: "Fraunces", Georgia, serif;
   font-size: 28px;
   font-weight: 700;
   line-height: 1.1;
+}
+
+/* ---- 3D chip-kasa (sylinterimäinen pino, yläviisto) ---- */
+.chip-stack {
+  --n: 1;
+  --chip-size: 28px;
+  --chip-lift: 4px;
+  --chip-thick: 3px;
+  position: relative;
+  width: var(--chip-size);
+  height: calc(var(--chip-size) * 0.55 + (var(--n) - 1) * var(--chip-lift) + var(--chip-thick));
+  margin-inline: auto;
+  perspective: 220px;
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+}
+.chip-stack.empty-pile {
+  height: 0;
+  filter: none;
+}
+.chip-stack.mini {
+  --chip-size: 18px;
+  --chip-lift: 3px;
+  --chip-thick: 2px;
+}
+.chip {
+  --i: 0;
+  position: absolute;
+  left: 0;
+  bottom: var(--chip-thick);
+  width: var(--chip-size);
+  height: calc(var(--chip-size) * 0.55);
+  border-radius: 50%;
+  transform:
+    translate3d(0, calc(var(--i) * var(--chip-lift) * -1), calc(var(--i) * 0.5px))
+    rotateX(52deg);
+  transform-origin: 50% 50%;
+  z-index: calc(var(--i) + 1);
+  border: 1.5px dashed rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 var(--chip-thick) 0 rgba(0, 0, 0, 0.45),
+    0 calc(var(--chip-thick) + 1px) 2px rgba(0, 0, 0, 0.25);
+  background: #888;
+}
+.chip.c100 {
+  background:
+    radial-gradient(ellipse 85% 70% at 32% 28%, #7a7a7a, #2a2a2a 52%, #111);
+  border-color: rgba(235, 235, 235, 0.55);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.3) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.5) inset,
+    0 var(--chip-thick) 0 #0a0a0a,
+    0 calc(var(--chip-thick) + 1px) 2px rgba(0, 0, 0, 0.3);
+}
+.chip.c25 {
+  background:
+    radial-gradient(ellipse 85% 70% at 32% 28%, #6ed4a0, #1f7a4a 52%, #0c3a24);
+  border-color: rgba(220, 255, 235, 0.5);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 var(--chip-thick) 0 #0d3d26,
+    0 calc(var(--chip-thick) + 1px) 2px rgba(0, 0, 0, 0.28);
+}
+.chip.c10 {
+  background:
+    radial-gradient(ellipse 85% 70% at 32% 28%, #7aade8, #2458a0 52%, #123060);
+  border-color: rgba(220, 235, 255, 0.5);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 var(--chip-thick) 0 #102a55,
+    0 calc(var(--chip-thick) + 1px) 2px rgba(0, 0, 0, 0.28);
+}
+.chip.c5 {
+  background:
+    radial-gradient(ellipse 85% 70% at 32% 28%, #f28888, #b02828 52%, #5c1010);
+  border-color: rgba(255, 230, 230, 0.55);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 var(--chip-thick) 0 #5c1010,
+    0 calc(var(--chip-thick) + 1px) 2px rgba(0, 0, 0, 0.28);
+}
+.chip.c1 {
+  background:
+    radial-gradient(ellipse 85% 70% at 32% 28%, #fffef9, #e0d6c4 52%, #b0a08a);
+  border-color: rgba(90, 70, 50, 0.45);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.25) inset,
+    0 var(--chip-thick) 0 #8a7a62,
+    0 calc(var(--chip-thick) + 1px) 2px rgba(0, 0, 0, 0.25);
 }
 .hud .meta {
   text-align: right;
@@ -371,6 +472,17 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.stack-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+  min-height: 22px;
+}
+.stack-row .chip-stack {
+  margin-inline: 0;
+}
 .seat-info .chips {
   font-family: "Fraunces", Georgia, serif;
   font-size: 16px;
@@ -387,14 +499,35 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
 }
 .seat-info .badge.dealer { color: var(--gold); }
 .bet-chip {
-  background: #c4282d;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(20, 20, 20, 0.55);
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 2px 8px 2px 4px;
   border-radius: 999px;
-  min-height: 18px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  min-height: 22px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.bet-chip .chip {
+  --chip-size: 14px;
+  --chip-thick: 2px;
+  --i: 0;
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: 14px;
+  height: 9px;
+  transform: rotateX(48deg);
+  filter: none;
+  flex-shrink: 0;
+}
+.bet-chip .bet-amt {
+  font-family: "Fraunces", Georgia, serif;
+  min-width: 1ch;
 }
 .bet-chip.empty { visibility: hidden; }
 
@@ -624,6 +757,7 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
       <div class="goal" id="goal">Kerää chipit</div>
       <div class="potbox">
         <div class="nm">Potti</div>
+        <div class="chip-stack" id="potChips" aria-hidden="true"></div>
         <div class="pt" id="pot">0</div>
       </div>
       <div class="meta">
@@ -2203,6 +2337,44 @@ module.exports = {
     })[s] || s;
   }
 
+  // Chip-denominations (suurin ensin) — numero säilyy, pino visualisoi määrän
+  var CHIP_DENOMS = [
+    { v: 100, cls: "c100" },
+    { v: 25, cls: "c25" },
+    { v: 10, cls: "c10" },
+    { v: 5, cls: "c5" },
+    { v: 1, cls: "c1" },
+  ];
+
+  function chipStackHTML(amount, maxChips) {
+    maxChips = maxChips || 8;
+    amount = Math.max(0, amount | 0);
+    if (amount === 0) return "";
+    var left = amount;
+    var parts = [];
+    var count = 0;
+    // Kerää denoms; pino rakennetaan alhaalta ylös (--i = 0 pohja)
+    for (var i = 0; i < CHIP_DENOMS.length && count < maxChips; i++) {
+      var d = CHIP_DENOMS[i];
+      var n = Math.floor(left / d.v);
+      left -= n * d.v;
+      while (n-- > 0 && count < maxChips) {
+        parts.push('<span class="chip ' + d.cls + '" style="--i:' + count + '"></span>');
+        count++;
+      }
+    }
+    return parts.join("");
+  }
+
+  function setChipPile(node, amount, maxChips) {
+    if (!node) return;
+    var html = chipStackHTML(amount, maxChips);
+    node.innerHTML = html;
+    var n = node.querySelectorAll(".chip").length;
+    node.style.setProperty("--n", String(n || 1));
+    node.classList.toggle("empty-pile", n === 0);
+  }
+
   function cardHTML(c, cls) {
     var extra = cls || "";
     if (!c) {
@@ -2312,10 +2484,13 @@ module.exports = {
           '<div class="seat" data-pos="' + idx + '" data-seat="' + idx + '">' +
             (idx === 0 ? "" : '<div class="hole">' + holes + "</div>") +
             '<div class="action-pill empty"></div>' +
-            '<div class="bet-chip empty">0</div>' +
+            '<div class="bet-chip empty"><span class="chip c5"></span><span class="bet-amt">0</span></div>' +
             '<div class="seat-info">' +
               '<div class="nm">' + p.name + "</div>" +
-              '<div class="chips">0</div>' +
+              '<div class="stack-row">' +
+                '<div class="chip-stack mini" data-role="stack"></div>' +
+                '<div class="chips">0</div>' +
+              "</div>" +
               '<div class="badges"></div>' +
             "</div>" +
           "</div>"
@@ -2349,13 +2524,18 @@ module.exports = {
       var bet = seat.querySelector(".bet-chip");
       if (bet) {
         if (p.bet > 0) {
-          bet.textContent = String(p.bet);
           bet.classList.remove("empty");
+          var betAmt = bet.querySelector(".bet-amt");
+          if (betAmt) betAmt.textContent = String(p.bet);
+          else bet.innerHTML = '<span class="chip ' + (p.bet >= 100 ? "c100" : p.bet >= 25 ? "c25" : p.bet >= 10 ? "c10" : "c5") + '"></span><span class="bet-amt">' + p.bet + "</span>";
         } else {
-          bet.textContent = "0";
           bet.classList.add("empty");
+          var ba = bet.querySelector(".bet-amt");
+          if (ba) ba.textContent = "0";
         }
       }
+      var stack = seat.querySelector('[data-role="stack"]');
+      setChipPile(stack, p.chips, 7);
       var chips = seat.querySelector(".chips");
       if (chips) chips.textContent = String(p.chips);
       var badges = seat.querySelector(".badges");
@@ -2722,6 +2902,7 @@ module.exports = {
     var pub = E.publicState(G);
 
     el("pot").textContent = String(pub.potTotal);
+    setChipPile(el("potChips"), pub.potTotal, 12);
     el("street").textContent = streetLabel(pub.street);
     el("handNum").textContent = "Jako #" + pub.handNumber;
     el("blinds").textContent = "Blindit " + pub.sb + "/" + pub.bb;

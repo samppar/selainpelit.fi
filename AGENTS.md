@@ -7,6 +7,10 @@ testit): kunkin pelin oma `AGENTS.md` / README.
 pelaajat arvostavat että miten pelistä tulee koukuttava (terveellä tavalla).
 Tämä koskee uutta peliä, UI-muutosta ja pelin “valmiiksi” julistamista.
 
+**Jokaisen pelin on oltava kaunis.** Toimiva mekaniikka ei riitä: ulkoasu,
+typografia, värit, materiaalit ja mikroliike ovat osa “valmis”-kriteeriä.
+Rumaa, geneeristä tai keskeneräisen näköistä UI:ta ei julisteta valmiiksi.
+
 ---
 
 ## 1. Mitä pelaajat arvostavat
@@ -40,8 +44,10 @@ silti täytettävä nämä vaatimukset.
    ketä vastaan, visuaalisesti selvästi.
 7. **Challenge / fairness** — oletusvaikeus on kohtuullinen uudelle pelaajalle;
    kovempi taso valittavissa, ei pakotettu heti.
-8. **Audiovisual appeal** — yksi selkeä visuaalinen kieli; palaute (korostus,
-   lyhyt toast/animaatio) tukee ymmärrystä, ei koristele tyhjää.
+8. **Audiovisual appeal / kauneus** — yksi selkeä, viimeistelty visuaalinen
+   kieli (ei “default dashboard”); palaute (korostus, lyhyt toast/animaatio)
+   tukee ymmärrystä. Peli näyttää ja tuntuu *haluttavalta* pelata, ei vain
+   toimivalta.
 
 ---
 
@@ -104,6 +110,8 @@ ja edistymisen**; ei siksi että ulkoinen palkinto / rangaistus pakottaa.
 - Jätä lailliset siirrot epäselviksi.
 - Korvaa UX-laatu bottivahvuustesteillä — ne mittaavat AI:ta, ei pelaajakokemusta.
 - Rakenna reteniota pimeillä kuvioilla (yllä).
+- Julkaise / julista valmiiksi ruma, geneerinen tai “väliaikainen” UI — jokaisen
+  pelin on oltava kaunis.
 
 ---
 
@@ -133,7 +141,9 @@ pelikohtaisissa `AGENTS.md`-tiedostoissa.
 3. **Aja build** jos peli niputetaan (`npm run build`).
 4. **Selain-smoke** uudelle tai UI-muutetulle pelille: avaa sivu, aloita peli,
    tee yksi merkityksellinen siirto, varmista ettei kaadu / lukitu.
-5. **Älä väitä valmiiksi** jos testit, build tai smoke epäonnistui.
+5. **Katso ulkoasu silmällä** (kuvakaappaus tarvittaessa): onko peli kaunis ja
+   yhtenäinen, vai geneerinen/ruma? Korjaa ennen “valmis”.
+6. **Älä väitä valmiiksi** jos testit, build, smoke tai ulkoasu pettää.
 
 Ihmisen tehtävä on pelata ja antaa tuote-/sääntöpalautetta — ei olla
 agentin QA-varmistusverkko.
@@ -149,6 +159,7 @@ agentin QA-varmistusverkko.
 - [ ] Tilanne / edistyminen näkyy koko ajan.
 - [ ] Oletusvaikeus on reilu; säännöt valinnaisesti auki.
 - [ ] Siirron ja erän jälkeen tulee lyhyt, ymmärrettävä palaute.
+- [ ] Ulkoasu on kaunis ja yhtenäinen (ei geneerinen / “placeholder”).
 
 **Koukuttavuus (terve)**
 
@@ -164,3 +175,4 @@ agentin QA-varmistusverkko.
 - [ ] `npm test` vihreä (ja CI-matrix päivitetty uudelle pelille).
 - [ ] Build ok jos niputuspelissä.
 - [ ] Selain-smoke tehty; löydetyt bugit korjattu.
+- [ ] Ulkoasu tarkistettu silmällä; kauneusvaatimus täyttyy.
