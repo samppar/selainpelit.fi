@@ -1,0 +1,10 @@
+{
+  "name": "rypas",
+  "version": "1.0.0",
+  "description": "Rypäs — numeropalaripeli tietokonetta vastaan (selainpeli).",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run_tests.js"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="Rypäs — numeropalaripeli tietokonetta vastaan. Muodosta ryhmiä ja jonoja, tyhjennä telineesi.">
+<title>Rypäs — numeropalaripeli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Rypäs — hienostunut klassinen laattapeli */
+:root {
+  color-scheme: light;
+  --ink: #152033;
+  --ink-soft: #3d4d63;
+  --muted: #6b7c90;
+  --linen: #e8eef5;
+  --linen-2: #d5e0ec;
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-edge: rgba(255, 255, 255, 0.9);
+
+  --sapphire: #1e5f9a;
+  --sapphire-deep: #144876;
+  --sapphire-ink: #0d3558;
+  --velvet: #1a6bb0;
+  --velvet-2: #155a96;
+  --velvet-3: #0f4574;
+  --velvet-hi: #3d8fd4;
+
+  --rack: #2470b8;
+  --rack-mid: #1c5f9e;
+  --rack-deep: #134a7d;
+  --rack-shine: rgba(255, 255, 255, 0.28);
+
+  --tile: #fbf7f0;
+  --tile-2: #f0e9dc;
+  --tile-rim: #cfc3ae;
+  --tile-ink-k: #1a1a1a;
+  --tile-ink-s: #0b67b5;
+  --tile-ink-p: #c81e28;
+  --tile-ink-o: #c9a000;
+
+  --select: #f0c14b;
+  --select-glow: rgba(240, 193, 75, 0.55);
+  --warn: #c41e26;
+  --ok: #1b8a5a;
+  --shadow: rgba(13, 40, 70, 0.22);
+  --shadow-deep: rgba(8, 28, 52, 0.38);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -15%, #b8d4ee 0%, transparent 58%),
+    radial-gradient(ellipse 50% 40% at 0% 100%, rgba(30, 95, 154, 0.12), transparent 50%),
+    radial-gradient(ellipse 45% 35% at 100% 80%, rgba(240, 193, 75, 0.08), transparent 45%),
+    linear-gradient(165deg, #eef3f8 0%, var(--linen) 42%, var(--linen-2) 100%);
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 18px 14px 52px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 680px;
+  animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.brand h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+  font-variation-settings: "SOFT" 50, "WONK" 0.4;
+  font-size: clamp(40px, 9vw, 56px);
+  line-height: 0.85;
+  letter-spacing: -0.035em;
+  color: var(--sapphire-ink);
+}
+.brand .tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sapphire);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  opacity: 0.85;
+}
+.hbtns { display: flex; gap: 8px; flex-shrink: 0; padding-bottom: 4px; }
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 95, 154, 0.14);
+  background: var(--glass);
+  color: var(--ink);
+  padding: 10px 15px;
+  font-size: 13.5px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+  box-shadow:
+    0 1px 0 var(--glass-edge) inset,
+    0 2px 8px var(--shadow);
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.15s, background 0.15s, opacity 0.15s;
+}
+button:hover:not(:disabled) {
+  background: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 #fff inset, 0 6px 14px var(--shadow);
+}
+button:active:not(:disabled) { transform: translateY(0); }
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+button.ghost {
+  background: transparent;
+  border: 1.5px solid rgba(30, 95, 154, 0.28);
+  box-shadow: none;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  color: var(--sapphire-deep);
+}
+button.ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: var(--sapphire);
+  box-shadow: none;
+  transform: none;
+}
+button.go {
+  background: linear-gradient(180deg, #3d8fd4 0%, var(--sapphire) 55%, var(--sapphire-deep) 100%);
+  border-color: transparent;
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 3px 0 var(--sapphire-ink),
+    0 6px 16px var(--shadow-deep);
+}
+button.go:hover:not(:disabled) {
+  color: #fff;
+  filter: brightness(1.05);
+}
+button.danger:hover:not(:disabled) {
+  color: var(--warn);
+  border-color: rgba(196, 30, 38, 0.35);
+}
+
+.hidden { display: none !important; }
+
+/* HUD — lasinen palkki */
+.hud {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0;
+  margin-bottom: 12px;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px var(--shadow);
+}
+.pscore {
+  padding: 10px 14px;
+  transition: background 0.25s;
+}
+.pscore + .pscore,
+.bagbox {
+  border-left: 1px solid rgba(30, 95, 154, 0.1);
+}
+.pscore.turn {
+  background: linear-gradient(180deg, rgba(61, 143, 212, 0.14), rgba(61, 143, 212, 0.05));
+}
+.pscore.turn .nm { color: var(--sapphire); }
+.pscore.turn .pt { color: var(--sapphire-deep); }
+.pscore .nm {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pscore .pt {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.pscore .lm {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  min-height: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+.bagbox {
+  padding: 10px 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 74px;
+  background: rgba(30, 95, 154, 0.04);
+}
+.bagbox .nm {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.bagbox .pt {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--sapphire-deep);
+}
+
+.goal {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.goal strong { color: var(--ink); font-weight: 750; }
+.goal .meld-ok { color: var(--ok); font-weight: 700; }
+.goal .meld-need { color: var(--tile-ink-o); font-weight: 700; }
+
+.status {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+  min-height: 20px;
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+.status.warn { color: var(--warn); font-weight: 700; }
+.status.ok { color: var(--ok); font-weight: 700; }
+
+.table-label {
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sapphire-deep);
+  margin-bottom: 8px;
+  opacity: 0.75;
+}
+
+/* Pöytä — safiirinen sametti */
+.table {
+  position: relative;
+  background:
+    radial-gradient(ellipse 85% 60% at 50% 15%, rgba(255, 255, 255, 0.2), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 90%, rgba(15, 69, 116, 0.45), transparent 50%),
+    linear-gradient(160deg, var(--velvet-hi) 0%, var(--velvet) 28%, var(--velvet-2) 70%, var(--velvet-3) 100%);
+  border-radius: 20px;
+  padding: 16px 14px;
+  min-height: 176px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 -1px 0 rgba(0, 40, 80, 0.2) inset,
+    0 16px 40px -8px var(--shadow-deep),
+    0 4px 12px var(--shadow);
+}
+.table::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 14px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 2px 12px rgba(0, 30, 60, 0.15);
+}
+.table.empty-hint {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 14px;
+  font-weight: 650;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 22px;
+  text-shadow: 0 1px 3px rgba(0, 40, 80, 0.3);
+  letter-spacing: 0.01em;
+}
+
+.set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  padding: 7px 8px;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background: rgba(8, 35, 65, 0.22);
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  animation: setIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  position: relative;
+  z-index: 1;
+}
+@keyframes setIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.set:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(8, 35, 65, 0.3);
+}
+.set.selected {
+  border-color: var(--select);
+  box-shadow: 0 0 0 2px var(--select-glow);
+}
+.set .set-actions { margin-left: auto; display: flex; gap: 4px; }
+.set .set-actions button {
+  padding: 4px 10px;
+  font-size: 11px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--sapphire-deep);
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  backdrop-filter: none;
+}
+.set .set-actions button:hover:not(:disabled) {
+  background: #fff;
+  color: var(--sapphire-ink);
+}
+
+/* Palat — kiillotettu luu */
+.tile {
+  width: 42px;
+  height: 56px;
+  border-radius: 7px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, transparent 42%),
+    linear-gradient(180deg, var(--tile) 0%, var(--tile-2) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-weight: 800;
+  line-height: 1;
+  border: 1px solid var(--tile-rim);
+  box-shadow:
+    0 1.5px 0 rgba(255, 255, 255, 0.95) inset,
+    0 -1px 0 rgba(180, 160, 130, 0.25) inset,
+    0 2px 0 #d8cdba,
+    0 4px 8px rgba(30, 30, 40, 0.18);
+  user-select: none;
+  position: relative;
+  flex-shrink: 0;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s;
+}
+.tile .v {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+.tile .c {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+}
+.tile.K { color: var(--tile-ink-k); }
+.tile.S { color: var(--tile-ink-s); }
+.tile.P { color: var(--tile-ink-p); }
+.tile.O { color: var(--tile-ink-o); }
+.tile.joker {
+  background:
+    linear-gradient(145deg, #fff 0%, transparent 40%),
+    linear-gradient(180deg, #fff9ec, #f5e0b0);
+  border-color: #e0b84a;
+  color: var(--tile-ink-k);
+}
+.tile.joker .v {
+  font-size: 22px;
+  background: linear-gradient(105deg, var(--tile-ink-p) 0%, var(--tile-ink-o) 45%, var(--tile-ink-s) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.tile.selected {
+  transform: translateY(-10px) scale(1.06);
+  box-shadow:
+    0 0 0 2.5px var(--select),
+    0 0 16px var(--select-glow),
+    0 1.5px 0 #fff inset,
+    0 12px 20px var(--shadow-deep);
+  z-index: 3;
+}
+.tile.clickable { cursor: pointer; }
+.tile.clickable:hover:not(.selected) {
+  transform: translateY(-4px);
+  box-shadow:
+    0 1.5px 0 #fff inset,
+    0 2px 0 #d8cdba,
+    0 8px 14px rgba(30, 30, 40, 0.22);
+}
+
+.section { margin-bottom: 12px; }
+.section-h { margin-bottom: 7px; }
+
+/* Teline — veistetty kobolttimuovi */
+.pool, .rack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 78px;
+  padding: 16px 14px 14px;
+  border-radius: 16px 16px 22px 22px;
+  background:
+    linear-gradient(180deg, var(--rack-shine) 0%, transparent 32%),
+    linear-gradient(185deg, var(--rack) 0%, var(--rack-mid) 48%, var(--rack-deep) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 -3px 8px rgba(8, 40, 80, 0.35) inset,
+    0 10px 24px var(--shadow-deep);
+  position: relative;
+}
+.pool::after, .rack::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 10px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(0, 40, 80, 0.18);
+  pointer-events: none;
+}
+.pool {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.4);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 30%),
+    linear-gradient(185deg, #2d7bc0, #16548f);
+}
+.pool:empty::after, .rack:empty::after {
+  content: attr(data-empty);
+  position: static;
+  height: auto;
+  background: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 650;
+  align-self: center;
+  letter-spacing: 0.01em;
+}
+
+.ctrls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+.ctrls button {
+  flex: 1 1 auto;
+  min-width: 110px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(14px);
+  background: var(--sapphire-ink);
+  color: #f5f8fc;
+  border: 1.5px solid var(--select);
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 50;
+  max-width: min(90vw, 400px);
+  text-align: center;
+  box-shadow: 0 14px 36px var(--shadow-deep);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.ov {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 40, 70, 0.48);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 40;
+  animation: fadeIn 0.25s ease both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.ov-card {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(61, 143, 212, 0.12), transparent 55%),
+    linear-gradient(165deg, #ffffff 0%, #eef4fa 100%);
+  border-radius: 22px;
+  padding: 28px 24px;
+  width: min(100%, 400px);
+  max-height: min(88dvh, 640px);
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(30, 95, 154, 0.12),
+    0 28px 60px -16px var(--shadow-deep);
+  animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ov-card h2 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: -0.03em;
+  color: var(--sapphire-ink);
+  margin-bottom: 8px;
+}
+.ov-card p, .ov-card li {
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  line-height: 1.55;
+  font-weight: 500;
+}
+.ov-card ul { padding-left: 1.15em; margin: 12px 0 16px; }
+.ov-card li { margin-bottom: 7px; }
+.ov-card .lead {
+  color: var(--ink);
+  font-size: 15.5px;
+  font-weight: 650;
+  margin-bottom: 12px;
+}
+.ov-card strong { color: var(--ink); }
+.ov-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.ov-actions button { width: 100%; padding: 13px 14px; }
+
+.field-label {
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sapphire-deep);
+  margin: 14px 0 6px;
+  opacity: 0.8;
+}
+.diff {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 4px;
+}
+.diff label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border: 1.5px solid rgba(30, 95, 154, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.65);
+  transition: 0.15s;
+}
+.diff input { accent-color: var(--sapphire); }
+.diff label:has(input:checked) {
+  border-color: var(--sapphire);
+  background: rgba(30, 95, 154, 0.1);
+  color: var(--sapphire-deep);
+  box-shadow: 0 0 0 3px rgba(30, 95, 154, 0.12);
+}
+
+@media (max-width: 480px) {
+  .tile { width: 35px; height: 48px; }
+  .tile .v { font-size: 20px; }
+  .ctrls button { min-width: 0; font-size: 12.5px; padding: 11px 8px; }
+  .brand h1 { font-size: clamp(34px, 11vw, 48px); }
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Rypäs</h1>
+      <div class="tag">Numerot · ryhmät · jonot</div>
+    </div>
+    <div class="hbtns">
+      <button class="ghost" id="btnRules" type="button">Säännöt</button>
+      <button class="ghost" id="btnNew" type="button">Uusi peli</button>
+    </div>
+  </header>
+
+  <div id="game" class="hidden">
+    <div class="hud">
+      <div class="pscore" id="hudP0">
+        <div class="nm"><span id="s0name">Sinä</span><span>ottelu</span></div>
+        <div class="pt" id="m0">0</div>
+        <div class="lm"><span id="s0">0</span> palaa · <span id="last0"></span></div>
+      </div>
+      <div class="pscore" id="hudP1">
+        <div class="nm"><span id="s1name">Tietokone</span><span>ottelu</span></div>
+        <div class="pt" id="m1">0</div>
+        <div class="lm"><span id="s1">0</span> palaa · <span id="last1"></span></div>
+      </div>
+      <div class="bagbox">
+        <div class="nm">Pussi</div>
+        <div class="pt" id="bag">0</div>
+      </div>
+    </div>
+
+    <div class="goal" id="goal"></div>
+    <div class="status" id="status"></div>
+
+    <div class="table-label">Pöytä</div>
+    <div class="table" id="table"></div>
+
+    <div class="section hidden" id="poolWrap">
+      <div class="section-h">
+        <div class="table-label">Työalue (puretut palat)</div>
+      </div>
+      <div class="pool" id="pool" data-empty="Työalue tyhjä"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-h">
+        <div class="table-label">Telineesi</div>
+      </div>
+      <div class="rack" id="rack" data-empty="Teline tyhjä"></div>
+    </div>
+
+    <div class="ctrls">
+      <button class="go" id="btnForm" type="button">Muodosta rypäs</button>
+      <button id="btnConfirm" type="button">Vahvista vuoro</button>
+      <button id="btnReset" type="button">Peru</button>
+      <button class="danger" id="btnDraw" type="button">Nosta</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov hidden" id="ov" role="dialog" aria-modal="true">
+  <div class="ov-card" id="ovBody"></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// Rypäs — pelimoottori (Node + selain).
+// Numeropalat, rypäät (ryhmä / jono), avaus ≥30, tavoite: tyhjennä teline.
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.RypasEngine = factory();
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  var COLORS = ["K", "S", "P", "O"]; // musta, sininen, punainen, keltainen
+  var COLOR_NAMES = { K: "musta", S: "sininen", P: "punainen", O: "keltainen" };
+  var RACK_SIZE = 14; // oletus
+  var RACK_SIZE_CHOICES = [7, 10, 14];
+  var INITIAL_MELD = 30;
+  var JOKER_PENALTY = 30;
+  var PLAYER_COUNT = 2;
+  var MATCH_TARGET = 200; // ottelu useammalla erällä
+
+  function clampRackSize(n) {
+    var v = n | 0;
+    if (RACK_SIZE_CHOICES.indexOf(v) >= 0) return v;
+    return RACK_SIZE;
+  }
+
+  function makeRNG(seed) {
+    var s = (seed >>> 0) || 1;
+    return function () {
+      s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+
+  function shuffle(arr, rng) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = (rng() * (i + 1)) | 0;
+      var t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+    }
+    return arr;
+  }
+
+  var _nextId = 1;
+  function tile(color, value, joker) {
+    return { id: _nextId++, color: color, value: value, joker: !!joker };
+  }
+
+  function resetIds() { _nextId = 1; }
+
+  function buildBag(rng) {
+    resetIds();
+    var bag = [];
+    for (var copy = 0; copy < 2; copy++) {
+      for (var ci = 0; ci < COLORS.length; ci++) {
+        for (var v = 1; v <= 13; v++) bag.push(tile(COLORS[ci], v, false));
+      }
+    }
+    bag.push(tile(null, 0, true));
+    bag.push(tile(null, 0, true));
+    return shuffle(bag, rng || makeRNG(Date.now()));
+  }
+
+  function cloneTile(t) {
+    return { id: t.id, color: t.color, value: t.value, joker: t.joker };
+  }
+
+  function cloneSet(set) {
+    return set.map(cloneTile);
+  }
+
+  function cloneBoard(board) {
+    return board.map(cloneSet);
+  }
+
+  function tileKey(t) {
+    return t.joker ? "J" : t.color + t.value;
+  }
+
+  function faceValue(t) {
+    if (t.joker) return JOKER_PENALTY;
+    return t.value;
+  }
+
+  function scoreTiles(tiles) {
+    var s = 0;
+    for (var i = 0; i < tiles.length; i++) s += faceValue(tiles[i]);
+    return s;
+  }
+
+  // ---- Rypään validointi ---------------------------------------------------
+
+  function isValidGroup(tiles) {
+    if (!tiles || tiles.length < 3 || tiles.length > 4) return false;
+    var fixed = [];
+    var jokers = 0;
+    for (var i = 0; i < tiles.length; i++) {
+      if (tiles[i].joker) jokers++;
+      else fixed.push(tiles[i]);
+    }
+    if (fixed.length === 0) return false;
+    var val = fixed[0].value;
+    var colors = {};
+    for (var j = 0; j < fixed.length; j++) {
+      if (fixed[j].value !== val) return false;
+      if (colors[fixed[j].color]) return false;
+      colors[fixed[j].color] = true;
+    }
+    var usedColors = Object.keys(colors).length;
+    if (usedColors + jokers !== tiles.length) return false;
+    if (usedColors + jokers > 4) return false;
+    return true;
+  }
+
+  function tryRunWithJokers(fixedSorted, jokers, totalLen) {
+    // fixedSorted: non-joker tiles sorted by value, same color already checked
+    if (fixedSorted.length === 0) return false;
+    var color = fixedSorted[0].color;
+    for (var i = 1; i < fixedSorted.length; i++) {
+      if (fixedSorted[i].color !== color) return false;
+      if (fixedSorted[i].value === fixedSorted[i - 1].value) return false;
+    }
+    var minV = fixedSorted[0].value;
+    var maxV = fixedSorted[fixedSorted.length - 1].value;
+    var span = maxV - minV + 1;
+    var gaps = span - fixedSorted.length;
+    if (gaps > jokers) return false;
+    var leftover = jokers - gaps;
+    // leftover jokers can extend ends, but stay in 1..13
+    var roomLow = minV - 1;
+    var roomHigh = 13 - maxV;
+    if (leftover > roomLow + roomHigh) return false;
+    var finalLen = span + leftover;
+    if (finalLen !== totalLen) return false;
+    if (finalLen > 13) return false;
+    return true;
+  }
+
+  function isValidRun(tiles) {
+    if (!tiles || tiles.length < 3) return false;
+    var fixed = [];
+    var jokers = 0;
+    for (var i = 0; i < tiles.length; i++) {
+      if (tiles[i].joker) jokers++;
+      else fixed.push(tiles[i]);
+    }
+    if (fixed.length === 0) return false;
+    fixed.sort(function (a, b) { return a.value - b.value; });
+    return tryRunWithJokers(fixed, jokers, tiles.length);
+  }
+
+  function isValidSet(tiles) {
+    return isValidGroup(tiles) || isValidRun(tiles);
+  }
+
+  function setKind(tiles) {
+    if (isValidGroup(tiles)) return "group";
+    if (isValidRun(tiles)) return "run";
+    return null;
+  }
+
+  function validateBoard(board) {
+    if (!board || !board.length) return { ok: true };
+    for (var i = 0; i < board.length; i++) {
+      if (!isValidSet(board[i])) {
+        return { ok: false, error: "Rypäs " + (i + 1) + " ei kelpaa", index: i };
+      }
+    }
+    return { ok: true };
+  }
+
+  // ---- Vuoron validointi ---------------------------------------------------
+
+  function countIds(tiles) {
+    var m = {};
+    for (var i = 0; i < tiles.length; i++) {
+      var id = tiles[i].id;
+      m[id] = (m[id] || 0) + 1;
+    }
+    return m;
+  }
+
+  function flatBoard(board) {
+    var out = [];
+    for (var i = 0; i < board.length; i++) {
+      for (var j = 0; j < board[i].length; j++) out.push(board[i][j]);
+    }
+    return out;
+  }
+
+  function sameMultiset(a, b) {
+    var ca = countIds(a), cb = countIds(b);
+    var keys = {};
+    Object.keys(ca).forEach(function (k) { keys[k] = true; });
+    Object.keys(cb).forEach(function (k) { keys[k] = true; });
+    var ks = Object.keys(keys);
+    for (var i = 0; i < ks.length; i++) {
+      if ((ca[ks[i]] || 0) !== (cb[ks[i]] || 0)) return false;
+    }
+    return true;
+  }
+
+  function scorePlayedFromRack(oldRack, newRack) {
+    var newIds = {};
+    newRack.forEach(function (t) { newIds[t.id] = true; });
+    var played = [];
+    oldRack.forEach(function (t) {
+      if (!newIds[t.id]) played.push(t);
+    });
+    return { tiles: played, score: scoreTiles(played) };
+  }
+
+  /**
+   * Validoi pelaajan siirto.
+   * @param {object} state — { board, racks, turn, hasMelded: boolean[] }
+   * @param {array[]} newBoard
+   * @param {array} newRack — vuorossa olevan pelaajan uusi teline
+   */
+  function validatePlay(state, newBoard, newRack) {
+    var p = state.turn;
+    var oldRack = state.racks[p];
+    var oldBoard = state.board;
+
+    if (!Array.isArray(newBoard) || !Array.isArray(newRack)) {
+      return { ok: false, error: "Virheellinen siirto" };
+    }
+    for (var i = 0; i < newBoard.length; i++) {
+      if (!newBoard[i] || newBoard[i].length < 3) {
+        return { ok: false, error: "Jokaisessa rypäässä vähintään 3 palaa" };
+      }
+    }
+
+    var boardCheck = validateBoard(newBoard);
+    if (!boardCheck.ok) return boardCheck;
+
+    var oldAll = flatBoard(oldBoard).concat(oldRack);
+    var newAll = flatBoard(newBoard).concat(newRack);
+    if (!sameMultiset(oldAll, newAll)) {
+      return { ok: false, error: "Palojen määrä ei täsmää (ei saa lisätä/poistaa paloja)" };
+    }
+
+    var played = scorePlayedFromRack(oldRack, newRack);
+    if (played.tiles.length === 0) {
+      return { ok: false, error: "Pelaa vähintään yksi pala telineestä, tai nosta" };
+    }
+
+    if (!state.hasMelded[p]) {
+      // Avaus: vain omia paloja — pöydän vanhat palat eivät saa olla muuttuneet
+      // (saa muodostaa uusia rypäitä, mutta ei koskea vanhoihin).
+      if (oldBoard.length !== 0) {
+        // Vanhat rypäät säilyvät identtisinä (järjestys voi vaihtua rypäiden välillä).
+        if (!boardsContainSameSets(oldBoard, newBoard, true)) {
+          // Salli: vanhat setit intact + uudet setit pelkästään pelatuista
+          var leftover = subtractSets(newBoard, oldBoard);
+          if (leftover === null) {
+            return { ok: false, error: "Ennen avausta et saa järjestellä pöytää" };
+          }
+          var fromRack = played.tiles;
+          var usedInNew = flatBoard(leftover);
+          if (!sameMultiset(usedInNew, fromRack)) {
+            return { ok: false, error: "Avauksessa käytä vain omia palojasi" };
+          }
+          var meldScore = scoreTiles(fromRack);
+          if (meldScore < INITIAL_MELD) {
+            return {
+              ok: false,
+              error: "Avaus vaatii vähintään " + INITIAL_MELD + " pistettä (nyt " + meldScore + ")",
+              score: meldScore,
+            };
+          }
+        } else {
+          // Kaikki vanhat tallella, mutta ei uusia? Sitten ei pelattu — jo estetty.
+          var onlyNew = subtractSets(newBoard, oldBoard);
+          if (!onlyNew || onlyNew.length === 0) {
+            return { ok: false, error: "Pelaa uusia rypäitä avaukseen" };
+          }
+          var ms = scoreTiles(played.tiles);
+          if (ms < INITIAL_MELD) {
+            return {
+              ok: false,
+              error: "Avaus vaatii vähintään " + INITIAL_MELD + " pistettä (nyt " + ms + ")",
+              score: ms,
+            };
+          }
+        }
+      } else {
+        var ms0 = scoreTiles(played.tiles);
+        if (ms0 < INITIAL_MELD) {
+          return {
+            ok: false,
+            error: "Avaus vaatii vähintään " + INITIAL_MELD + " pistettä (nyt " + ms0 + ")",
+            score: ms0,
+          };
+        }
+      }
+    }
+
+    return {
+      ok: true,
+      played: played.tiles,
+      score: played.score,
+      melded: true,
+      won: newRack.length === 0,
+    };
+  }
+
+  function setSignature(set) {
+    var ids = set.map(function (t) { return t.id; }).sort(function (a, b) { return a - b; });
+    return ids.join(",");
+  }
+
+  function boardsContainSameSets(a, b, allowExtra) {
+    var sa = a.map(setSignature).sort();
+    var sb = b.map(setSignature).sort();
+    if (!allowExtra && sa.length !== sb.length) return false;
+    var i = 0, j = 0;
+    while (i < sa.length && j < sb.length) {
+      if (sa[i] === sb[j]) { i++; j++; }
+      else if (allowExtra && sa[i] > sb[j]) j++;
+      else if (allowExtra && sa[i] < sb[j]) return false;
+      else return false;
+    }
+    return i === sa.length;
+  }
+
+  /** Palauta newBoard:n setit joita ei ole oldBoardissa; null jos oldBoardin settejä puuttuu. */
+  function subtractSets(newBoard, oldBoard) {
+    var nb = newBoard.map(function (s) { return { sig: setSignature(s), set: s }; });
+    var used = {};
+    for (var i = 0; i < oldBoard.length; i++) {
+      var sig = setSignature(oldBoard[i]);
+      var found = -1;
+      for (var j = 0; j < nb.length; j++) {
+        if (!used[j] && nb[j].sig === sig) { found = j; break; }
+      }
+      if (found < 0) return null;
+      used[found] = true;
+    }
+    var extra = [];
+    for (var k = 0; k < nb.length; k++) {
+      if (!used[k]) extra.push(nb[k].set);
+    }
+    return extra;
+  }
+
+  // ---- Pelitila ------------------------------------------------------------
+
+  function newGame(opts) {
+    opts = opts || {};
+    var rackSize = clampRackSize(opts.rackSize != null ? opts.rackSize : RACK_SIZE);
+    var seed = opts.seed != null ? opts.seed : ((Math.random() * 1e9) | 0);
+    var rng = makeRNG(seed);
+    var bag = buildBag(rng);
+    var racks = [];
+    for (var p = 0; p < PLAYER_COUNT; p++) {
+      racks.push(bag.splice(bag.length - rackSize, rackSize));
+    }
+    var matchScores = opts.matchScores ? opts.matchScores.slice() : [0, 0];
+    return {
+      bag: bag,
+      board: [],
+      racks: racks,
+      turn: 0,
+      hasMelded: [false, false],
+      over: false,
+      winner: null,
+      scores: [0, 0], // tämän erän pisteet
+      settled: false,
+      matchScores: matchScores,
+      matchTarget: opts.matchTarget != null ? opts.matchTarget : MATCH_TARGET,
+      matchOver: false,
+      matchWinner: null,
+      round: opts.round != null ? opts.round : 1,
+      lastAction: [null, null],
+      rng: rng,
+      seed: seed,
+      difficulty: opts.difficulty || "normaali",
+      rackSize: rackSize,
+    };
+  }
+
+  /** Kirjaa erän pisteet otteluun. Kutsu kun erä on ohi. */
+  function settleRound(state) {
+    if (!state.over || state.settled) return state;
+    state.settled = true;
+    state.matchScores[0] += state.scores[0];
+    state.matchScores[1] += state.scores[1];
+    var t = state.matchTarget;
+    if (state.matchScores[0] >= t || state.matchScores[1] >= t) {
+      state.matchOver = true;
+      if (state.matchScores[0] > state.matchScores[1]) state.matchWinner = 0;
+      else if (state.matchScores[1] > state.matchScores[0]) state.matchWinner = 1;
+      else state.matchWinner = null;
+    }
+    return state;
+  }
+
+  /** Seuraava erä (sama ottelu). Null jos ottelu jo ohi tai erä kesken. */
+  function nextRound(state) {
+    if (!state.over || state.matchOver) return null;
+    settleRound(state);
+    if (state.matchOver) return null;
+    var nextSeed = state.rng ? ((state.rng() * 1e9) | 0) : (((Math.random() * 1e9) | 0));
+    return newGame({
+      seed: nextSeed,
+      difficulty: state.difficulty,
+      rackSize: state.rackSize,
+      matchScores: state.matchScores.slice(),
+      matchTarget: state.matchTarget,
+      round: (state.round || 1) + 1,
+    });
+  }
+
+  function drawOne(state) {
+    if (state.over) return { ok: false, error: "Peli ohi" };
+    if (!state.bag.length) {
+      // Pussi tyhjä: ohita (ei nostoa)
+      state.lastAction[state.turn] = { type: "pass", reason: "pussi tyhjä" };
+      state.turn = (state.turn + 1) % PLAYER_COUNT;
+      return { ok: true, drew: null, passed: true };
+    }
+    var t = state.bag.pop();
+    state.racks[state.turn].push(t);
+    state.lastAction[state.turn] = { type: "draw", tile: cloneTile(t) };
+    state.turn = (state.turn + 1) % PLAYER_COUNT;
+    return { ok: true, drew: t };
+  }
+
+  function applyPlay(state, newBoard, newRack) {
+    if (state.over) return { ok: false, error: "Peli ohi" };
+    var res = validatePlay(state, newBoard, newRack);
+    if (!res.ok) return res;
+    var p = state.turn;
+    state.board = cloneBoard(newBoard);
+    state.racks[p] = newRack.map(cloneTile);
+    state.hasMelded[p] = true;
+    state.lastAction[p] = {
+      type: "play",
+      count: res.played.length,
+      score: res.score,
+    };
+    if (res.won) {
+      state.over = true;
+      state.winner = p;
+      // Häviäjän telineen pisteet voittajalle
+      var other = 1 - p;
+      var pen = scoreTiles(state.racks[other]);
+      state.scores[p] += pen;
+      state.scores[other] -= pen;
+      settleRound(state);
+    } else {
+      state.turn = (state.turn + 1) % PLAYER_COUNT;
+    }
+    return res;
+  }
+
+  function sortRack(rack) {
+    return rack.slice().sort(function (a, b) {
+      if (a.joker !== b.joker) return a.joker ? 1 : -1;
+      if (a.color !== b.color) return COLORS.indexOf(a.color) - COLORS.indexOf(b.color);
+      return a.value - b.value;
+    });
+  }
+
+  // ---- AI ------------------------------------------------------------------
+
+  function combinations(arr, k) {
+    var out = [];
+    function rec(start, path) {
+      if (path.length === k) { out.push(path.slice()); return; }
+      for (var i = start; i < arr.length; i++) {
+        path.push(arr[i]);
+        rec(i + 1, path);
+        path.pop();
+      }
+    }
+    rec(0, []);
+    return out;
+  }
+
+  function findSetsInRack(rack) {
+    var found = [];
+    var n = rack.length;
+    // Ryhmät: sama arvo
+    var byVal = {};
+    rack.forEach(function (t, idx) {
+      if (t.joker) return;
+      (byVal[t.value] = byVal[t.value] || []).push({ t: t, idx: idx });
+    });
+    var jokers = rack.filter(function (t) { return t.joker; });
+
+    Object.keys(byVal).forEach(function (v) {
+      var list = byVal[v];
+      // eri värit
+      var uniq = [];
+      var seen = {};
+      list.forEach(function (x) {
+        if (!seen[x.t.color]) { seen[x.t.color] = true; uniq.push(x); }
+      });
+      for (var need = 3; need <= 4; need++) {
+        if (uniq.length >= need) {
+          combinations(uniq, need).forEach(function (c) {
+            found.push({ tiles: c.map(function (x) { return x.t; }), kind: "group" });
+          });
+        } else if (uniq.length + jokers.length >= need && uniq.length >= 1) {
+          var jNeed = need - uniq.length;
+          if (jNeed <= jokers.length && jNeed >= 0) {
+            found.push({
+              tiles: uniq.map(function (x) { return x.t; }).concat(jokers.slice(0, jNeed)),
+              kind: "group",
+            });
+          }
+        }
+      }
+    });
+
+    // Jonot: sama väri
+    COLORS.forEach(function (col) {
+      var list = rack.filter(function (t) { return !t.joker && t.color === col; });
+      list.sort(function (a, b) { return a.value - b.value; });
+      // dedupe values
+      var uniq = [];
+      var seenV = {};
+      list.forEach(function (t) {
+        if (!seenV[t.value]) { seenV[t.value] = true; uniq.push(t); }
+      });
+      for (var len = 3; len <= Math.min(13, uniq.length + jokers.length); len++) {
+        for (var start = 0; start < uniq.length; start++) {
+          for (var end = start; end < uniq.length; end++) {
+            var slice = uniq.slice(start, end + 1);
+            var span = slice[slice.length - 1].value - slice[0].value + 1;
+            var gaps = span - slice.length;
+            var jNeed = len - slice.length;
+            if (jNeed < 0) continue;
+            if (gaps > jNeed) continue;
+            if (jNeed > jokers.length) continue;
+            if (span + (jNeed - gaps) !== len && gaps !== jNeed) {
+              // leftover extends
+              var leftover = jNeed - gaps;
+              var room = (slice[0].value - 1) + (13 - slice[slice.length - 1].value);
+              if (leftover > room) continue;
+            }
+            var tiles = slice.concat(jokers.slice(0, jNeed));
+            if (isValidRun(tiles) && tiles.length === len) {
+              found.push({ tiles: tiles, kind: "run" });
+            }
+          }
+        }
+      }
+    });
+
+    return found;
+  }
+
+  function removeTiles(rack, tiles) {
+    var ids = {};
+    tiles.forEach(function (t) { ids[t.id] = true; });
+    return rack.filter(function (t) { return !ids[t.id]; });
+  }
+
+  function canAddToSet(set, tile) {
+    var trial = set.concat([tile]);
+    return isValidSet(trial);
+  }
+
+  function findAdditions(board, rack) {
+    var moves = [];
+    for (var i = 0; i < board.length; i++) {
+      for (var r = 0; r < rack.length; r++) {
+        if (canAddToSet(board[i], rack[r])) {
+          var nb = cloneBoard(board);
+          nb[i] = nb[i].concat([cloneTile(rack[r])]);
+          moves.push({
+            board: nb,
+            rack: removeTiles(rack, [rack[r]]),
+            played: 1,
+            score: faceValue(rack[r]),
+          });
+        }
+      }
+    }
+    return moves;
+  }
+
+  /** Ahne AI: avaus / lisäykset / uudet rypäät telineestä. */
+  function bestMove(state, player) {
+    if (player == null) player = state.turn;
+    var rack = state.racks[player].slice();
+    var board = cloneBoard(state.board);
+    var hasMelded = state.hasMelded[player];
+
+    if (!hasMelded) {
+      // Etsi yhdistelmä rypäitä joiden pisteet ≥ 30
+      var sets = findSetsInRack(rack);
+      // Greedy: kokeile yksittäisiä ja pareja
+      var best = null;
+      for (var i = 0; i < sets.length; i++) {
+        var s = sets[i];
+        var sc = scoreTiles(s.tiles);
+        if (sc >= INITIAL_MELD) {
+          var cand = {
+            board: board.concat([cloneSet(s.tiles)]),
+            rack: removeTiles(rack, s.tiles),
+            played: s.tiles.length,
+            score: sc,
+          };
+          if (!best || cand.played > best.played || (cand.played === best.played && cand.score > best.score)) {
+            best = cand;
+          }
+        }
+      }
+      // Kaksi rypästä
+      for (var a = 0; a < sets.length; a++) {
+        for (var b = a + 1; b < sets.length; b++) {
+          var ids = {};
+          var overlap = false;
+          sets[a].tiles.concat(sets[b].tiles).forEach(function (t) {
+            if (ids[t.id]) overlap = true;
+            ids[t.id] = true;
+          });
+          if (overlap) continue;
+          var sc2 = scoreTiles(sets[a].tiles) + scoreTiles(sets[b].tiles);
+          if (sc2 >= INITIAL_MELD) {
+            var cand2 = {
+              board: board.concat([cloneSet(sets[a].tiles), cloneSet(sets[b].tiles)]),
+              rack: removeTiles(removeTiles(rack, sets[a].tiles), sets[b].tiles),
+              played: sets[a].tiles.length + sets[b].tiles.length,
+              score: sc2,
+            };
+            if (!best || cand2.played > best.played) best = cand2;
+          }
+        }
+      }
+      return best;
+    }
+
+    // Avattu: kokeile lisäyksiä ja uusia rypäitä; valitse eniten paloja
+    var candidates = [];
+    findAdditions(board, rack).forEach(function (m) { candidates.push(m); });
+
+    var sets2 = findSetsInRack(rack);
+    sets2.forEach(function (s) {
+      candidates.push({
+        board: board.concat([cloneSet(s.tiles)]),
+        rack: removeTiles(rack, s.tiles),
+        played: s.tiles.length,
+        score: scoreTiles(s.tiles),
+      });
+    });
+
+    // Yksi lisäys + yksi uusi rypäs (yksinkertainen kombo)
+    findAdditions(board, rack).forEach(function (add) {
+      var more = findSetsInRack(add.rack);
+      more.forEach(function (s) {
+        candidates.push({
+          board: add.board.concat([cloneSet(s.tiles)]),
+          rack: removeTiles(add.rack, s.tiles),
+          played: add.played + s.tiles.length,
+          score: add.score + scoreTiles(s.tiles),
+        });
+      });
+    });
+
+    if (!candidates.length) return null;
+    candidates.sort(function (a, b) {
+      if (b.played !== a.played) return b.played - a.played;
+      return b.score - a.score;
+    });
+
+    // Helppo: joskus ohita paras ja nosta
+    if (state.difficulty === "helppo" && candidates[0].played === 1 && state.rng() < 0.35) {
+      return null;
+    }
+    return candidates[0];
+  }
+
+  function aiTurn(state) {
+    var mv = bestMove(state);
+    if (!mv) return drawOne(state);
+    return applyPlay(state, mv.board, mv.rack);
+  }
+
+  /** Simuloi peli loppuun (testejä / smoke). */
+  function playToEnd(state, maxTurns) {
+    maxTurns = maxTurns || 500;
+    var turns = 0;
+    while (!state.over && turns < maxTurns) {
+      aiTurn(state);
+      turns++;
+      // Umpikuja: molemmat vain nostavat ja pussi tyhjä
+      if (!state.bag.length) {
+        var idle = 0;
+        // anna vielä muutama vuoro
+        while (!state.over && idle < PLAYER_COUNT * 2 && turns < maxTurns) {
+          var before = state.racks[state.turn].length;
+          aiTurn(state);
+          turns++;
+          if (state.racks[(state.turn + PLAYER_COUNT - 1) % PLAYER_COUNT].length >= before) idle++;
+          else idle = 0;
+        }
+        if (!state.over) {
+          // Pisteytä telineet: vähemmän häviää vähemmän
+          var s0 = scoreTiles(state.racks[0]);
+          var s1 = scoreTiles(state.racks[1]);
+          state.over = true;
+          if (s0 < s1) { state.winner = 0; state.scores[0] += s1; state.scores[1] -= s1; }
+          else if (s1 < s0) { state.winner = 1; state.scores[1] += s0; state.scores[0] -= s0; }
+          else state.winner = null; // tasapeli
+        }
+        break;
+      }
+    }
+    if (state.over) settleRound(state);
+    return state;
+  }
+
+  return {
+    COLORS: COLORS,
+    COLOR_NAMES: COLOR_NAMES,
+    RACK_SIZE: RACK_SIZE,
+    RACK_SIZE_CHOICES: RACK_SIZE_CHOICES,
+    clampRackSize: clampRackSize,
+    INITIAL_MELD: INITIAL_MELD,
+    JOKER_PENALTY: JOKER_PENALTY,
+    PLAYER_COUNT: PLAYER_COUNT,
+    MATCH_TARGET: MATCH_TARGET,
+    makeRNG: makeRNG,
+    shuffle: shuffle,
+    tile: tile,
+    resetIds: resetIds,
+    buildBag: buildBag,
+    cloneTile: cloneTile,
+    cloneBoard: cloneBoard,
+    tileKey: tileKey,
+    faceValue: faceValue,
+    scoreTiles: scoreTiles,
+    isValidGroup: isValidGroup,
+    isValidRun: isValidRun,
+    isValidSet: isValidSet,
+    setKind: setKind,
+    validateBoard: validateBoard,
+    validatePlay: validatePlay,
+    newGame: newGame,
+    settleRound: settleRound,
+    nextRound: nextRound,
+    drawOne: drawOne,
+    applyPlay: applyPlay,
+    sortRack: sortRack,
+    findSetsInRack: findSetsInRack,
+    bestMove: bestMove,
+    aiTurn: aiTurn,
+    playToEnd: playToEnd,
+    flatBoard: flatBoard,
+  };
+});
+
+</script>
+<script>
+// Rypäs — selainsovellus (DOM). Ydin: globalThis.RypasEngine.
+(function () {
+  "use strict";
+  var E = globalThis.RypasEngine;
+  var el = function (id) { return document.getElementById(id); };
+
+  var NAMES = ["Sinä", "Tietokone"];
+  var AI_DELAY = 650;
+
+  var G = null;
+  var snap = null; // vuoron alku
+  var workBoard = null;
+  var workRack = null;
+  var pool = []; // pöydältä puretut (työalue)
+  var sel = {}; // id -> true
+  var selSet = null;
+  var busy = false;
+
+  function toast(msg) {
+    var t = el("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(function () { t.classList.remove("show"); }, 2200);
+  }
+
+  function setStatus(msg, kind) {
+    var s = el("status");
+    s.textContent = msg || "";
+    s.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function openOverlay(html) {
+    el("ovBody").innerHTML = html;
+    el("ov").classList.remove("hidden");
+  }
+  function closeOverlay() {
+    el("ov").classList.add("hidden");
+  }
+
+  function startScreen() {
+    var rackOpts = E.RACK_SIZE_CHOICES.map(function (n) {
+      var checked = n === E.RACK_SIZE ? " checked" : "";
+      return "<label><input type=\"radio\" name=\"rack\" value=\"" + n + "\"" + checked + "> " + n + "</label>";
+    }).join("");
+    openOverlay(
+      "<h2>Rypäs</h2>" +
+      "<p class=\"lead\">Muodosta numerorypäitä, tyhjennä telineesi ja kerää ottelupisteitä — ensimmäinen " + E.MATCH_TARGET + " pisteeseen voittaa.</p>" +
+      "<p>Ryhmä = sama numero, eri värit (3–4). Jono = sama väri, peräkkäiset (≥3). Avaus ≥30 pistettä.</p>" +
+      "<div class=\"field-label\">Aloituspalat telineeseen</div>" +
+      "<div class=\"diff\">" + rackOpts + "</div>" +
+      "<div class=\"field-label\">Vaikeus</div>" +
+      "<div class=\"diff\">" +
+      "<label><input type=\"radio\" name=\"diff\" value=\"helppo\"> Helppo</label>" +
+      "<label><input type=\"radio\" name=\"diff\" value=\"normaali\" checked> Normaali</label>" +
+      "</div>" +
+      "<div class=\"ov-actions\">" +
+      "<button class=\"go\" id=\"ovStart\">Aloita peli</button>" +
+      "<button class=\"ghost\" id=\"ovRules\">Säännöt</button>" +
+      "</div>"
+    );
+    el("ovStart").onclick = function () {
+      var d = document.querySelector("input[name=diff]:checked");
+      var r = document.querySelector("input[name=rack]:checked");
+      newGame({
+        difficulty: d ? d.value : "normaali",
+        rackSize: r ? +r.value : E.RACK_SIZE,
+      });
+    };
+    el("ovRules").onclick = showRules;
+  }
+
+  function showRules() {
+    openOverlay(
+      "<h2>Säännöt</h2>" +
+      "<ul>" +
+      "<li><strong>Ottelu:</strong> pelataan eriä, kunnes joku saavuttaa " + E.MATCH_TARGET + " pistettä.</li>" +
+      "<li><strong>Erä:</strong> tyhjennä telineesi ensimmäisenä — saat vastustajan jäljellä olevat pisteet (hänelle miinus).</li>" +
+      "<li><strong>Aloitus:</strong> valitse montako palaa kumpikin saa telineeseen (7, 10 tai 14).</li>" +
+      "<li><strong>Ryhmä:</strong> sama numero, eri värit, 3–4 palaa.</li>" +
+      "<li><strong>Jono:</strong> sama väri, peräkkäiset numerot, vähintään 3.</li>" +
+      "<li><strong>Jokerit</strong> korvaavat minkä tahansa palan. Kädessä jokerin sakko on 30.</li>" +
+      "<li><strong>Avaus:</strong> ensimmäisellä siirrolla vähintään 30 pistettä omista paloista (pöytää ei saa vielä järjestellä).</li>" +
+      "<li>Avauksen jälkeen voit purkaa ja järjestellä pöydän rypäitä, kunhan vuoron lopussa kaikki rypäät kelpaavat ja olet pelannut vähintään yhden uuden palan.</li>" +
+      "<li>Jos et pelaa, <strong>nosta</strong> yksi pala.</li>" +
+      "</ul>" +
+      "<div class=\"ov-actions\">" +
+      "<button class=\"go\" id=\"ovBack\">Takaisin</button>" +
+      "</div>"
+    );
+    el("ovBack").onclick = function () {
+      if (G && !G.over) closeOverlay();
+      else startScreen();
+    };
+  }
+
+  function newGame(opts) {
+    G = E.newGame(opts || {});
+    busy = false;
+    el("game").classList.remove("hidden");
+    closeOverlay();
+    beginHumanTurn();
+    setStatus("Sinun vuorosi — valitse paloja ja muodosta rypäs (avaus ≥30 p).");
+    toast(G.round > 1
+      ? "Erä " + G.round + " — tyhjennä telineesi!"
+      : "Ottelu " + G.matchTarget + " pisteeseen — tyhjennä telineesi!");
+  }
+
+  // Agentti-/smoke-testaus: window.RypasUI.newGame({ seed: 3 })
+  globalThis.RypasUI = {
+    newGame: newGame,
+    startScreen: startScreen,
+  };
+
+  function startFromQuery() {
+    var m = /(?:\?|&)seed=(\d+)/.exec(location.search || "");
+    if (m) {
+      newGame({ seed: +m[1], difficulty: "normaali" });
+      return;
+    }
+    startScreen();
+  }
+
+  function beginHumanTurn() {
+    snap = {
+      board: E.cloneBoard(G.board),
+      rack: G.racks[0].map(E.cloneTile),
+    };
+    workBoard = E.cloneBoard(G.board);
+    workRack = G.racks[0].map(E.cloneTile);
+    pool = [];
+    sel = {};
+    selSet = null;
+    render();
+  }
+
+  function selectedTiles() {
+    var out = [];
+    workRack.forEach(function (t) { if (sel[t.id]) out.push(t); });
+    pool.forEach(function (t) { if (sel[t.id]) out.push(t); });
+    return out;
+  }
+
+  function removeSelectedFromSources() {
+    var ids = sel;
+    workRack = workRack.filter(function (t) { return !ids[t.id]; });
+    pool = pool.filter(function (t) { return !ids[t.id]; });
+    sel = {};
+  }
+
+  function tileEl(t, clickable) {
+    var d = document.createElement("div");
+    var cls = "tile" + (t.joker ? " joker" : " " + t.color);
+    if (sel[t.id]) cls += " selected";
+    if (clickable) cls += " clickable";
+    d.className = cls;
+    d.dataset.id = t.id;
+    if (t.joker) {
+      d.innerHTML = '<span class="v">☺</span><span class="c">jokeri</span>';
+      d.title = "Jokeri";
+    } else {
+      d.innerHTML = '<span class="v">' + t.value + '</span><span class="c">' +
+        (E.COLOR_NAMES[t.color] || "") + "</span>";
+      d.title = t.value + " " + (E.COLOR_NAMES[t.color] || "");
+    }
+    if (clickable) {
+      d.onclick = function (e) {
+        e.stopPropagation();
+        if (busy || G.turn !== 0 || G.over) return;
+        sel[t.id] = !sel[t.id];
+        render();
+      };
+    }
+    return d;
+  }
+
+  function render() {
+    renderHud();
+    renderGoal();
+    renderTable();
+    renderPool();
+    renderRack();
+    renderControls();
+  }
+
+  function renderHud() {
+    for (var p = 0; p < 2; p++) {
+      var hud = el("hudP" + p);
+      hud.className = "pscore" + (G.turn === p && !G.over ? " turn" : "");
+      el("s" + p + "name").textContent = NAMES[p];
+      el("m" + p).textContent = G.matchScores[p];
+      el("s" + p).textContent = G.racks[p].length;
+      var la = G.lastAction[p];
+      var lm = el("last" + p);
+      if (!la) lm.textContent = G.hasMelded[p] ? "Avattu" : "Ei avattu";
+      else if (la.type === "draw") lm.textContent = "Nosti";
+      else if (la.type === "pass") lm.textContent = "Ohitti";
+      else if (la.type === "play") lm.textContent = "Pelasi " + la.count;
+    }
+    if (G.turn === 0 && !G.over) el("s0").textContent = workRack.length;
+    el("bag").textContent = G.bag.length;
+  }
+
+  function renderGoal() {
+    var g = el("goal");
+    var matchLine = "<strong>Ottelu " + G.matchTarget + " p</strong> · Erä " + G.round +
+      " · " + G.matchScores[0] + "–" + G.matchScores[1];
+    if (G.over) {
+      g.innerHTML = matchLine + (G.matchOver ? " · <strong>Ottelu ohi</strong>" : " · <strong>Erä ohi</strong>");
+      return;
+    }
+    var meld = G.hasMelded[0]
+      ? '<span class="meld-ok">Avaus tehty</span>'
+      : '<span class="meld-need">Avaus ≥' + E.INITIAL_MELD + " p</span>";
+    g.innerHTML = matchLine + " · " + meld +
+      " · Vuoro: <strong>" + NAMES[G.turn] + "</strong>";
+  }
+
+  function renderTable() {
+    var host = el("table");
+    host.innerHTML = "";
+    host.className = "table";
+    if (!workBoard.length) {
+      host.classList.add("empty-hint");
+      host.textContent = "Pöytä tyhjä — muodosta ensimmäinen rypäs telineestä.";
+      return;
+    }
+    workBoard.forEach(function (set, idx) {
+      var row = document.createElement("div");
+      row.className = "set" + (selSet === idx ? " selected" : "");
+      set.forEach(function (t) { row.appendChild(tileEl(t, false)); });
+      var actions = document.createElement("div");
+      actions.className = "set-actions";
+      var canBreak = G.hasMelded[0] || isNewSet(idx);
+      if (canBreak && G.turn === 0 && !G.over && !busy) {
+        var b = document.createElement("button");
+        b.textContent = "Pura";
+        b.onclick = function (e) {
+          e.stopPropagation();
+          breakSet(idx);
+        };
+        actions.appendChild(b);
+      }
+      row.appendChild(actions);
+      row.onclick = function () {
+        if (busy || G.turn !== 0 || G.over) return;
+        onSetClick(idx);
+      };
+      host.appendChild(row);
+    });
+  }
+
+  function isNewSet(idx) {
+    var sig = workBoard[idx].map(function (t) { return t.id; }).sort(function (a, b) { return a - b; }).join(",");
+    for (var i = 0; i < snap.board.length; i++) {
+      var s2 = snap.board[i].map(function (t) { return t.id; }).sort(function (a, b) { return a - b; }).join(",");
+      if (s2 === sig) return false;
+    }
+    return true;
+  }
+
+  function breakSet(idx) {
+    var set = workBoard[idx];
+    workBoard.splice(idx, 1);
+    set.forEach(function (t) { pool.push(t); });
+    selSet = null;
+    setStatus("Rypäs purettu työalueelle — muodosta uudet rypäät.");
+    render();
+  }
+
+  function onSetClick(idx) {
+    if (busy || G.turn !== 0 || G.over) return;
+    var tiles = selectedTiles();
+    if (tiles.length) {
+      if (!G.hasMelded[0] && !isNewSet(idx)) {
+        setStatus("Ennen avausta et voi lisätä pöydän vanhoihin rypäisiin.", "warn");
+        toast("Tee ensin oma avaus (≥30 p)");
+        return;
+      }
+      var trial = workBoard[idx].concat(tiles);
+      if (!E.isValidSet(trial)) {
+        setStatus("Valitut palat eivät sovi tähän rypääseen.", "warn");
+        toast("Ei sovi rypääseen");
+        return;
+      }
+      workBoard[idx] = trial;
+      removeSelectedFromSources();
+      selSet = null;
+      setStatus("Palat lisätty rypääseen.");
+      toast("+" + tiles.length + " palaa rypääseen");
+      render();
+      return;
+    }
+    selSet = selSet === idx ? null : idx;
+    render();
+  }
+
+  function renderPool() {
+    var wrap = el("poolWrap");
+    if (!pool.length && !(G.hasMelded[0] && G.turn === 0)) {
+      wrap.classList.add("hidden");
+      return;
+    }
+    wrap.classList.remove("hidden");
+    var host = el("pool");
+    host.innerHTML = "";
+    host.dataset.empty = "Työalue tyhjä";
+    pool.forEach(function (t) { host.appendChild(tileEl(t, G.turn === 0 && !busy)); });
+  }
+
+  function renderRack() {
+    var host = el("rack");
+    host.innerHTML = "";
+    host.dataset.empty = "Teline tyhjä — voitit?";
+    var sorted = E.sortRack(workRack);
+    // pidä workRack-järjestys synkassa sorttauksen kanssa vain näytössä
+    sorted.forEach(function (t) {
+      host.appendChild(tileEl(t, G.turn === 0 && !G.over && !busy));
+    });
+  }
+
+  function renderControls() {
+    var human = G.turn === 0 && !G.over && !busy;
+    el("btnForm").disabled = !human || selectedTiles().length < 3;
+    el("btnConfirm").disabled = !human;
+    el("btnReset").disabled = !human;
+    el("btnDraw").disabled = !human;
+  }
+
+  function formSet() {
+    var tiles = selectedTiles();
+    if (tiles.length < 3) {
+      setStatus("Valitse vähintään 3 palaa.", "warn");
+      return;
+    }
+    if (!E.isValidSet(tiles)) {
+      setStatus("Valinta ei ole kelvollinen ryhmä eikä jono.", "warn");
+      toast("Ei kelvollinen rypäs");
+      return;
+    }
+    workBoard.push(tiles.map(E.cloneTile));
+    removeSelectedFromSources();
+    setStatus("Rypäs muodostettu — vahvista vuoro tai jatka.");
+    toast("Rypäs valmis (" + tiles.length + ")");
+    render();
+  }
+
+  function resetTurn() {
+    workBoard = E.cloneBoard(snap.board);
+    workRack = snap.rack.map(E.cloneTile);
+    pool = [];
+    sel = {};
+    selSet = null;
+    setStatus("Vuoro palautettu.");
+    render();
+  }
+
+  function confirmTurn() {
+    if (pool.length) {
+      setStatus("Työalueella on vielä paloja — muodosta niistä rypäät tai pura takaisin.", "warn");
+      toast("Tyhjennä työalue ensin");
+      return;
+    }
+    var res = E.validatePlay(
+      { board: snap.board, racks: [snap.rack, G.racks[1]], turn: 0, hasMelded: G.hasMelded },
+      workBoard,
+      workRack
+    );
+    if (!res.ok) {
+      setStatus(res.error, "warn");
+      toast(res.error);
+      return;
+    }
+    // Synkaa G:n rack[0] snapista ennen applya
+    G.board = E.cloneBoard(snap.board);
+    G.racks[0] = snap.rack.map(E.cloneTile);
+    var applied = E.applyPlay(G, workBoard, workRack);
+    if (!applied.ok) {
+      setStatus(applied.error, "warn");
+      return;
+    }
+    toast(applied.won ? "Tyhjensit telineen — voitit!" : "Pelasit " + applied.played.length + " palaa");
+    if (G.over) {
+      endGame();
+      return;
+    }
+    setStatus("Tietokoneen vuoro…");
+    render();
+    busy = true;
+    setTimeout(runAI, AI_DELAY);
+  }
+
+  function doDraw() {
+    if (pool.length) {
+      setStatus("Palauta työalue ennen nostoa (tai vahvista siirto).", "warn");
+      return;
+    }
+    // Palauta työpöytä ennen nostoa
+    G.board = E.cloneBoard(snap.board);
+    G.racks[0] = snap.rack.map(E.cloneTile);
+    E.drawOne(G);
+    toast("Nostit palan");
+    setStatus("Tietokoneen vuoro…");
+    render();
+    busy = true;
+    setTimeout(runAI, AI_DELAY);
+  }
+
+  function runAI() {
+    if (G.over) { busy = false; endGame(); return; }
+    var before = G.racks[1].length;
+    var res = E.aiTurn(G);
+    busy = false;
+    if (res && res.drew) toast("Tietokone nosti");
+    else if (res && res.played) toast("Tietokone pelasi " + res.played.length + " palaa");
+    else if (res && res.ok && !res.drew) {
+      var after = G.racks[1].length;
+      if (after < before) toast("Tietokone pelasi " + (before - after) + " palaa");
+    }
+    if (G.over) { endGame(); return; }
+    beginHumanTurn();
+    setStatus("Sinun vuorosi.");
+  }
+
+  function fmtDelta(n) {
+    return (n > 0 ? "+" : "") + n;
+  }
+
+  function endGame() {
+    E.settleRound(G);
+    render();
+    var roundMsg;
+    if (G.winner === 0) roundMsg = "Tyhjensit telineesi — voitit erän.";
+    else if (G.winner === 1) roundMsg = "Tietokone tyhjensi telineensä.";
+    else roundMsg = "Erä päättyi tasapeliin (pussi / telineet).";
+
+    var scoreLine = "Erä: " + fmtDelta(G.scores[0]) + " / " + fmtDelta(G.scores[1]) +
+      " · Ottelu: <strong>" + G.matchScores[0] + "–" + G.matchScores[1] + "</strong> / " + G.matchTarget;
+
+    if (G.matchOver) {
+      var title = G.matchWinner === 0 ? "Otteluvoititto!" : G.matchWinner === 1 ? "Otteluhäviö" : "Ottelutasapeli";
+      var lead = G.matchWinner === 0
+        ? "Saavutit " + G.matchTarget + " pistettä."
+        : G.matchWinner === 1
+          ? "Tietokone ehti " + G.matchTarget + " pisteeseen."
+          : "Molemmilla sama pistemäärä.";
+      openOverlay(
+        "<h2>" + title + "</h2>" +
+        "<p class=\"lead\">" + lead + "</p>" +
+        "<p>" + roundMsg + "</p>" +
+        "<p>" + scoreLine + "</p>" +
+        "<div class=\"ov-actions\">" +
+        "<button class=\"go\" id=\"ovAgain\">Uusi ottelu</button>" +
+        "</div>"
+      );
+      el("ovAgain").onclick = function () { startScreen(); };
+      return;
+    }
+
+    openOverlay(
+      "<h2>Erä " + G.round + " ohi</h2>" +
+      "<p class=\"lead\">" + roundMsg + "</p>" +
+      "<p>" + scoreLine + "</p>" +
+      "<p>Jatketaan, kunnes joku saavuttaa " + G.matchTarget + " pistettä.</p>" +
+      "<div class=\"ov-actions\">" +
+      "<button class=\"go\" id=\"ovNext\">Seuraava erä</button>" +
+      "<button class=\"ghost\" id=\"ovQuit\">Lopeta ottelu</button>" +
+      "</div>"
+    );
+    el("ovNext").onclick = function () {
+      var next = E.nextRound(G);
+      if (!next) { startScreen(); return; }
+      G = next;
+      busy = false;
+      closeOverlay();
+      beginHumanTurn();
+      setStatus("Erä " + G.round + " — sinun vuorosi.");
+      toast("Erä " + G.round);
+    };
+    el("ovQuit").onclick = function () { startScreen(); };
+  }
+
+  // ---- Bindings ------------------------------------------------------------
+  el("btnForm").onclick = formSet;
+  el("btnConfirm").onclick = confirmTurn;
+  el("btnReset").onclick = resetTurn;
+  el("btnDraw").onclick = doDraw;
+  el("btnRules").onclick = showRules;
+  el("btnNew").onclick = function () { startScreen(); };
+
+  startFromQuery();
+})();
+
+</script>
+</body>
+</html>
