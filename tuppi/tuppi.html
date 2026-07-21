@@ -3430,8 +3430,11 @@ function askHumanSooli(hand, mstate, myTeam, oppTeam) {
       "Vaihdat yhden kortin kaverisi kanssa, ässä on pienin ja pelaat aina viimeisenä. " +
       "<b>Et saa ottaa yhtään tikkiä</b>: onnistut → +24p, epäonnistut → vastustajille 24p.<br>" +
       "Arvioitu selviäminen <b>~" + surv + "%</b>. Odotusarvo: sooli <b>" + ev.evSooli.toFixed(1) +
-      "p</b> vs. puolustus <b>" + ev.evDefense.toFixed(1) + "p</b>. " + suositus + " " + tilanne;
+      "p</b> vs. puolustus <b>" + ev.evDefense.toFixed(1) + "p</b>. " + suositus + " " + tilanne +
+      "<br><b>Kätesi:</b>";
+    // Näytä käsi + päätösnapit (ennen nappeja peittivät kortit kokonaan).
     el("hand").innerHTML =
+      sortHand(hand).map((c) => cardHTML(c, false)).join("") +
       '<div class="showbtns">' +
       '<button id="sooliYes">Pelaa sooli</button>' +
       '<button id="sooliNo" class="ghost">Ei, pelaa normaalisti</button></div>';
