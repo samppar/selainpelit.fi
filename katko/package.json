@@ -1,0 +1,11 @@
+{
+  "name": "katko",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Katko — viimeinen tikki. Selainpeli + päätön eval-/turnausharness.",
+  "scripts": {
+    "tournament": "node tournament.mjs",
+    "eval": "node eval.js"
+  }
+}

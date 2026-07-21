@@ -1,0 +1,698 @@
+<!--
+  Katko – viimeinen tikki
+  Perinteinen suomalainen tikkipeli. Yksi ihmispelaaja, kolme tekoälyvastustajaa.
+  Säännöt: maapakko (tunnustettava aloitusmaata), korkein aloitusmaan kortti vie tikin,
+  vain viimeisen tikin voittaja saa pisteen. Valinnainen kakkossääntö: viimeisen tikin
+  voitto kakkosella tuo kaksi pistettä.
+-->
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --night-1:#0b241f;
+    --felt:#164a3f;
+    --felt-2:#124036;
+    --felt-edge:#0c2e27;
+    --birch:#f4edda;
+    --ink:#20201b;
+    --puna:#b6392f;
+    --amber:#e8a93c;
+    --amber-soft:rgba(232,169,60,.16);
+    --cream:#ece5d4;
+    --muted:#8ba79c;
+    --line:rgba(236,229,212,.12);
+    --card-w:58px;
+    --card-h:82px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  body{
+    font-family:"Instrument Sans",system-ui,sans-serif;
+    color:var(--cream);
+    background:
+      radial-gradient(ellipse 120% 90% at 50% 34%, #1c5548 0%, #0d2a24 58%, #07186f00 0),
+      radial-gradient(ellipse 130% 100% at 50% 40%, #1a4c40 0%, #0b241f 62%, #06140f 100%);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:18px 14px 34px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{width:100%;max-width:660px}
+
+  /* ---------- header ---------- */
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .brand h1{
+    font-family:"Bricolage Grotesque",sans-serif;
+    font-weight:800;
+    font-size:clamp(30px,8vw,46px);
+    line-height:.9;
+    letter-spacing:-.02em;
+    color:var(--birch);
+  }
+  .brand .tag{
+    font-size:12.5px;color:var(--muted);letter-spacing:.14em;
+    text-transform:uppercase;margin-top:6px;
+  }
+  .hbtns{display:flex;gap:8px;flex-shrink:0}
+  .ghost{
+    font-family:"Instrument Sans",sans-serif;
+    background:transparent;color:var(--cream);
+    border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px;font-size:13px;cursor:pointer;transition:.15s;
+  }
+  .ghost:hover{border-color:var(--amber);color:var(--amber)}
+
+  /* ---------- scoreboard ---------- */
+  .scores{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;
+  }
+  .chip{
+    background:rgba(9,26,22,.5);border:1px solid var(--line);
+    border-radius:12px;padding:9px 10px;text-align:center;position:relative;
+    transition:.2s;
+  }
+  .chip .nm{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip .pt{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:24px;color:var(--birch);line-height:1.05}
+  .chip.turn{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 0 18px var(--amber-soft)}
+  .chip.turn .nm{color:var(--amber)}
+
+  /* ---------- table ---------- */
+  .table{
+    background:
+      radial-gradient(120% 120% at 50% 42%, var(--felt) 0%, var(--felt-2) 70%, var(--felt-edge) 100%);
+    border:1px solid rgba(255,255,255,.05);
+    border-radius:22px;
+    box-shadow:0 22px 50px -20px #000, inset 0 1px 0 rgba(255,255,255,.06), inset 0 0 0 8px rgba(0,0,0,.14);
+    padding:16px;
+    display:grid;
+    grid-template-columns:1fr 1.15fr 1fr;
+    grid-template-rows:auto auto auto;
+    grid-template-areas:
+      ".    top   ."
+      "left mid   right"
+      ".    you   .";
+    gap:10px;
+    position:relative;
+    min-height:360px;
+  }
+  .seat{display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;min-height:104px}
+  .seat.s-top{grid-area:top}
+  .seat.s-left{grid-area:left}
+  .seat.s-right{grid-area:right}
+  .seat.s-you{grid-area:you}
+  .seat .label{
+    font-size:12px;color:var(--muted);letter-spacing:.04em;
+    display:flex;align-items:center;gap:6px;
+  }
+  .seat .label b{color:var(--cream);font-weight:600}
+  .seat .cnt{font-size:11px;color:var(--muted)}
+  .seat.active .label b{color:var(--amber)}
+  .seat.winner{animation:pop .5s ease}
+  .seat.winner .label b{color:var(--amber)}
+
+  .slot{
+    width:var(--card-w);height:var(--card-h);border-radius:9px;
+    border:1px dashed rgba(255,255,255,.14);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .slot.empty{background:rgba(0,0,0,.10)}
+
+  /* center */
+  .mid{grid-area:mid;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;position:relative}
+  .tikki{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .tikki.final{color:var(--amber)}
+  .led{
+    display:inline-flex;align-items:center;gap:7px;
+    background:rgba(0,0,0,.22);border:1px solid var(--line);
+    border-radius:999px;padding:6px 13px;font-size:13px;color:var(--cream);
+  }
+  .led .sym{font-size:16px;line-height:1}
+  .led.none{opacity:.5}
+  .msg{font-size:12.5px;color:var(--muted);max-width:190px;min-height:16px;line-height:1.35}
+
+  /* ---------- cards ---------- */
+  .card{
+    width:var(--card-w);height:var(--card-h);
+    background:linear-gradient(160deg,#fbf6e9,var(--birch));
+    border-radius:9px;position:relative;
+    box-shadow:0 6px 14px -6px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.06);
+    color:var(--ink);flex-shrink:0;
+    animation:deal .28s ease both;
+  }
+  .card .r{position:absolute;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:14px;line-height:1}
+  .card .r.tl{top:5px;left:6px}
+  .card .r.br{bottom:5px;right:6px;transform:rotate(180deg)}
+  .card .pip{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px}
+  .card.red{color:var(--puna)}
+  .card .r small{display:block;font-size:10px;text-align:center;margin-top:-1px}
+
+  .back{
+    width:var(--card-w);height:var(--card-h);border-radius:9px;flex-shrink:0;
+    background:
+      repeating-linear-gradient(45deg,#164a3f 0 6px,#123f36 6px 12px);
+    box-shadow:inset 0 0 0 3px #0d2f28, inset 0 0 0 4px rgba(232,169,60,.4), 0 4px 10px -4px #000;
+  }
+
+  /* hand */
+  .hand-wrap{margin-top:16px;text-align:center}
+  .hand-title{font-size:12px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px}
+  .hand{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+  .hand .card{cursor:pointer;transition:transform .15s, box-shadow .15s}
+  .hand .card.legal:hover{transform:translateY(-12px);box-shadow:0 16px 22px -10px rgba(0,0,0,.7)}
+  .hand .card.illegal{opacity:.34;filter:grayscale(.55);cursor:not-allowed}
+  .hand.locked .card{cursor:default}
+  .hand.locked .card:hover{transform:none;box-shadow:0 6px 14px -6px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.06)}
+
+  /* ---------- overlays ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(6,18,15,.82);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:20;
+    animation:fade .2s ease;
+  }
+  .panel{
+    background:linear-gradient(180deg,#123c33,#0d2c26);
+    border:1px solid var(--line);border-radius:20px;
+    padding:26px 26px 24px;max-width:390px;width:100%;
+    box-shadow:0 30px 60px -20px #000;
+  }
+  .panel h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:26px;color:var(--birch);letter-spacing:-.01em;margin-bottom:6px}
+  .panel p{font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:16px}
+  .panel p.tight{margin-bottom:10px}
+  .field{margin-bottom:16px}
+  .field .flabel{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .seg{display:flex;gap:6px}
+  .seg button{
+    flex:1;background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--cream);
+    border-radius:10px;padding:10px 0;font-size:15px;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;cursor:pointer;transition:.15s;
+  }
+  .seg button.on{background:var(--amber);color:#241a06;border-color:var(--amber)}
+  .toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer}
+  .toggle .t-txt b{display:block;font-size:14px;color:var(--cream)}
+  .toggle .t-txt span{font-size:12px;color:var(--muted)}
+  .sw{width:42px;height:24px;border-radius:999px;background:rgba(255,255,255,.14);position:relative;flex-shrink:0;transition:.15s}
+  .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--cream);transition:.15s}
+  .toggle.on .sw{background:var(--amber)}
+  .toggle.on .sw::after{left:21px;background:#241a06}
+
+  .primary{
+    width:100%;background:var(--amber);color:#241a06;border:none;border-radius:12px;
+    padding:14px;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:17px;
+    cursor:pointer;letter-spacing:.01em;transition:.15s;margin-top:4px;
+  }
+  .primary:hover{filter:brightness(1.06)}
+
+  .rules-list{font-size:13.5px;color:var(--cream);line-height:1.6;list-style:none}
+  .rules-list li{margin-bottom:9px;padding-left:18px;position:relative}
+  .rules-list li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:50%;background:var(--amber)}
+
+  /* katko banner in center cell */
+  .katko-burst{
+    position:absolute;inset:-8px;border-radius:16px;
+    background:radial-gradient(circle at 50% 50%, var(--amber-soft), transparent 70%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    animation:fade .25s ease;
+  }
+  .katko-burst .big{
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:34px;letter-spacing:.02em;
+    color:var(--amber);text-shadow:0 0 24px rgba(232,169,60,.6);animation:pop .45s ease;
+  }
+  .katko-burst .sub{font-size:13px;color:var(--cream);max-width:180px;line-height:1.4}
+  .katko-burst .next{
+    margin-top:2px;background:var(--amber);color:#241a06;border:none;border-radius:999px;
+    padding:9px 20px;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:14px;cursor:pointer;
+  }
+
+  .card.win-glow{box-shadow:0 0 0 2px var(--amber),0 0 22px var(--amber-soft),0 6px 14px -6px rgba(0,0,0,.6)}
+
+  @keyframes deal{from{opacity:0;transform:translateY(8px) scale(.94)}to{opacity:1;transform:none}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes pop{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+
+  @media (max-width:460px){
+    :root{--card-w:50px;--card-h:71px}
+    .table{padding:12px;gap:6px}
+    .hand{gap:6px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .card,.katko-burst,.katko-burst .big,.seat.winner,.overlay{animation:none}
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Katko</h1>
+      <div class="tag">Viimeinen tikki ratkaisee</div>
+    </div>
+    <div class="hbtns">
+      <button class="ghost" id="rulesBtn">Säännöt</button>
+      <button class="ghost" id="newBtn">Uusi peli</button>
+    </div>
+  </header>
+
+  <div class="scores" id="scores"></div>
+  <div class="table" id="table"></div>
+
+  <div class="hand-wrap">
+    <div class="hand-title" id="handTitle">Kätesi</div>
+    <div class="hand" id="hand"></div>
+  </div>
+</div>
+
+<div id="overlayHost"></div>
+
+<script type="module">
+import { aino }  from './agents/aino.js';
+import { eino }  from './agents/eino.js';
+import { vaino } from './agents/vaino.js';
+import { monte } from './agents/monte.js';
+import { buildDeck, shuffle, legalCards as engineLegal, trickWinner,
+         trickPoints, buildView as engineView, safeChoose } from './engine.js';
+(function(){
+  "use strict";
+
+  const SUITS = [
+    {k:"H",sym:"♥",name:"hertta",red:true},
+    {k:"D",sym:"♦",name:"ruutu",red:true},
+    {k:"C",sym:"♣",name:"risti",red:false},
+    {k:"S",sym:"♠",name:"pata",red:false},
+  ];
+  const suitOrder = {H:0,D:1,C:2,S:3};
+  const RANKS = [2,3,4,5,6,7,8,9,10,11,12,13,14];
+  function rankLabel(v){return v<=10?String(v):{11:"J",12:"Q",13:"K",14:"A"}[v];}
+
+  const NAMES = ["Sinä","Aino","Eino","Väinö"]; // 0 = human, clockwise (default names)
+  // Kaikki valittavissa olevat vastustaja-agentit (aloitusvalikon rosteri).
+  const ROSTER = [aino, eino, vaino, monte];
+  const AI_DELAY = 720;
+  const TRICK_PAUSE = 1250;
+
+  let S = null; // game state
+  let timer = null; // single pending timeout handle — prevents overlapping turn chains
+
+  /* ---------- deck (pure logic lives in engine.js) ---------- */
+  function sortHand(h){
+    return h.slice().sort((a,b)=> suitOrder[a.suit]-suitOrder[b.suit] || a.v-b.v);
+  }
+
+  /* ---------- game setup ---------- */
+  // opps = kolme valittua agenttia paikoille 1,2,3 (oletuksena aino,eino,väinö).
+  function newGame(target,kakko,opps){
+    clearTimeout(timer);
+    const sel = opps || [aino, eino, vaino];
+    AGENTS = { 1: sel[0], 2: sel[1], 3: sel[2] };
+    const names = ["Sinä", ...sel.map(a=>a.name)];
+    disambiguate(names);                       // erottele samannimiset (esim. kaksi Marttaa)
+    S = {
+      target:target, kakko:kakko,
+      players:[0,1,2,3].map(i=>({name:names[i],human:i===0,hand:[],score:0})),
+      trick:[], ledSuit:null, trickNumber:1,
+      turn:0, phase:"playing",
+      trickWinner:null, winningCard:null,
+      handResult:null, message:"",
+    };
+    dealHand(Math.floor(Math.random()*4));
+    render();
+    proceed();
+  }
+
+  function dealHand(leader){
+    const deck = shuffle(buildDeck());
+    for(let p=0;p<4;p++) S.players[p].hand=[];
+    let idx=0;
+    for(let n=0;n<5;n++) for(let p=0;p<4;p++) S.players[p].hand.push(deck[idx++]);
+    S.players[0].hand = sortHand(S.players[0].hand);
+    S.trick=[]; S.ledSuit=null; S.trickNumber=1; S.played=[]; S.history=[];
+    S.trickWinner=null; S.winningCard=null; S.handResult=null;
+    S.turn=leader; S.phase="playing"; S.message="";
+  }
+
+  /* ---------- rules helpers (delegate to engine.js) ---------- */
+  function legalCards(pi){
+    return engineLegal(S.players[pi].hand, S.trick, S.ledSuit);
+  }
+  function isLegal(pi,card){
+    return legalCards(pi).some(c=>c.suit===card.suit && c.v===card.v);
+  }
+  /* ---------- AI agents -----------------------------------------------------
+     Each opponent's AI lives in its own module under ./agents/ and implements the
+     Agent interface { name, style, chooseCard(view) }. They receive only a
+     read-only "view" (their hand + the public played-cards history) and count
+     cards from it. See ./agents/base.js for the shared interface and helpers. */
+  let AGENTS = { 1: aino, 2: eino, 3: vaino }; // player index -> agent (0 = human); set in newGame
+
+  // Jos kaksi paikkaa valitsi saman agentin, lisää nimeen erotin (Martta, Martta 2).
+  function disambiguate(names){
+    const seen = {};
+    for(let i=0;i<names.length;i++){
+      const n=names[i];
+      seen[n]=(seen[n]||0)+1;
+      if(seen[n]>1) names[i]=n+" "+seen[n];
+    }
+  }
+
+  // The observation an agent is allowed to see (no peeking at hidden hands).
+  // Same builder the headless engine uses — one source of truth.
+  function buildView(pi){
+    return engineView({
+      hands:       S.players.map(p=>p.hand),
+      trick:       S.trick,
+      ledSuit:     S.ledSuit,
+      trickNumber: S.trickNumber,
+      kakko:       S.kakko,
+      played:      S.played,
+      history:     S.history,
+      scores:      S.players.map(p=>p.score),
+      target:      S.target,
+    }, pi);
+  }
+  // Short personality tag shown under each opponent's name.
+  function agentTag(pi){ const a=AGENTS[pi]; if(!a) return ""; return (a.style.split("—")[0]||"").trim(); }
+
+  /* ---------- flow ---------- */
+  function proceed(){
+    if(S.phase!=="playing") return;
+    render();
+    if(S.turn===0) return; // wait for human click
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      if(S.phase!=="playing"||S.turn===0) return;
+      doPlay(S.turn, safeChoose(AGENTS[S.turn], buildView(S.turn)));
+    }, AI_DELAY);
+  }
+
+  function doPlay(pi,card){
+    clearTimeout(timer); // cancel any pending scheduled advance before mutating state
+    const h=S.players[pi].hand;
+    const i=h.findIndex(c=>c.suit===card.suit && c.v===card.v);
+    if(i<0) return;
+    h.splice(i,1);
+    S.trick.push({p:pi,card});
+    S.played.push({suit:card.suit,v:card.v});
+    if(S.trick.length===1) S.ledSuit=card.suit;
+
+    if(S.trick.length===4){
+      // determine winner now so we can highlight during the pause
+      const win=trickWinner(S.trick, S.ledSuit);
+      S.trickWinner=win.p; S.winningCard=win.card;
+      S.history.push({ledSuit:S.ledSuit, plays:S.trick.map(t=>({p:t.p,card:t.card}))});
+      S.phase="trickEnd";
+      render();
+      clearTimeout(timer);
+      timer=setTimeout(resolveTrick, TRICK_PAUSE);
+    }else{
+      S.turn=(S.turn+1)%4;
+      proceed();
+    }
+  }
+
+  function resolveTrick(){
+    const w=S.trickWinner;
+    if(S.trickNumber===5){
+      const pts=trickPoints(S.winningCard, S.kakko);
+      S.players[w].score+=pts;
+      S.handResult={winner:w,pts,card:S.winningCard};
+      S.phase = (S.players[w].score>=S.target) ? "gameEnd" : "handEnd";
+      render();
+      return;
+    }
+    // next trick
+    S.trickNumber++;
+    S.trick=[]; S.ledSuit=null;
+    S.turn=w; S.phase="playing";
+    S.message = S.players[w].name+" vei tikin.";
+    S.trickWinner=null; S.winningCard=null;
+    render();
+    clearTimeout(timer);
+    timer=setTimeout(()=>{ S.message=""; proceed(); }, 500);
+  }
+
+  function nextHand(){
+    clearTimeout(timer);
+    dealHand(S.handResult.winner);
+    render();
+    proceed();
+  }
+
+  /* ---------- rendering ---------- */
+  function cardEl(card,{win=false}={}){
+    const d=document.createElement("div");
+    const su=SUITS.find(s=>s.k===card.suit);
+    d.className="card"+(su.red?" red":"")+(win?" win-glow":"");
+    const lab=rankLabel(card.v);
+    const sym=su.sym;
+    d.innerHTML=`<span class="r tl">${lab}<small>${sym}</small></span>`+
+                `<span class="pip">${sym}</span>`+
+                `<span class="r br">${lab}<small>${sym}</small></span>`;
+    return d;
+  }
+
+  function playedBy(pi){ const t=S.trick.find(x=>x.p===pi); return t?t.card:null; }
+
+  function renderScores(){
+    const host=document.getElementById("scores");
+    host.innerHTML="";
+    for(let i=0;i<4;i++){
+      const p=S.players[i];
+      const c=document.createElement("div");
+      c.className="chip"+((S.phase==="playing"&&S.turn===i)?" turn":"");
+      c.innerHTML=`<div class="nm">${p.name}</div><div class="pt">${p.score}</div>`;
+      host.appendChild(c);
+    }
+  }
+
+  function renderSeat(pi,cls){
+    const p=S.players[pi];
+    const seat=document.createElement("div");
+    let sc="seat "+cls;
+    if(S.phase==="playing"&&S.turn===pi) sc+=" active";
+    if((S.phase==="trickEnd"||S.phase==="handEnd"||S.phase==="gameEnd")&&S.trickWinner===pi) sc+=" winner";
+    seat.className=sc;
+
+    const played=playedBy(pi);
+    const winHere = (S.phase!=="playing") && S.winningCard && played && S.trickWinner===pi;
+
+    const label=document.createElement("div");
+    label.className="label";
+    const tag = p.human ? "" : agentTag(pi);
+    label.innerHTML = `<b>${p.name}</b>` +
+      (tag ? `<span style="display:block;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;opacity:.6;font-weight:700;margin-top:2px">${tag}</span>` : "");
+
+    const slotWrap=document.createElement("div");
+    if(played){
+      slotWrap.appendChild(cardEl(played,{win:winHere}));
+    }else{
+      const s=document.createElement("div"); s.className="slot empty"; slotWrap.appendChild(s);
+    }
+
+    const cnt=document.createElement("div");
+    cnt.className="cnt";
+    cnt.textContent=p.hand.length+(p.hand.length===1?" kortti":" korttia");
+
+    if(cls==="s-you"){ seat.append(slotWrap,label,cnt); }
+    else { seat.append(label,slotWrap,cnt); }
+    return seat;
+  }
+
+  function renderTable(){
+    const t=document.getElementById("table");
+    t.innerHTML="";
+    t.appendChild(renderSeat(2,"s-top"));
+    t.appendChild(renderSeat(1,"s-left"));
+
+    const mid=document.createElement("div");
+    mid.className="mid";
+    const final=S.trickNumber===5;
+    const tk=document.createElement("div");
+    tk.className="tikki"+(final?" final":"");
+    tk.textContent="Tikki "+S.trickNumber+" / 5"+(final?" · ratkaiseva":"");
+    const led=document.createElement("div");
+    if(S.ledSuit){
+      const su=SUITS.find(s=>s.k===S.ledSuit);
+      led.className="led";
+      led.innerHTML=`<span class="sym" style="color:${su.red?'var(--puna)':'var(--birch)'}">${su.sym}</span> Maa: ${su.name}`;
+    }else{
+      led.className="led none"; led.textContent="Odottaa avausta";
+    }
+    const msg=document.createElement("div");
+    msg.className="msg"; msg.textContent=S.message||"";
+    mid.append(tk,led,msg);
+
+    if(S.phase==="handEnd"||S.phase==="gameEnd"){
+      mid.appendChild(katkoBurst());
+    }
+    t.appendChild(mid);
+
+    t.appendChild(renderSeat(3,"s-right"));
+    t.appendChild(renderSeat(0,"s-you"));
+  }
+
+  function katkoBurst(){
+    const b=document.createElement("div");
+    b.className="katko-burst";
+    const r=S.handResult;
+    if(S.phase==="gameEnd"){
+      b.innerHTML=`<div class="big">Peli poikki!</div>
+        <div class="sub"><b>${S.players[r.winner].name}</b> voitti pelin ${S.players[r.winner].score} pisteellä.</div>`;
+      const btn=document.createElement("button");
+      btn.className="next"; btn.textContent="Uusi peli";
+      btn.onclick=()=>openMenu();
+      b.appendChild(btn);
+    }else{
+      const extra = r.pts>1 ? " kakkosella (+"+r.pts+")" : "";
+      b.innerHTML=`<div class="big">Katko!</div>
+        <div class="sub"><b>${S.players[r.winner].name}</b> vei viimeisen tikin${extra}. +${r.pts} piste${r.pts>1?"ttä":""}.</div>`;
+      const btn=document.createElement("button");
+      btn.className="next"; btn.textContent="Seuraava jako";
+      btn.onclick=()=>nextHand();
+      b.appendChild(btn);
+    }
+    return b;
+  }
+
+  function renderHand(){
+    const host=document.getElementById("hand");
+    const title=document.getElementById("handTitle");
+    const myTurn = S.phase==="playing" && S.turn===0;
+    host.className="hand"+(myTurn?"":" locked");
+    title.textContent = myTurn ? "Sinun vuorosi — valitse kortti" : "Kätesi";
+
+    const hand=S.players[0].hand;
+    if(hand.length===0){ host.innerHTML='<div style="color:var(--muted);font-size:13px">Ei kortteja.</div>'; return; }
+
+    const legal = myTurn ? legalCards(0) : [];
+    const isLeg = card => legal.some(c=>c.suit===card.suit&&c.v===card.v);
+
+    // Uudelleenkäytä olemassa olevat korttielementit: näin deal-animaatio ei soi
+    // joka renderöinnillä (välkyntä pois). Uusi elementti syntyy vain oikeasti
+    // uudelle kortille (uusi jako); pelattu kortti poistetaan, muut säilyvät.
+    const want=new Set(hand.map(c=>c.suit+c.v));
+    const byKey={};
+    for(const el of [...host.children]){
+      if(el.dataset.k && want.has(el.dataset.k)) byKey[el.dataset.k]=el;
+      else el.remove();
+    }
+    for(const card of hand){
+      const k=card.suit+card.v;
+      let el=byKey[k];
+      if(!el){ el=cardEl(card); el.dataset.k=k; }
+      host.appendChild(el);                          // siirtää olemassa olevan (ei uudelleenluontia)
+      el.classList.remove("legal","illegal"); el.onclick=null; el.removeAttribute("title");
+      if(myTurn){
+        if(isLeg(card)){
+          el.classList.add("legal");
+          el.onclick=()=>{ if(S.phase==="playing"&&S.turn===0&&isLegal(0,card)) doPlay(0,card); };
+        }else{
+          el.classList.add("illegal");
+          const su=SUITS.find(s=>s.k===S.ledSuit);
+          el.title="Maapakko: sinun on pelattava "+(su?su.name:"aloitusmaata");
+        }
+      }
+    }
+  }
+
+  function render(){
+    if(!S) return;
+    renderScores();
+    renderTable();
+    renderHand();
+  }
+
+  /* ---------- overlays / menu ---------- */
+  // opps = ROSTER-indeksit paikoille 1,2,3 (oletus: aino, eino, väinö).
+  // Oletustavoite 10 pistettä (vakiintunut pelipituus).
+  let cfg={target:10,kakko:true,opps:[0,1,2]};
+
+  function openMenu(){
+    const host=document.getElementById("overlayHost");
+    host.innerHTML="";
+    const ov=document.createElement("div"); ov.className="overlay";
+    ov.innerHTML=`
+      <div class="panel">
+        <h2>Katko</h2>
+        <p class="tight">Pelaa kolmea tekoälyä vastaan. Vain viimeisen tikin voittaja saa pisteen — säästä vahvat korttisi loppuun.</p>
+        <div class="field">
+          <div class="flabel">Voittoon tarvittavat pisteet</div>
+          <div class="seg" id="segTarget">
+            <button data-t="3">3</button><button data-t="5">5</button><button data-t="7">7</button><button data-t="10">10</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="flabel">Lisäsääntö</div>
+          <div class="toggle" id="tgKakko">
+            <div class="t-txt"><b>Kakkossääntö</b><span>Viimeinen tikki kakkosella = 2 pistettä</span></div>
+            <div class="sw"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="flabel">Vastustajat</div>
+          <div class="opp-picker" id="oppPicker"></div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.4">Martta = vahvin (Monte Carlo -tekoäly, simuloi jaon loppuun).</div>
+        </div>
+        <button class="primary" id="startBtn">Aloita peli</button>
+      </div>`;
+    host.appendChild(ov);
+
+    const seg=ov.querySelector("#segTarget");
+    seg.querySelectorAll("button").forEach(b=>{
+      if(+b.dataset.t===cfg.target) b.classList.add("on");
+      b.onclick=()=>{ seg.querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); cfg.target=+b.dataset.t; };
+    });
+    const tg=ov.querySelector("#tgKakko");
+    if(cfg.kakko) tg.classList.add("on");
+    tg.onclick=()=>{ cfg.kakko=!cfg.kakko; tg.classList.toggle("on",cfg.kakko); };
+
+    // Vastustajanvalinta: kolme pudotusvalikkoa (paikat vasen / ylä / oikea).
+    const optsHtml=ROSTER.map((a,i)=>`<option value="${i}">${a.name}</option>`).join("");
+    const seatName=["","Vasen","Yläreuna","Oikea"];
+    const picker=ov.querySelector("#oppPicker");
+    picker.style.cssText="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px";
+    for(let seat=1;seat<=3;seat++){
+      const wrap=document.createElement("label");
+      wrap.style.cssText="display:flex;flex-direction:column;gap:5px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)";
+      const sel=document.createElement("select");
+      sel.innerHTML=optsHtml;
+      sel.value=String(cfg.opps[seat-1]);
+      sel.style.cssText="background:rgba(0,0,0,.28);border:1px solid var(--line);color:var(--cream);border-radius:9px;padding:9px 8px;font-family:'Instrument Sans',sans-serif;font-size:14px;cursor:pointer";
+      sel.onchange=(s=>()=>{ cfg.opps[s-1]=+sel.value; })(seat);
+      wrap.append(seatName[seat], sel);
+      picker.appendChild(wrap);
+    }
+
+    ov.querySelector("#startBtn").onclick=()=>{ host.innerHTML=""; newGame(cfg.target,cfg.kakko,cfg.opps.map(i=>ROSTER[i])); };
+  }
+
+  function openRules(){
+    const host=document.getElementById("overlayHost");
+    host.innerHTML="";
+    const ov=document.createElement("div"); ov.className="overlay";
+    ov.onclick=(e)=>{ if(e.target===ov) host.innerHTML=""; };
+    ov.innerHTML=`
+      <div class="panel">
+        <h2>Säännöt</h2>
+        <ul class="rules-list">
+          <li>Neljä pelaajaa, viisi korttia kullekin. Korttien arvo 2 (pienin) → ässä (suurin), ei valttia.</li>
+          <li><b>Maapakko:</b> sinun on tunnustettava aloitusmaata, jos kädessäsi on sitä. Muuten saat pelata minkä tahansa kortin — mutta et voi voittaa tikkiä.</li>
+          <li>Tikin voittaa korkein aloitusmaan kortti. Voittaja aloittaa seuraavan tikin.</li>
+          <li><b>Vain viimeinen tikki tuo pisteen.</b> Aiemmat tikit vain valmistelevat loppua.</li>
+          <li>Ensimmäisenä sovittuun pistemäärään yltävä voittaa pelin.</li>
+          <li><b>Kakkossääntö</b> (valinnainen): viimeisen tikin voitto kakkosella tuo 2 pistettä.</li>
+        </ul>
+        <button class="primary" id="closeRules" style="margin-top:6px">Selvä</button>
+      </div>`;
+    host.appendChild(ov);
+    ov.querySelector("#closeRules").onclick=()=>host.innerHTML="";
+  }
+
+  document.getElementById("newBtn").onclick=openMenu;
+  document.getElementById("rulesBtn").onclick=openRules;
+
+  openMenu();
+})();
+</script>

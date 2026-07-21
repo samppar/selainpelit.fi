@@ -1,0 +1,3646 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neljän tuppi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  color-scheme: dark;
+  --bg: #0b1410;
+  --ink: #eef2ee;
+  --muted: #9fb3a6;
+  --line: rgba(255,255,255,.08);
+  --felt-1: #1f6f4c;
+  --felt-2: #124a32;
+  --gold: #e8c15a;
+  --gold-soft: rgba(232,193,90,.5);
+  --glass: rgba(20,32,26,.72);
+  --red: #d1274b;
+  --black: #1a2028;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  margin: 0; padding: clamp(1rem, 3vw, 2.2rem); color: var(--ink);
+  background:
+    radial-gradient(1200px 700px at 50% -10%, #123a2a 0%, transparent 60%),
+    radial-gradient(900px 900px at 110% 120%, #0e2a1f 0%, transparent 55%),
+    var(--bg);
+  min-height: 100vh; -webkit-font-smoothing: antialiased;
+}
+#app { max-width: 820px; margin: 0 auto; }
+h1 {
+  font-family: "Fraunces", Georgia, serif; font-weight: 600;
+  font-size: clamp(1.7rem, 4vw, 2.4rem); letter-spacing: -.01em;
+  margin: 0 0 1.4rem; line-height: 1.1;
+}
+h1 .sub { display: block; font-family: "Inter", sans-serif; font-size: .82rem;
+  font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); margin-top: .4rem; }
+
+.panel {
+  display: flex; gap: 1rem; flex-wrap: wrap; align-items: end;
+  background: var(--glass); backdrop-filter: blur(8px);
+  padding: 1.1rem 1.2rem; border-radius: 16px; margin-bottom: 1.2rem;
+  border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+label { display: flex; flex-direction: column; font-size: .72rem;
+  font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+  gap: .4rem; color: var(--muted); }
+select, button { font: inherit; padding: .55rem .8rem; border-radius: 10px;
+  border: 1px solid var(--line); background: rgba(0,0,0,.25); color: var(--ink);
+  font-size: .95rem; text-transform: none; letter-spacing: 0; font-weight: 500; }
+select:focus, button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
+button {
+  background: linear-gradient(180deg, #f2d074, var(--gold)); border: none;
+  color: #2a1e00; cursor: pointer; font-weight: 700; letter-spacing: .01em;
+  box-shadow: 0 4px 14px rgba(232,193,90,.28); transition: transform .12s, box-shadow .12s, filter .12s;
+}
+button:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(232,193,90,.4); filter: brightness(1.03); }
+button:active { transform: translateY(0); }
+.hidden { display: none; }
+
+.scoreboard {
+  display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .9rem;
+}
+.scitem {
+  display: flex; flex-direction: column; gap: .15rem; flex: 1 1 auto;
+  min-width: 8rem; background: var(--glass); border: 1px solid var(--line);
+  border-radius: 12px; padding: .5rem .8rem;
+}
+.sclabel {
+  font-size: .6rem; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.scval { font-size: .95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.gametype { font-size: .95rem; font-weight: 600; margin-bottom: .7rem; min-height: 1.2em; }
+.gametype:empty { margin: 0; min-height: 0; }
+.tricks {
+  font-size: .95rem; font-weight: 600; color: var(--ink);
+  margin-bottom: .6rem; font-variant-numeric: tabular-nums;
+}
+.tricks:empty { display: none; }
+.tricks b { color: var(--gold); font-size: 1.05rem; }
+.tklabel {
+  font-size: .62rem; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted); margin-right: .5rem;
+}
+.tkgoal { color: var(--muted); font-weight: 400; font-size: .8rem; margin-left: .35rem; }
+.gt-rami, .gt-nolo {
+  font-weight: 800; letter-spacing: .05em; padding: .1rem .5rem;
+  border-radius: 999px; font-size: .82rem;
+}
+.gt-rami { background: rgba(209,39,75,.18); color: #ff6b8a; }
+.gt-nolo { background: rgba(255,255,255,.1); color: var(--ink); }
+.gt-sooli { background: rgba(232,193,90,.2); color: var(--gold); }
+button.ghost {
+  background: rgba(0,0,0,.25); color: var(--ink); border: 1px solid var(--line);
+  box-shadow: none; font-weight: 600;
+}
+button.ghost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.3); filter: none; }
+.status {
+  font-size: .82rem; letter-spacing: .03em; color: var(--muted);
+  margin-bottom: .8rem; min-height: 1.2em; font-variant-numeric: tabular-nums;
+}
+
+/* Pöytä: neljä paikkaa ristin muotoon (0 ylä, 1 oikea, 2 ala, 3 vasen). */
+.table {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, auto); gap: .5rem; place-items: center;
+  border-radius: 20px; padding: 1.4rem; margin-bottom: 1.4rem; min-height: 260px;
+  background:
+    radial-gradient(120% 120% at 50% 30%, #2a8a5f 0%, var(--felt-1) 42%, #124a32 100%);
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: inset 0 0 60px rgba(0,0,0,.35), 0 14px 40px rgba(0,0,0,.4);
+}
+.seatcell {
+  text-align: center; display: flex; flex-direction: column; align-items: center;
+  gap: .45rem; padding: .3rem;
+}
+.seatcell:nth-child(1) { grid-column: 2; grid-row: 1; }
+.seatcell:nth-child(2) { grid-column: 3; grid-row: 2; }
+.seatcell:nth-child(3) { grid-column: 2; grid-row: 3; }
+.seatcell:nth-child(4) { grid-column: 1; grid-row: 2; }
+.seatname {
+  font-size: .62rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,255,255,.6); background: rgba(0,0,0,.22);
+  padding: .18rem .5rem; border-radius: 999px;
+}
+.empty {
+  width: 2.9rem; height: 4rem; border-radius: 10px;
+  border: 1.5px dashed rgba(255,255,255,.22); color: transparent;
+  display: inline-block;
+}
+
+.handlabel { font-size: .95rem; font-weight: 500; margin-bottom: .7rem;
+  min-height: 1.2em; color: var(--ink); }
+.handlabel b { color: var(--gold); }
+.hand { display: flex; flex-wrap: wrap; gap: .45rem; min-height: 4.4rem;
+  padding: .2rem 0; }
+
+.card {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2.9rem; height: 4rem; border-radius: 10px;
+  background: linear-gradient(170deg, #ffffff 0%, #eef0f6 100%);
+  color: var(--black); font-weight: 700; font-size: 1.15rem;
+  font-variant-numeric: lining-nums; border: 1px solid rgba(0,0,0,.14);
+  box-shadow: 0 3px 8px rgba(0,0,0,.35); user-select: none;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.card.red { color: var(--red); }
+.card.black { color: var(--black); }
+.card.playable { cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,.35), 0 0 0 2px var(--gold); }
+.card.playable:hover { transform: translateY(-8px); box-shadow: 0 12px 22px rgba(0,0,0,.45), 0 0 0 2px var(--gold); }
+.table .card { height: 3.4rem; min-width: 2.5rem; font-size: 1.05rem; }
+
+.seatcell.me .seatname { background: linear-gradient(180deg, #f2d074, var(--gold)); color: #2a1e00; }
+.seatcell.me { filter: drop-shadow(0 0 10px rgba(232,193,90,.35)); }
+
+.showbtns { display: flex; gap: .7rem; margin-top: 1rem; width: 100%; }
+.scdrop { color: #ff6b8a; font-weight: 600; }
+
+.playedwrap {
+  margin: .2rem 0 1rem; border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(0,0,0,.22); overflow: hidden;
+}
+.playedwrap > summary {
+  cursor: pointer; padding: .55rem .8rem; font-size: .82rem; font-weight: 600;
+  color: var(--muted); list-style: none; user-select: none;
+}
+.playedwrap > summary::-webkit-details-marker { display: none; }
+.playedwrap > summary::before { content: "▸ "; color: var(--gold); }
+.playedwrap[open] > summary::before { content: "▾ "; }
+.played { padding: .1rem .6rem .7rem; overflow-x: auto; }
+.plempty { color: var(--muted); font-size: .8rem; padding: .3rem 0; }
+.pltable {
+  border-collapse: collapse; width: 100%; font-size: .82rem;
+  font-variant-numeric: tabular-nums;
+}
+.pltable th, .pltable td {
+  padding: .3rem .5rem; border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.pltable thead th { color: var(--muted); font-size: 1rem; text-align: center; }
+.pltable .plseat { color: var(--ink); font-weight: 600; text-align: left; }
+.pltable td { text-align: center; color: var(--ink); }
+.pltable .plred { color: var(--red); }
+.pltable td.plvoid {
+  background: rgba(209,39,75,.2); color: var(--red); font-weight: 800;
+}
+
+.log {
+  margin-top: 1.2rem; font-size: .78rem; line-height: 1.6;
+  color: var(--muted); max-height: 240px; overflow: auto;
+  background: rgba(0,0,0,.28); border: 1px solid var(--line);
+  border-radius: 14px; padding: .9rem 1rem; font-variant-numeric: tabular-nums;
+}
+.log b { color: var(--ink); }
+.log hr { border: none; border-top: 1px solid var(--line); margin: .6rem 0; }
+
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Neljän tuppi <span class="sub">— pelaa botteja vastaan, ei palvelinta</span></h1>
+  <div id="setup" class="panel">
+    <label>Vastustajien taso:
+      <select id="level">
+        <option value="champion" selected>Mestari (kovin)</option>
+        <option value="analyytikko">Analyytikko</option>
+        <option value="codex">Codex</option>
+        <option value="counting">Laskuri</option>
+        <option value="seniori">Seniori</option>
+        <option value="heuristic">Heuristi</option>
+        <option value="random">Satku (helpoin)</option>
+      </select>
+    </label>
+    <button id="start">Aloita jako</button>
+  </div>
+  <div id="board" class="hidden">
+    <div id="score" class="scoreboard"></div>
+    <div id="gametype" class="gametype"></div>
+    <div id="tricks" class="tricks"></div>
+    <div id="status" class="status"></div>
+    <div id="table" class="table"></div>
+    <div id="handLabel" class="handlabel"></div>
+    <div id="hand" class="hand"></div>
+    <details class="playedwrap">
+      <summary>🂠 Pelatut kortit &amp; tyhjät maat</summary>
+      <div id="played" class="played"></div>
+    </details>
+    <div id="log" class="log"></div>
+  </div>
+</div>
+<script>
+// AUTOMAATTISESTI TUOTETTU tiedostosta build.js — älä muokkaa käsin.
+(function (root) {
+  var __modules = {}, __cache = {};
+  function __norm(fromKey, rel) {
+    var dir = fromKey.split('/').slice(0, -1);
+    var parts = rel.split('/');
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (p === '.' || p === '') continue;
+      if (p === '..') dir.pop(); else dir.push(p);
+    }
+    return dir.join('/');
+  }
+  function __load(key) {
+    if (__cache[key]) return __cache[key].exports;
+    var fn = __modules[key];
+    if (!fn) throw new Error('moduulia ei löydy: ' + key);
+    var module = { exports: {} };
+    __cache[key] = module;
+    var req = function (rel) { return __load(__norm(key, rel)); };
+    fn(module, module.exports, req);
+    return module.exports;
+  }
+
+  __modules["src/cards.js"] = function (module, exports, require) {
+    // Kortit: maat, arvot ja pakka.
+    //
+    // Tupessa ei ole valttia. Ässä on korkein, kakkonen matalin.
+    // Tikin (kasan) voittaa suurin lyödyn maan kortti.
+    
+    // --- Maat -------------------------------------------------------------- //
+    // Maat ovat kokonaislukuja 0..3, jotta vertailu on halpaa.
+    const Suit = Object.freeze({
+      CLUBS: 0,     // risti  (musta)
+      DIAMONDS: 1,  // ruutu  (punainen)
+      HEARTS: 2,    // hertta (punainen)
+      SPADES: 3,    // pata   (musta)
+    });
+    
+    const SUITS = [Suit.CLUBS, Suit.DIAMONDS, Suit.HEARTS, Suit.SPADES];
+    
+    const SUIT_SYMBOL = { 0: "\u2663", 1: "\u2666", 2: "\u2665", 3: "\u2660" };
+    
+    function suitIsRed(suit) {
+      return suit === Suit.DIAMONDS || suit === Suit.HEARTS;
+    }
+    
+    function suitSymbol(suit) {
+      return SUIT_SYMBOL[suit];
+    }
+    
+    // --- Arvot ------------------------------------------------------------- //
+    // Arvot: 2..14 (11=J, 12=Q, 13=K, 14=A). Ässä korkein.
+    const RANK_NAMES = { 11: "J", 12: "Q", 13: "K", 14: "A" };
+    const MIN_RANK = 2;
+    const MAX_RANK = 14;
+    
+    // --- Kortti ------------------------------------------------------------ //
+    // Kortit "internoidaan": jokaista (rank, suit) -paria kohti on tasan yksi
+    // oliо. Näin === ja Set toimivat arvopohjaisesti, aivan kuten Pythonin
+    // frozen dataclass.
+    const _INTERN = new Map();
+    
+    class Card {
+      constructor(rank, suit) {
+        this.rank = rank;
+        this.suit = suit;
+        Object.freeze(this);
+      }
+    
+      /** Palauta internoitu (jaettu) korttiolio. Käytä aina tätä. */
+      static of(rank, suit) {
+        const key = rank * 4 + suit;
+        let c = _INTERN.get(key);
+        if (c === undefined) {
+          c = new Card(rank, suit);
+          _INTERN.set(key, c);
+        }
+        return c;
+      }
+    
+      get name() {
+        return RANK_NAMES[this.rank] ?? String(this.rank);
+      }
+    
+      toString() {
+        return `${this.name}${SUIT_SYMBOL[this.suit]}`;
+      }
+    }
+    
+    /** Poista kortti kädestä paikan päältä (internoitu -> === toimii). */
+    function removeCard(hand, card) {
+      const i = hand.indexOf(card);
+      if (i >= 0) hand.splice(i, 1);
+      return i >= 0;
+    }
+    
+    /** Vertailuavain käden lajitteluun: ensin maa, sitten arvo. */
+    function cardSortKey(c) {
+      return c.suit * 100 + c.rank;
+    }
+    
+    function fullDeck() {
+      const deck = [];
+      for (const s of SUITS) {
+        for (let r = MIN_RANK; r <= MAX_RANK; r++) {
+          deck.push(Card.of(r, s));
+        }
+      }
+      return deck;
+    }
+    
+    // --- Sekoitus & jako --------------------------------------------------- //
+    // Pieni siemennettävä satunnaislukugeneraattori (mulberry32), jotta pelit
+    // ovat toistettavissa --seed -valinnalla. Ei kryptografinen.
+    class RNG {
+      constructor(seed = null) {
+        if (seed === null || seed === undefined) {
+          seed = (Math.random() * 2 ** 32) >>> 0;
+        }
+        this._s = seed >>> 0;
+      }
+    
+      /** Liukuluku [0, 1). */
+      random() {
+        let t = (this._s += 0x6d2b79f5);
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      }
+    
+      /** Kokonaisluku [0, n). */
+      int(n) {
+        return Math.floor(this.random() * n);
+      }
+    
+      /** Palauta satunnainen alkio. */
+      choice(arr) {
+        return arr[this.int(arr.length)];
+      }
+    
+      /** Sekoita taulukko paikan päällä (Fisher–Yates) ja palauta se. */
+      shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = this.int(i + 1);
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+    }
+    
+    /** Sekoita ja jaa 13 korttia neljälle pelaajalle (paikat 0..3). */
+    function deal(rng) {
+      const deck = fullDeck();
+      rng.shuffle(deck);
+      const hands = [];
+      for (let i = 0; i < 4; i++) {
+        const hand = deck.slice(i * 13, (i + 1) * 13);
+        hand.sort((a, b) => cardSortKey(a) - cardSortKey(b));
+        hands.push(hand);
+      }
+      return hands;
+    }
+    
+    exports.suitIsRed = suitIsRed;
+    exports.suitSymbol = suitSymbol;
+    exports.Card = Card;
+    exports.removeCard = removeCard;
+    exports.cardSortKey = cardSortKey;
+    exports.fullDeck = fullDeck;
+    exports.RNG = RNG;
+    exports.deal = deal;
+    exports.Suit = Suit;
+    exports.SUITS = SUITS;
+    exports.MIN_RANK = MIN_RANK;
+    exports.MAX_RANK = MAX_RANK;
+    
+  };
+
+  __modules["src/rules.js"] = function (module, exports, require) {
+    // Tupen säännöt: joukkueet, maantunto, tikin voittaja ja pisteet.
+    //
+    // Neljän tuppi. Kaksi paria pelaa vastakkain, parit istuvat vastakkain.
+    // Paikat 0..3 myötäpäivään.  Joukkueet:
+    //     Joukkue 0 = paikat {0, 2}
+    //     Joukkue 1 = paikat {1, 3}
+    
+    const NUM_PLAYERS = 4;
+    const CARDS_PER_HAND = 13;
+    const TUPPI_TARGET = 52; // yhtäjaksoinen nousu >= 52 -> tuppi
+    
+    /** Palauta paikan joukkue (0 tai 1). */
+    function teamOf(seat) {
+      return seat % 2;
+    }
+    
+    /** Vastapäätä istuva parikaveri. */
+    function partnerOf(seat) {
+      return (seat + 2) % 4;
+    }
+    
+    /** Vastustajien paikat. */
+    function opponentsOf(seat) {
+      return [(seat + 1) % 4, (seat + 3) % 4];
+    }
+    
+    /**
+     * Maantuntopakko: jos aloitusmaata on kädessä, on pelattava sitä.
+     * Muuten saa lyödä minkä tahansa (sakata).
+     */
+    function legalMoves(hand, ledSuit) {
+      if (ledSuit === null || ledSuit === undefined) return hand.slice();
+      const same = hand.filter((c) => c.suit === ledSuit);
+      return same.length ? same : hand.slice();
+    }
+    
+    /**
+     * trick = [[seat, card], ...] lyöntijärjestyksessä (4 korttia).
+     * Voittaja = suurin aloitusmaan (ensimmäisen kortin maa) kortti.
+     * Valttia ei ole.
+     */
+    function trickWinner(trick) {
+      const ledSuit = trick[0][1].suit;
+      let bestSeat = trick[0][0];
+      let bestRank = trick[0][1].rank;
+      for (let i = 1; i < trick.length; i++) {
+        const [seat, card] = trick[i];
+        if (card.suit === ledSuit && card.rank > bestRank) {
+          bestSeat = seat;
+          bestRank = card.rank;
+        }
+      }
+      return bestSeat;
+    }
+    
+    // ---------------------------------------------------------------------- //
+    //  SOOLI                                                                  //
+    // ---------------------------------------------------------------------- //
+    // Rami-näytön jälkeen puolustava pelaaja voi pelata YKSIN ramaajia vastaan.
+    // Soolissa ässä on PIENIN kortti, soolaaja pelaa aina viimeisenä eikä hänen
+    // parinsa pelaa lainkaan. Jos soolaaja ottaa yhdenkin tikin, ramaajat saavat
+    // SOOLI_POINTS pistettä; jos soolaaja selviää tikeittä, soolipari saa ne.
+    
+    const SOOLI_POINTS = 24;
+    
+    /** Kortin arvo SOOLI-vertailuun: ässä (14) on pienin (1), muut ennallaan. */
+    function sooliRank(card) {
+      return card.rank === 14 ? 1 : card.rank;
+    }
+    
+    /**
+     * Tikin voittaja soolissa. Kuten trickWinner, mutta ässä on pienin.
+     * trick = [[seat, card], ...] lyöntijärjestyksessä.
+     */
+    function sooliTrickWinner(trick) {
+      const ledSuit = trick[0][1].suit;
+      let bestSeat = trick[0][0];
+      let bestRank = sooliRank(trick[0][1]);
+      for (let i = 1; i < trick.length; i++) {
+        const [seat, card] = trick[i];
+        if (card.suit === ledSuit && sooliRank(card) > bestRank) {
+          bestSeat = seat;
+          bestRank = sooliRank(card);
+        }
+      }
+      return bestSeat;
+    }
+    
+    /**
+     * Soolin tulos. soolaajaTookTrick = otiko soolaaja yhdenkin tikin.
+     * Palauttaa { winner, points } (voittajajoukkue ja SOOLI_POINTS).
+     */
+    function scoreSooli(soolaajaTeam, ramaajaTeam, soolaajaTookTrick) {
+      const winner = soolaajaTookTrick ? ramaajaTeam : soolaajaTeam;
+      return { winner, points: SOOLI_POINTS };
+    }
+    
+    /**
+     * Arvioi todennäköisyys (0..1) SELVITÄ soolista tikeittä. Sooli on kuin nolo
+     * yksin: otat tikin vain jos joudut tunnustamaan maassa korkeimman kortin
+     * (pelaat viimeisenä, ässä on pienin -> matalat ovat duunikortteja). Huomioi
+     * kortinvaihdon: pudota korkein, saat ässän lyhimpään maahan.
+     *
+     * Karkea heuristiikka, kalibroitu simulaatiota vasten: tyhjät maat (voi
+     * sakata) ja matalat pohjakortit joka maassa nostavat selviämistä, korkeat
+     * kortit ja korkea pohja laskevat sitä.
+     */
+    function estimateSooliSurvival(hand) {
+      const cards = hand.slice().sort((a, b) => sooliRank(a) - sooliRank(b));
+      cards.pop(); // vaihto: pois korkein sooli-kortti
+      const bySuit = { 0: [], 1: [], 2: [], 3: [] };
+      for (const c of cards) bySuit[c.suit].push(sooliRank(c));
+      // vaihdossa saatu ässä lyhimpään ei-tyhjään maahan
+      let shortest = 0, best = Infinity;
+      for (const s of [0, 1, 2, 3]) { const n = bySuit[s].length; if (n > 0 && n < best) { best = n; shortest = s; } }
+      bySuit[shortest].push(1);
+      for (const s of [0, 1, 2, 3]) bySuit[s].sort((a, b) => a - b);
+    
+      let score = 2.0, highCards = 0;
+      for (const s of [0, 1, 2, 3]) {
+        const C = bySuit[s], len = C.length;
+        if (len === 0) { score += 1.2; continue; } // tyhjä maa -> sakkaa vapaasti
+        const low = C[0];
+        if (low <= 2) score += 0.8;           // ässä/kakkonen pohjalla = turva
+        else if (low <= 4) score += 0.2;
+        else score -= (low - 4) * 0.35;       // korkea pohja = ansariski
+        score += Math.min(C.filter((r) => r <= 5).length, 3) * 0.25; // matalat auttavat duckaamaan
+        highCards += C.filter((r) => r >= 11).length;
+      }
+      score -= highCards * 0.7;
+      // Logistinen sovitus (a,b) kalibroitu 40 000 sooli-jaon simulaatioon
+      // baseline-puolustusta vastaan: ennustetut desiilit vastaavat todellista
+      // selviämis-%:a. Huom: vahvaa puolustusta vastaan sooli on aito longshot —
+      // suurin osa käsistä jää alle 10 %:n.
+      return 1 / (1 + Math.exp(-(0.85 * score - 6.25)));
+    }
+    
+    /**
+     * Rami-PUOLUSTUKSEN vahvuus (ässä KORKEIN): ässät/kuninkaat + pitkät/tyhjät
+     * maat. Käytetään arvioimaan paljonko luovutat/ryöstät normaalia ramia
+     * puolustaessa. Huom: hyvä sooli-käsi (matala) on tässä heikko — juuri siksi
+     * sooli kannattaa kun puolustus olisi tappiollinen.
+     */
+    function ramiDefenseStrength(hand) {
+      let s = 0;
+      const bySuit = { 0: 0, 1: 0, 2: 0, 3: 0 };
+      for (const c of hand) {
+        bySuit[c.suit]++;
+        s += c.rank >= 14 ? 2.2 : c.rank >= 13 ? 1.4 : c.rank >= 12 ? 0.7 : c.rank >= 11 ? 0.35 : 0;
+      }
+      for (const n of Object.values(bySuit)) { if (n >= 5) s += 1.0; else if (n >= 4) s += 0.4; if (n === 0) s += 0.3; }
+      return s;
+    }
+    
+    const _clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    
+    // Kalibroitu 15 000 rami-jakoon (counting-botit): keskiluovutus ~9.4p,
+    // keskiryöstö ~17.6p, steal-% ~lineaarinen puolustusvahvuudessa.
+    const RAMI_CONCEDE_PTS = 9.4;
+    const RAMI_STEAL_PTS = 17.6;
+    
+    /**
+     * Kannattaako soolata vai puolustaa ramia normaalisti? Vertaa ODOTUSARVOJA
+     * puolustajajoukkueen kannalta, huomioiden ottelutilanteen epälineaarisuus:
+     * jos oma joukkue on nousulla, häviö pudottaa koko nousun (tippumisriski); jos
+     * vastustaja on nousulla, voitto pudottaa heidät.
+     *
+     * @param {Card[]} hand
+     * @param {{upTeam:number|null, upScore:number}} match
+     * @param {number} myTeam   puolustajan (mahdollisen soolaajan) joukkue
+     * @param {number} oppTeam  ramaajien joukkue
+     * @returns {{pSurvive, evSooli, evDefense, recommend}}
+     */
+    function estimateSooliEV(hand, match, myTeam, oppTeam) {
+      const upTeam = match ? match.upTeam : null;
+      const upScore = match ? match.upScore : 0;
+      // Jaon arvo omalle joukkueelle, kun voittaja saa myPts TAI oppPts (toinen 0).
+      const dealVal = (myPts, oppPts) => {
+        if (myPts > 0) return myPts + (upTeam === oppTeam ? upScore : 0); // pudotimme heidät
+        return -oppPts - (upTeam === myTeam ? upScore : 0);              // putosimme itse
+      };
+    
+      const P = estimateSooliSurvival(hand);
+      const evSooli = P * dealVal(SOOLI_POINTS, 0) + (1 - P) * dealVal(0, SOOLI_POINTS);
+    
+      const st = ramiDefenseStrength(hand);
+      const pSteal = _clamp(0.08 * st + 0.02, 0.05, 0.92);
+      const evDefense = pSteal * dealVal(RAMI_STEAL_PTS, 0) + (1 - pSteal) * dealVal(0, RAMI_CONCEDE_PTS);
+    
+      return { pSurvive: P, evSooli, evDefense, recommend: evSooli > evDefense };
+    }
+    
+    const _bySooliLow = (a, b) => sooliRank(a) - sooliRank(b);
+    
+    /** Pöydän korkein aloitusmaan sooli-arvo tähän mennessä (-1 jos tyhjä). */
+    function _tableMaxSooli(currentTrick, ledSuit) {
+      let max = -1;
+      for (const [, c] of currentTrick) {
+        if (c.suit === ledSuit) max = Math.max(max, sooliRank(c));
+      }
+      return max;
+    }
+    
+    /**
+     * RAMAAJAN siirto soolia vastaan. Tavoite: pakottaa viimeisenä pelaava
+     * soolaaja ottamaan tikki. Periaate: pidä pöytä MATALANA (johda ja seuraa
+     * matalimmalla), niin soolaaja joutuu tunnustamaan korkealla; kun olet
+     * tyhjä maasta, sakkaa korkein (pura vaaralliset, jotta voit johtaa matalalla).
+     */
+    function pickSooliRamaajaCard(view) {
+      const legal = view.legalMoves.slice().sort(_bySooliLow);
+      const led = view.ledSuit;
+      if (led === null) return legal[0]; // johda matalin
+      const following = legal.some((c) => c.suit === led);
+      if (following) return legal.find((c) => c.suit === led); // matalin tunnustus
+      return legal[legal.length - 1]; // tyhjä: sakkaa korkein
+    }
+    
+    /**
+     * SOOLAAJAN siirto. Soolaaja pelaa viimeisenä ja yrittää olla ottamatta
+     * tikkiä: tunnusta maassa korkein kortti joka EI voita (pudota kalliit
+     * turvassa); jos kaikki tunnustukset voittaisivat, on pakko ottaa -> pelaa
+     * matalin. Tyhjänä maasta sakkaa korkein (pura vaaralliset).
+     */
+    function pickSooliSoolaajaCard(view) {
+      const legal = view.legalMoves.slice().sort(_bySooliLow);
+      const led = view.ledSuit;
+      if (led === null) return legal[0]; // ei tapahdu normaalisti (soolaaja ei johda)
+      const inSuit = legal.filter((c) => c.suit === led);
+      if (inSuit.length) {
+        const tableMax = _tableMaxSooli(view.currentTrick, led);
+        const duckers = inSuit.filter((c) => sooliRank(c) < tableMax);
+        if (duckers.length) return duckers[duckers.length - 1]; // korkein alle pöydän
+        return inSuit[0]; // pakko voittaa -> matalin
+      }
+      return legal[legal.length - 1]; // sakkaa korkein
+    }
+    
+    /**
+     * Laske jaon tulos.
+     *
+     * tricksByTeam: {0: n0, 1: n1}, n0+n1 === 13
+     * gameType: 'rami' tai 'nolo'
+     * ramaajaTeam: ramin näyttäneen joukkue (vain ramissa), muuten null
+     *
+     * Palauttaa { winner, points, steal }.
+     *
+     * Pisteet lasketaan seitsemännestä kasasta: 4 pistettä / kasa yli kuuden.
+     * 7. kasa = 4p, 8. = 8p, ... 13. = 28p.
+     *
+     * Rami: voittaa yli 6 kasaa kerännyt pari. Jos ramin ryöstää vastapari
+     *       (tekee itse yli 6 kasaa), pisteet tuplaantuvat (ryöstörami).
+     * Nolo: voittaa vähemmän kasoja kerännyt pari. Ei tuplausta.
+     */
+    function scoreDeal(tricksByTeam, gameType, ramaajaTeam) {
+      const n0 = tricksByTeam[0];
+      const n1 = tricksByTeam[1];
+      if (n0 + n1 !== 13) throw new Error("kasoja pitää olla yhteensä 13");
+    
+      if (gameType === "rami") {
+        const winner = n0 > n1 ? 0 : 1; // yli 6 kasaa
+        const margin = tricksByTeam[winner] - 6; // 1..7
+        let points = 4 * margin;
+        const steal = winner !== ramaajaTeam;
+        if (steal) points *= 2;
+        return { winner, points, steal };
+      }
+      // nolo
+      const winner = n0 < n1 ? 0 : 1; // vähemmän kasoja
+      const loserCount = tricksByTeam[1 - winner];
+      const points = 4 * (loserCount - 6); // loser >= 7
+      return { winner, points, steal: false };
+    }
+    
+    exports.teamOf = teamOf;
+    exports.partnerOf = partnerOf;
+    exports.opponentsOf = opponentsOf;
+    exports.legalMoves = legalMoves;
+    exports.trickWinner = trickWinner;
+    exports.sooliRank = sooliRank;
+    exports.sooliTrickWinner = sooliTrickWinner;
+    exports.scoreSooli = scoreSooli;
+    exports.estimateSooliSurvival = estimateSooliSurvival;
+    exports.ramiDefenseStrength = ramiDefenseStrength;
+    exports.estimateSooliEV = estimateSooliEV;
+    exports.pickSooliRamaajaCard = pickSooliRamaajaCard;
+    exports.pickSooliSoolaajaCard = pickSooliSoolaajaCard;
+    exports.scoreDeal = scoreDeal;
+    exports.NUM_PLAYERS = NUM_PLAYERS;
+    exports.CARDS_PER_HAND = CARDS_PER_HAND;
+    exports.TUPPI_TARGET = TUPPI_TARGET;
+    exports.SOOLI_POINTS = SOOLI_POINTS;
+    
+  };
+
+  __modules["src/views.js"] = function (module, exports, require) {
+    // Näkymät joita moottori antaa pelaajille.
+    //
+    // Pelaaja EI näe muiden käsiä. Se näkee vain oman kätensä + julkisen tiedon
+    // (pelatut kortit, kasatilanne, kuka nousulla jne). Näkymät jäädytetään
+    // (Object.freeze), joten pelaaja ei voi huijata muokkaamalla tilaa.
+    
+    const { teamOf, partnerOf } = require("./rules.js");
+    
+    /** Ottelun tilanne (nousu/tuppi) näyttö- ja pelihetkellä. */
+    class MatchState {
+      constructor({ dealNumber, dealer, upTeam, upScore, banked, target }) {
+        this.dealNumber = dealNumber;
+        this.dealer = dealer;
+        this.upTeam = upTeam; // nousulla oleva joukkue, null = pöytäpeli
+        this.upScore = upScore; // nousulla olevan pistemäärä
+        this.banked = banked; // { 0: n, 1: n } kokonaisnousupisteet (turnaus)
+        this.target = target; // tuppiraja (52)
+        Object.freeze(this.banked);
+        Object.freeze(this);
+      }
+    }
+    
+    /** Näyttöpäätöstä (rami/nolo) varten. */
+    class ShowView {
+      constructor({ seat, hand, match }) {
+        this.seat = seat;
+        this.hand = Object.freeze(hand.slice());
+        this.match = match;
+        Object.freeze(this);
+      }
+    
+      get team() {
+        return teamOf(this.seat);
+      }
+    
+      get partner() {
+        return partnerOf(this.seat);
+      }
+    }
+    
+    /** Yhden kortin lyöntipäätöstä varten. */
+    class PlayView {
+      constructor({
+        seat,
+        hand,
+        legalMoves,
+        gameType,
+        ramaaja,
+        leader,
+        currentTrick,
+        ledSuit,
+        trickNumber,
+        tricksByTeam,
+        history,
+        match,
+        sooli = false,
+        soolaaja = null,
+      }) {
+        this.seat = seat;
+        this.hand = Object.freeze(hand.slice()); // oma käsi juuri nyt
+        this.legalMoves = Object.freeze(legalMoves.slice()); // sallitut kortit
+        this.gameType = gameType; // 'rami' tai 'nolo'
+        this.ramaaja = ramaaja; // ramin näyttäjä (null nolossa)
+        this.sooli = sooli; // pelataanko soolia (ässä pienin, soolaaja viimeisenä)
+        this.soolaaja = soolaaja; // soolaajan paikka (null jos ei soolia)
+        this.leader = leader; // kuka aloitti tämän kierroksen
+        this.currentTrick = Object.freeze(currentTrick.map((p) => Object.freeze(p.slice())));
+        this.ledSuit = ledSuit; // aloitusmaa (null jos aloitat itse)
+        this.trickNumber = trickNumber; // 0..12
+        this.tricksByTeam = Object.freeze({ ...tricksByTeam }); // voitetut kasat
+        this.history = Object.freeze(
+          history.map((t) => Object.freeze(t.map((p) => Object.freeze(p.slice())))),
+        );
+        this.match = match;
+        Object.freeze(this);
+      }
+    
+      // --- mukavuusaputoiminnot ------------------------------------------- //
+      get team() {
+        return teamOf(this.seat);
+      }
+    
+      get partner() {
+        return partnerOf(this.seat);
+      }
+    
+      /** Ramissa halutaan kasoja, nolossa vältetään. */
+      get wantToWinTricks() {
+        return this.gameType === "rami";
+      }
+    
+      /** Kaikki tähän mennessä pelatut kortit (Set). */
+      get cardsPlayed() {
+        const played = new Set();
+        for (const trick of this.history) for (const [, c] of trick) played.add(c);
+        for (const [, c] of this.currentTrick) played.add(c);
+        return played;
+      }
+    
+      /** Kuka johtaa kesken olevaa kierrosta (tai null jos tyhjä)? */
+      currentWinnerSeat() {
+        if (this.currentTrick.length === 0) return null;
+        const led = this.currentTrick[0][1].suit;
+        let bestSeat = this.currentTrick[0][0];
+        let bestRank = this.currentTrick[0][1].rank;
+        for (let i = 1; i < this.currentTrick.length; i++) {
+          const [seat, card] = this.currentTrick[i];
+          if (card.suit === led && card.rank > bestRank) {
+            bestSeat = seat;
+            bestRank = card.rank;
+          }
+        }
+        return bestSeat;
+      }
+    
+      partnerIsWinning() {
+        const w = this.currentWinnerSeat();
+        return w !== null && w === this.partner;
+      }
+    }
+    
+    exports.MatchState = MatchState;
+    exports.ShowView = ShowView;
+    exports.PlayView = PlayView;
+    
+  };
+
+  __modules["src/player.js"] = function (module, exports, require) {
+    // TuppiPlayer: rajapinta jonka JOKAINEN tekoälypelaaja toteuttaa.
+    //
+    // Tämä on koko projektin ydinsopimus. Kun haluat uuden pelaajan, kirjoita
+    // uusi tiedosto players/-kansioon, jossa on luokka joka perii TuppiPlayerin
+    // ja toteuttaa vähintään chooseShow() ja playCard().
+    //
+    // Katso players/randomPlayer.js minimikaavaksi.
+    
+    class TuppiPlayer {
+      /**
+       * Yhden istumapaikan tekoäly.
+       *
+       * Sama pelaajaolio pelaa koko ottelun yhdessä paikassa. Voit pitää tilaa
+       * (esim. laskea pelattuja kortteja) olion kentissä; moottori kutsuu
+       * tapahtumakoukkuja (onDealStart jne.) joiden avulla voit nollata tilan.
+       */
+      constructor(name = null) {
+        // Näytettävä nimi. Aseta alaluokassa joko tämän kautta tai this.name.
+        this.name = name ?? this.constructor.defaultName ?? "TuppiPlayer";
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  PAKOLLISET METODIT                                                 //
+      // ------------------------------------------------------------------ //
+    
+      /**
+       * Näyttöpäätös ENNEN jakoa: palauta 'rami' tai 'nolo'.
+       *
+       * Näyttö kiertää jakajasta seuraavasta myötäpäivään. Heti kun joku
+       * näyttää 'rami', peliksi tulee rami ja hänestä tulee ramaaja.
+       * Jos kaikki näyttävät 'nolo', pelataan noloa.
+       *
+       * Muista: rami = yrität kerätä kasoja (yli 6), nolo = vältät niitä.
+       *
+       * @param {import('./views.js').ShowView} view
+       * @returns {'rami'|'nolo'}
+       */
+      chooseShow(view) {
+        throw new Error("chooseShow() on toteutettava alaluokassa");
+      }
+    
+      /**
+       * Lyö yksi kortti. Palautettavan kortin ON oltava view.legalMoves
+       * joukossa (maantuntopakko). Muuten moottori hylkää siirron.
+       *
+       * @param {import('./views.js').PlayView} view
+       * @returns {import('./cards.js').Card}
+       */
+      playCard(view) {
+        throw new Error("playCard() on toteutettava alaluokassa");
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  VAPAAEHTOISET TAPAHTUMAKOUKUT (oletuksena ei tee mitään)           //
+      // ------------------------------------------------------------------ //
+    
+      /** Kutsutaan kun uusi jako alkaa (ennen näyttöä). Hyvä paikka nollata
+       *  jaon aikainen tila (esim. pelattujen korttien lasku). */
+      onDealStart(view) {}
+    
+      /** Kutsutaan kun näyttö on ratkennut: peliksi tuli gameType
+       *  ('rami'/'nolo') ja ramaaja on ramin näyttäjän paikka (tai null). */
+      onShowResult(gameType, ramaaja) {}
+    
+      // ------------------------------------------------------------------ //
+      //  SOOLI (vapaaehtoinen)                                              //
+      // ------------------------------------------------------------------ //
+      /**
+       * Kysytään jokaiselta PUOLUSTAJALTA (ramaajan vastapari) rami-näytön
+       * jälkeen: haluatko pelata soolon eli yksin ramaajia vastaan? Ensimmäinen
+       * 'true' ryhtyy soolaajaksi. Oletuksena ei soolaa.
+       *
+       * Muista soolin erot: ässä on PIENIN, pelaat aina viimeisenä, parisi ei
+       * pelaa. Otat riskin: yksikin tikki -> ramaajat saavat 24p.
+       *
+       * @param {import('./views.js').ShowView} view
+       * @returns {boolean}
+       */
+      chooseSooli(view) {
+        return false;
+      }
+    
+      /**
+       * Soolaaja antaa parilleen yhden kortin (ja saa yhden tilalle). Palauta
+       * käden kortti jonka annat pois. Oletus: anna korkein sooli-arvoinen kortti
+       * (vaarallisin), jotta kädestä tulee mahdollisimman matala.
+       *
+       * @param {import('./views.js').ShowView} view
+       * @returns {import('./cards.js').Card}
+       */
+      chooseSooliGift(view) {
+        const hand = view.hand.slice();
+        hand.sort((a, b) => (a.rank === 14 ? 1 : a.rank) - (b.rank === 14 ? 1 : b.rank));
+        return hand[hand.length - 1];
+      }
+    
+      /**
+       * Soolaajan pari antaa soolaajalle yhden kortin tilalle. Palauta käden
+       * kortti jonka annat. Oletus: anna matalin sooli-arvoinen kortti (paras
+       * duunikortti soolaajalle, esim. ässä).
+       *
+       * @param {import('./views.js').ShowView} view
+       * @returns {import('./cards.js').Card}
+       */
+      chooseSooliReturn(view) {
+        const hand = view.hand.slice();
+        hand.sort((a, b) => (a.rank === 14 ? 1 : a.rank) - (b.rank === 14 ? 1 : b.rank));
+        return hand[0];
+      }
+    
+      /** Kutsutaan kun sooli on päätetty: soolaaja = paikka (tai null). */
+      onSooli(soolaaja) {}
+    
+      /** Kutsutaan kun kasa on lyöty loppuun. trick = [[seat, card], ...]. */
+      onTrickComplete(trick, winnerSeat) {}
+    
+      /** Kutsutaan jaon lopussa tuloksen kera. */
+      onDealEnd(tricksByTeam, winnerTeam, points) {}
+    }
+    
+    exports.TuppiPlayer = TuppiPlayer;
+    
+  };
+
+  __modules["src/analysis.js"] = function (module, exports, require) {
+    // Vapaaehtoisia apufunktioita pelaajille.
+    //
+    // Nämä on rakennettu VAIN julkisesta tiedosta (oma käsi + pelatut kortit),
+    // joten niiden käyttö on täysin sallittua. Pelaajien ei ole pakko käyttää
+    // näitä — voit kirjoittaa oman analyysin.
+    
+    const { fullDeck } = require("./cards.js");
+    
+    /**
+     * Kortit joita et näe: eivät kädessäsi eivätkä pelattuja.
+     * Nämä ovat vastustajien + parin piilossa olevat kortit. Palauttaa Setin.
+     */
+    function unseenCards(view) {
+      const seen = new Set(view.hand);
+      for (const c of view.cardsPlayed) seen.add(c);
+      const out = new Set();
+      for (const c of fullDeck()) if (!seen.has(c)) out.add(c);
+      return out;
+    }
+    
+    /** Näkymättömät kortit annetussa maassa, korkeimmasta matalimpaan. */
+    function unseenInSuit(view, suit) {
+      const cards = [...unseenCards(view)].filter((c) => c.suit === suit);
+      cards.sort((a, b) => b.rank - a.rank);
+      return cards;
+    }
+    
+    /**
+     * Onko kortti korkein jäljellä oleva (näkymätön) kyseisessä maassa? Ts.
+     * voittaako se varmasti jos sillä aloittaa.
+     */
+    function isBoss(view, card) {
+      for (const c of unseenCards(view)) {
+        if (c.suit === card.suit && c.rank > card.rank) return false;
+      }
+      return true;
+    }
+    
+    /**
+     * Päättele mistä maasta kukin paikka on tyhjä: jos pelaaja sakkasi
+     * (ei tunnustanut aloitusmaata), hänellä ei ole sitä maata.
+     * Palauttaa { seat: Set<suit> }.
+     */
+    function voidsFromHistory(view) {
+      const voids = { 0: new Set(), 1: new Set(), 2: new Set(), 3: new Set() };
+      const tricks = [...view.history];
+      if (view.currentTrick.length) tricks.push(view.currentTrick);
+      for (const trick of tricks) {
+        if (!trick.length) continue;
+        const led = trick[0][1].suit;
+        for (const [seat, card] of trick) {
+          if (card.suit !== led) voids[seat].add(led);
+        }
+      }
+      return voids;
+    }
+    
+    /** Montako korttia annetulla paikalla on vielä kädessä. */
+    function cardsRemainingInHand(view, seat) {
+      let played = 0;
+      for (const trick of view.history) for (const [s] of trick) if (s === seat) played++;
+      for (const [s] of view.currentTrick) if (s === seat) played++;
+      return 13 - played;
+    }
+    
+    /**
+     * Johtaisiko 'card' kierrosta heti lyönnin jälkeen? Ts. lyötkö tähän
+     * mennessä korkeimman aloitusmaan kortin. (Perässä tulevat voivat vielä
+     * ohittaa, mutta tämä kertoo tilanteen juuri nyt.)
+     */
+    function leadsAfterPlaying(currentTrick, card, seat) {
+      const hypo = [...currentTrick, [seat, card]];
+      const led = hypo[0][1].suit;
+      let bestSeat = hypo[0][0];
+      let bestRank = hypo[0][1].rank;
+      for (let i = 1; i < hypo.length; i++) {
+        const [s, c] = hypo[i];
+        if (c.suit === led && c.rank > bestRank) {
+          bestSeat = s;
+          bestRank = c.rank;
+        }
+      }
+      return bestSeat === seat;
+    }
+    
+    exports.unseenCards = unseenCards;
+    exports.unseenInSuit = unseenInSuit;
+    exports.isBoss = isBoss;
+    exports.voidsFromHistory = voidsFromHistory;
+    exports.cardsRemainingInHand = cardsRemainingInHand;
+    exports.leadsAfterPlaying = leadsAfterPlaying;
+    
+  };
+
+  __modules["src/sooliMatch.js"] = function (module, exports, require) {
+    // Sooli-jaon jaettu ydin (ilman UI:ta). Sekä moottori että sooli-turnaus
+    // käyttävät tätä, jotta tikkien kulku, ässä-pienin-vertailu ja lopetusehto
+    // ovat yhdessä paikassa.
+    //
+    // Soolaaja pelaa yksin kahta ramaajaa vastaan: ässä on pienin, soolaaja
+    // pelaa aina viimeisenä, soolaajan pari ei pelaa. Ramaaja aloittaa. Jos
+    // soolaaja ottaa yhdenkin tikin, ramaajat voittavat; muuten soolipari.
+    
+    const { CARDS_PER_HAND, legalMoves, sooliTrickWinner, teamOf, partnerOf, scoreSooli } = require("./rules.js");
+    const { PlayView } = require("./views.js");
+    
+    /**
+     * Aja sooli-jaon tikit. Kädet (hands) mutatoidaan.
+     *
+     * @param {object} p
+     * @param {import('./cards.js').Card[][]} p.hands  neljä kättä (vaihto jo tehty)
+     * @param {number} p.ramaaja   ramin näyttäjän paikka (aloittaa)
+     * @param {number} p.soolaaja  soolaajan paikka
+     * @param {object} p.mstate    MatchState PlayView'ta varten
+     * @param {(seat:number, view:PlayView)=>Card} p.getCard  palauta pelattava kortti
+     * @param {(trick, winnerSeat)=>void} [p.onTrick]  valinnainen tapahtumakoukku
+     * @returns {{soolaajaTookTrick, winnerTeam, points, tricksByTeam, history}}
+     */
+    function runSooliDeal({ hands, ramaaja, soolaaja, mstate, getCard, onTrick = null }) {
+      const otherRamaaja = partnerOf(ramaaja);
+      const tricksByTeam = { 0: 0, 1: 0 };
+      const history = [];
+      let leader = ramaaja; // ramaaja aloittaa
+      let soolaajaTookTrick = false;
+    
+      for (let trickNo = 0; trickNo < CARDS_PER_HAND; trickNo++) {
+        // Lyöntijärjestys: johtava ramaaja, toinen ramaaja, soolaaja viimeisenä.
+        const order = leader === ramaaja ? [ramaaja, otherRamaaja, soolaaja] : [otherRamaaja, ramaaja, soolaaja];
+        const trick = [];
+        let ledSuit = null;
+        for (const seat of order) {
+          const moves = legalMoves(hands[seat], ledSuit);
+          const view = new PlayView({
+            seat, hand: hands[seat], legalMoves: moves, gameType: "rami", ramaaja,
+            leader, currentTrick: trick, ledSuit, trickNumber: trickNo,
+            tricksByTeam, history, match: mstate, sooli: true, soolaaja,
+          });
+          let card = getCard(seat, view);
+          if (!moves.includes(card)) card = moves[0]; // turvakääre: laiton -> ensimmäinen sallittu
+          const idx = hands[seat].indexOf(card);
+          hands[seat].splice(idx, 1);
+          if (ledSuit === null) ledSuit = card.suit;
+          trick.push([seat, card]);
+        }
+        const w = sooliTrickWinner(trick);
+        tricksByTeam[teamOf(w)] += 1;
+        history.push(trick);
+        if (onTrick) onTrick(trick.map((p) => p.slice()), w);
+        if (w === soolaaja) { soolaajaTookTrick = true; break; }
+        leader = w;
+      }
+    
+      const { winner, points } = scoreSooli(teamOf(soolaaja), teamOf(ramaaja), soolaajaTookTrick);
+      return { soolaajaTookTrick, winnerTeam: winner, points, tricksByTeam, history };
+    }
+    
+    exports.runSooliDeal = runSooliDeal;
+    
+  };
+
+  __modules["src/engine.js"] = function (module, exports, require) {
+    // Pelimoottori: jaon kulku, näyttö, kasat, pisteet ja ottelun nousu/tuppi.
+    //
+    // Moottori on ainoa taho joka näkee kaikki kortit. Pelaajille annetaan vain
+    // rajatut näkymät (views.js), joten pelaajat eivät voi huijata.
+    
+    const { deal: dealCards, removeCard, RNG } = require("./cards.js");
+    const { CARDS_PER_HAND, TUPPI_TARGET, legalMoves, scoreDeal, pickSooliRamaajaCard, teamOf, trickWinner, opponentsOf, partnerOf } = require("./rules.js");
+    const { runSooliDeal } = require("./sooliMatch.js");
+    const { MatchState, PlayView, ShowView } = require("./views.js");
+    
+    class IllegalMove extends Error {}
+    
+    class TuppiEngine {
+      /**
+       * @param {import('./player.js').TuppiPlayer[]} players tasan 4 pelaajaa
+       * @param {object} [opts]
+       * @param {number|null} [opts.seed]
+       * @param {number} [opts.target] tuppiraja (oletus 52)
+       * @param {boolean} [opts.verbose] tulostaako tapahtumat
+       * @param {boolean} [opts.strict] laiton siirto = poikkeus (muuten korjataan)
+       */
+      constructor(players, { seed = null, target = TUPPI_TARGET, verbose = false, strict = true } = {}) {
+        if (players.length !== 4) throw new Error("tarvitaan tasan 4 pelaajaa");
+        this.players = players;
+        this.rng = new RNG(seed);
+        this.target = target;
+        this.verbose = verbose;
+        this.strict = strict;
+        // ottelun tila
+        this.upTeam = null; // nousulla oleva joukkue, null = pöytäpeli
+        this.upScore = 0;
+        this.banked = { 0: 0, 1: 0 };
+      }
+    
+      _log(...args) {
+        if (this.verbose) console.log(...args);
+      }
+    
+      _matchState(dealNumber, dealer) {
+        return new MatchState({
+          dealNumber,
+          dealer,
+          upTeam: this.upTeam,
+          upScore: this.upScore,
+          banked: { ...this.banked },
+          target: this.target,
+        });
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  NÄYTTÖ (rami/nolo)                                                 //
+      // ------------------------------------------------------------------ //
+      // Palauta { gameType, ramaaja, leader }.
+      // Näyttö alkaa jakajasta seuraavasta (etukäsi) ja kiertää myötäpäivään.
+      // Ensimmäinen 'rami' voittaa -> ramaaja. Muuten nolo.
+      _runShow(hands, dealer, mstate) {
+        const firstShower = (dealer + 1) % 4; // etukäsi
+        for (let i = 0; i < 4; i++) {
+          const seat = (firstShower + i) % 4;
+          const view = new ShowView({ seat, hand: hands[seat], match: mstate });
+          let choice = this.players[seat].chooseShow(view);
+          if (choice !== "rami" && choice !== "nolo") {
+            if (this.strict) throw new IllegalMove(`paikka ${seat}: virheellinen näyttö ${choice}`);
+            choice = "nolo";
+          }
+          if (choice === "rami") {
+            const leader = (seat + 3) % 4; // ramaajasta EDELLINEN aloittaa
+            return { gameType: "rami", ramaaja: seat, leader };
+          }
+        }
+        return { gameType: "nolo", ramaaja: null, leader: firstShower };
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  SOOLI-TARJOUS                                                      //
+      // ------------------------------------------------------------------ //
+      // Kysytään rami-näytön jälkeen kummaltakin puolustajalta (ramaajan
+      // vastaparilta), haluaako pelata soolon. Ensimmäinen 'true' ryhtyy
+      // soolaajaksi. Kysytään ramaajasta seuraavasta myötäpäivään.
+      _runSooliOffer(hands, ramaaja, mstate) {
+        const defenders = opponentsOf(ramaaja); // [ramaaja+1, ramaaja+3]
+        for (let i = 0; i < 4; i++) {
+          const seat = (ramaaja + 1 + i) % 4;
+          if (!defenders.includes(seat)) continue;
+          const view = new ShowView({ seat, hand: hands[seat], match: mstate });
+          if (this.players[seat].chooseSooli(view) === true) return seat;
+        }
+        return null;
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  SOOLI-JAKO                                                         //
+      // ------------------------------------------------------------------ //
+      // Soolaaja pelaa yksin kahta ramaajaa vastaan. Ässä on pienin, soolaaja
+      // pelaa aina viimeisenä, soolaajan pari ei pelaa. Ramaaja aloittaa. Jos
+      // soolaaja ottaa yhdenkin tikin, ramaajat voittavat; muuten soolipari.
+      _playSooliDeal(dealNumber, dealer, hands, ramaaja, soolaaja, mstate) {
+        // Kortinvaihto: soolaaja antaa yhden kortin parilleen ja saa yhden.
+        const soolPartner = partnerOf(soolaaja);
+        const giftView = new ShowView({ seat: soolaaja, hand: hands[soolaaja], match: mstate });
+        let gift = this.players[soolaaja].chooseSooliGift(giftView);
+        if (!hands[soolaaja].includes(gift)) gift = hands[soolaaja][0];
+        const retView = new ShowView({ seat: soolPartner, hand: hands[soolPartner], match: mstate });
+        let ret = this.players[soolPartner].chooseSooliReturn(retView);
+        if (!hands[soolPartner].includes(ret)) ret = hands[soolPartner][0];
+        // gift ja ret ovat aina eri kortteja (eri käsistä, kortit internoituja).
+        removeCard(hands[soolaaja], gift);
+        removeCard(hands[soolPartner], ret);
+        hands[soolaaja].push(ret);
+        hands[soolPartner].push(gift);
+    
+        for (let seat = 0; seat < 4; seat++) this.players[seat].onSooli(soolaaja);
+    
+        const otherRamaaja = partnerOf(ramaaja);
+        this._log(
+          `\n--- Jako ${dealNumber} | jakaja ${dealer} | SOOLI` +
+            ` (soolaaja ${soolaaja} vs ramaajat ${ramaaja}&${otherRamaaja}) | aloittaa ${ramaaja} ---`,
+        );
+    
+        // Jaettu ydin ajaa tikit. Ramaajat ajetaan dedikoidulla sooli-puolustuksella
+        // (botit eivät osaa soolia); soolaaja tekee omat päätöksensä (ihminen/oma pelaaja).
+        const { soolaajaTookTrick, winnerTeam, points, tricksByTeam } = runSooliDeal({
+          hands, ramaaja, soolaaja, mstate,
+          getCard: (seat, view) =>
+            seat === soolaaja ? this.players[seat].playCard(view) : pickSooliRamaajaCard(view),
+          onTrick: (trick, w) => {
+            for (let seat = 0; seat < 4; seat++) this.players[seat].onTrickComplete(trick, w);
+            this._log("  " + trick.map(([s, c]) => `${s}:${c}`).join("  ") + `  -> tikki paikalle ${w}`);
+          },
+        });
+        for (let seat = 0; seat < 4; seat++) this.players[seat].onDealEnd({ ...tricksByTeam }, winnerTeam, points);
+        this._log(
+          `  Sooli: soolaaja ${soolaajaTookTrick ? "OTTI tikin" : "selvisi tikeittä"} -> ` +
+            `joukkue ${winnerTeam} voittaa ${points}p`,
+        );
+    
+        return {
+          gameType: "sooli", ramaaja, soolaaja, leader: ramaaja,
+          tricksByTeam: { ...tricksByTeam }, winnerTeam, points, steal: false,
+          soolaajaTookTrick,
+        };
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  YKSI JAKO                                                          //
+      // ------------------------------------------------------------------ //
+      playDeal(dealNumber, dealer) {
+        const hands = dealCards(this.rng);
+        const mstate = this._matchState(dealNumber, dealer);
+    
+        for (let seat = 0; seat < 4; seat++) {
+          this.players[seat].onDealStart(new ShowView({ seat, hand: hands[seat], match: mstate }));
+        }
+    
+        const { gameType, ramaaja, leader } = this._runShow(hands, dealer, mstate);
+        for (let seat = 0; seat < 4; seat++) {
+          this.players[seat].onShowResult(gameType, ramaaja);
+        }
+    
+        // Rami-näytön jälkeen puolustaja voi ryhtyä soolaajaksi.
+        if (gameType === "rami") {
+          const soolaaja = this._runSooliOffer(hands, ramaaja, mstate);
+          if (soolaaja !== null) {
+            return this._playSooliDeal(dealNumber, dealer, hands, ramaaja, soolaaja, mstate);
+          }
+        }
+    
+        this._log(
+          `\n--- Jako ${dealNumber} | jakaja ${dealer} | ${gameType.toUpperCase()}` +
+            (ramaaja !== null ? ` (ramaaja ${ramaaja})` : "") +
+            ` | aloittaa ${leader} ---`,
+        );
+    
+        const tricksByTeam = { 0: 0, 1: 0 };
+        const history = [];
+        let current = leader;
+    
+        for (let trickNo = 0; trickNo < CARDS_PER_HAND; trickNo++) {
+          const trick = [];
+          let ledSuit = null;
+          for (let j = 0; j < 4; j++) {
+            const seat = (current + j) % 4;
+            const moves = legalMoves(hands[seat], ledSuit);
+            const view = new PlayView({
+              seat,
+              hand: hands[seat],
+              legalMoves: moves,
+              gameType,
+              ramaaja,
+              leader: current,
+              currentTrick: trick,
+              ledSuit,
+              trickNumber: trickNo,
+              tricksByTeam,
+              history,
+              match: mstate,
+            });
+            let card = this.players[seat].playCard(view);
+            card = this._validate(card, moves, seat);
+            removeCard(hands[seat], card);
+            if (ledSuit === null) ledSuit = card.suit;
+            trick.push([seat, card]);
+          }
+    
+          const w = trickWinner(trick);
+          tricksByTeam[teamOf(w)] += 1;
+          history.push(trick);
+          for (let seat = 0; seat < 4; seat++) {
+            this.players[seat].onTrickComplete(trick.map((p) => p.slice()), w);
+          }
+          this._log(
+            "  " + trick.map(([s, c]) => `${s}:${c}`).join("  ") +
+              `  -> kasa paikalle ${w} (joukkue ${teamOf(w)})`,
+          );
+          current = w;
+        }
+    
+        const ramaajaTeam = ramaaja !== null ? teamOf(ramaaja) : null;
+        const { winner: winnerTeam, points, steal } = scoreDeal(tricksByTeam, gameType, ramaajaTeam);
+        for (let seat = 0; seat < 4; seat++) {
+          this.players[seat].onDealEnd({ ...tricksByTeam }, winnerTeam, points);
+        }
+    
+        this._log(
+          `  Kasat: joukkue0=${tricksByTeam[0]} joukkue1=${tricksByTeam[1]} -> ` +
+            `joukkue ${winnerTeam} voittaa ${points}p` + (steal ? "  [RYÖSTÖ!]" : ""),
+        );
+    
+        return {
+          gameType,
+          ramaaja,
+          leader,
+          tricksByTeam: { ...tricksByTeam },
+          winnerTeam,
+          points,
+          steal,
+        };
+      }
+    
+      _validate(card, moves, seat) {
+        if (moves.includes(card)) return card;
+        const msg = `paikka ${seat} yritti laitonta siirtoa ${card}; sallitut: ${moves.join(", ")}`;
+        if (this.strict) throw new IllegalMove(msg);
+        this._log("  [VAROITUS] " + msg + " -> korjataan");
+        return moves[0];
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  NOUSU / TUPPI -PÄIVITYS                                            //
+      // ------------------------------------------------------------------ //
+      // Vain toinen joukkue voi olla nousulla kerrallaan.
+      //  - Pöytäpeli (kukaan ei nousulla): voittaja nousee pisteillään.
+      //  - Voittaja on jo nousulla: lisää pisteet.
+      //  - Vastapari voittaa nousulla olevalta: nousulla ollut putoaa nollaan
+      //    ja tulee pöytäpeli. Voittaja EI pankkaa.
+      _applyNousu(winnerTeam, points) {
+        if (this.upTeam === null) {
+          this.upTeam = winnerTeam;
+          this.upScore = points;
+          this.banked[winnerTeam] += points;
+        } else if (this.upTeam === winnerTeam) {
+          this.upScore += points;
+          this.banked[winnerTeam] += points;
+        } else {
+          this.upTeam = null;
+          this.upScore = 0;
+        }
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  KOKO OTTELU                                                        //
+      // ------------------------------------------------------------------ //
+      /**
+       * Oletus: pelataan kunnes joku tekee tupen (yhtäjaksoinen nousu >= 52)
+       * tai maxDeals täyttyy (turvaraja). fixedDeals: pelaa tasan n jakoa
+       * (turnaustyyli) ja voittaja = enemmän nousupisteitä kerännyt.
+       */
+      playMatch({ maxDeals = 500, fixedDeals = null } = {}) {
+        const results = [];
+        let dealNumber = 0;
+        let byTuppi = false;
+        let winnerTeam = null;
+    
+        const limit = fixedDeals !== null ? fixedDeals : maxDeals;
+        while (dealNumber < limit) {
+          dealNumber += 1;
+          const dealer = (dealNumber - 1) % 4;
+          const res = this.playDeal(dealNumber, dealer);
+          results.push(res);
+          this._applyNousu(res.winnerTeam, res.points);
+          this._log(
+            `  Tilanne: nousulla=${this.upTeam} (${this.upScore}) | ` +
+              `pankki={0:${this.banked[0]}, 1:${this.banked[1]}}`,
+          );
+    
+          if (fixedDeals === null && this.upScore >= this.target) {
+            byTuppi = true;
+            winnerTeam = this.upTeam;
+            this._log(
+              `\n*** TUPPI! Joukkue ${winnerTeam} vei joukkueen ${1 - winnerTeam} ` +
+                `tuppeen (${this.upScore} p). ***`,
+            );
+            break;
+          }
+        }
+    
+        if (winnerTeam === null && this.banked[0] !== this.banked[1]) {
+          winnerTeam = this.banked[0] > this.banked[1] ? 0 : 1;
+        }
+    
+        return {
+          winnerTeam,
+          byTuppi,
+          dealsPlayed: dealNumber,
+          banked: { ...this.banked },
+          dealResults: results,
+        };
+      }
+    }
+    
+    exports.IllegalMove = IllegalMove;
+    exports.TuppiEngine = TuppiEngine;
+    
+  };
+
+  __modules["src/index.js"] = function (module, exports, require) {
+    // Tuppi-pelin ydin: kortit, säännöt, moottori ja pelaajarajapinta.
+    //
+    // Yksi tuontipiste kaikelle julkiselle rajapinnalle:
+    //   const { TuppiPlayer, Card, Suit, ... } = require("../src/index.js");
+    
+    { const __x = require("./cards.js"); exports.Card = __x.Card; exports.Suit = __x.Suit; exports.SUITS = __x.SUITS; exports.fullDeck = __x.fullDeck; exports.removeCard = __x.removeCard; exports.cardSortKey = __x.cardSortKey; exports.suitIsRed = __x.suitIsRed; exports.suitSymbol = __x.suitSymbol; exports.RNG = __x.RNG; exports.deal = __x.deal; }
+    
+    { const __x = require("./player.js"); exports.TuppiPlayer = __x.TuppiPlayer; }
+    { const __x = require("./views.js"); exports.MatchState = __x.MatchState; exports.PlayView = __x.PlayView; exports.ShowView = __x.ShowView; }
+    { const __x = require("./engine.js"); exports.TuppiEngine = __x.TuppiEngine; exports.IllegalMove = __x.IllegalMove; }
+    { const __x = require("./rules.js"); exports.NUM_PLAYERS = __x.NUM_PLAYERS; exports.CARDS_PER_HAND = __x.CARDS_PER_HAND; exports.TUPPI_TARGET = __x.TUPPI_TARGET; exports.teamOf = __x.teamOf; exports.partnerOf = __x.partnerOf; exports.opponentsOf = __x.opponentsOf; exports.legalMoves = __x.legalMoves; exports.trickWinner = __x.trickWinner; exports.scoreDeal = __x.scoreDeal; exports.scoreSooli = __x.scoreSooli; exports.sooliRank = __x.sooliRank; exports.sooliTrickWinner = __x.sooliTrickWinner; exports.SOOLI_POINTS = __x.SOOLI_POINTS; exports.pickSooliRamaajaCard = __x.pickSooliRamaajaCard; exports.pickSooliSoolaajaCard = __x.pickSooliSoolaajaCard; exports.estimateSooliSurvival = __x.estimateSooliSurvival; exports.ramiDefenseStrength = __x.ramiDefenseStrength; exports.estimateSooliEV = __x.estimateSooliEV; }
+    
+    
+  };
+
+  __modules["players/randomPlayer.js"] = function (module, exports, require) {
+    // Satunnaispelaaja — pienin mahdollinen esimerkki.
+    //
+    // TÄMÄ ON MALLIPOHJA uudelle pelaajalle. Kopioi tämä tiedosto, nimeä
+    // luokka ja tiedosto uudelleen ja korvaa logiikka omallasi.
+    //
+    // Vaatimukset uudelle pelaajalle:
+    //   1. Peri TuppiPlayer.
+    //   2. Toteuta chooseShow(view) -> 'rami' | 'nolo'.
+    //   3. Toteuta playCard(view) -> Card (kortin ON oltava view.legalMoves).
+    //   4. Vie oletusfunktio createPlayer() -> TuppiPlayer.
+    
+    const { RNG, TuppiPlayer } = require("../src/index.js");
+    
+    class RandomPlayer extends TuppiPlayer {
+      static defaultName = "Satku";
+    
+      constructor(name = null, seed = null) {
+        super(name);
+        this.rng = new RNG(seed);
+      }
+    
+      chooseShow(view) {
+        // Naiivi: näytä ramia jos kädessä on kovia kortteja, muuten nolo.
+        const highs = view.hand.filter((c) => c.rank >= 13).length; // K, A
+        return highs >= 3 ? "rami" : "nolo";
+      }
+    
+      playCard(view) {
+        // Lyö satunnainen sallittu kortti.
+        return this.rng.choice(view.legalMoves);
+      }
+    }
+    
+    function createPlayer() {
+      return new RandomPlayer();
+    }
+    
+    exports.RandomPlayer = RandomPlayer;
+    exports.default = createPlayer;
+    
+  };
+
+  __modules["players/heuristicPlayer.js"] = function (module, exports, require) {
+    // Heuristinen pelaaja — vankka sääntöpohjainen strategia.
+    //
+    // Osaa perusasiat: näyttöpäätöksen käden vahvuudesta, ramissa kasojen
+    // keräämisen ja nolossa niiden väistämisen (duck), parikaverin huomioinnin
+    // sekä hyvän sakkauksen (korkeiden korttien pudottamisen nolossa).
+    
+    const { SUITS, TuppiPlayer } = require("../src/index.js");
+    
+    // Pieni apu: valitse taulukon alkio jolla annettu avain on suurin/pienin.
+    function argmax(arr, key) {
+      let best = arr[0];
+      let bestK = key(best);
+      for (let i = 1; i < arr.length; i++) {
+        const k = key(arr[i]);
+        if (k > bestK) {
+          best = arr[i];
+          bestK = k;
+        }
+      }
+      return best;
+    }
+    function argmin(arr, key) {
+      return argmax(arr, (x) => -key(x));
+    }
+    
+    class HeuristicPlayer extends TuppiPlayer {
+      static defaultName = "Heuristi";
+    
+      // ------------------------------------------------------------------ //
+      //  NÄYTTÖ                                                             //
+      // ------------------------------------------------------------------ //
+      chooseShow(view) {
+        return this._ramiStrength(view.hand) >= 9 ? "rami" : "nolo";
+      }
+    
+      // Karkea ramivahvuus. Ässät ja kuninkaat ovat kovia; pitkät maat ja
+      // lyhyet maat (sakkausmahdollisuus) auttavat kasojen keräämisessä.
+      _ramiStrength(hand) {
+        let pts = 0;
+        const bySuit = { 0: [], 1: [], 2: [], 3: [] };
+        for (const c of hand) bySuit[c.suit].push(c.rank);
+        for (const s of SUITS) {
+          const ranks = bySuit[s];
+          for (const r of ranks) {
+            if (r === 14) pts += 3; // ässä
+            else if (r === 13) pts += 2; // kuningas
+            else if (r === 12) pts += 1; // rouva
+          }
+          const length = ranks.length;
+          if (length >= 5) pts += (length - 4) * 1.5; // pitkä maa -> loppukasoja
+          if (length <= 1) pts += 1.0; // lyhyt maa = sakkausvara
+        }
+        return pts;
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  LYÖNTI                                                             //
+      // ------------------------------------------------------------------ //
+      playCard(view) {
+        return view.wantToWinTricks ? this._playRami(view) : this._playNolo(view);
+      }
+    
+      // --- RAMI: kerää kasoja ------------------------------------------- //
+      _playRami(view) {
+        const moves = [...view.legalMoves];
+        if (view.ledSuit === null) return this._leadRami(view, moves);
+    
+        if (view.partnerIsWinning() && this._partnerSafe(view)) {
+          // Pari johtaa turvallisesti -> säästä, lyö matalin.
+          return argmin(moves, (c) => c.rank);
+        }
+    
+        const winners = moves.filter((c) => this._beatsCurrent(view, c));
+        if (winners.length) return argmin(winners, (c) => c.rank); // voita halvalla
+        return argmin(moves, (c) => c.rank); // ei voi voittaa -> pudota matalin
+      }
+    
+      _leadRami(view, moves) {
+        const bySuit = new Map();
+        for (const c of moves) {
+          if (!bySuit.has(c.suit)) bySuit.set(c.suit, []);
+          bySuit.get(c.suit).push(c);
+        }
+        // Suosi maata jossa on ässä/kuningas tai pisin maa.
+        let bestSuit = null;
+        let bestKey = null;
+        for (const [s, cards] of bySuit) {
+          const maxRank = Math.max(...cards.map((c) => c.rank));
+          const key = maxRank * 100 + cards.length;
+          if (bestKey === null || key > bestKey) {
+            bestKey = key;
+            bestSuit = s;
+          }
+        }
+        return argmax(bySuit.get(bestSuit), (c) => c.rank);
+      }
+    
+      // --- NOLO: vältä kasoja ------------------------------------------- //
+      _playNolo(view) {
+        const moves = [...view.legalMoves];
+        if (view.ledSuit === null) {
+          // Aloita matalalla pitkästä maasta.
+          const bySuit = this._bySuit(moves);
+          let bestSuit = null;
+          let bestLen = -1;
+          for (const [s, cards] of bySuit) {
+            if (cards.length > bestLen) {
+              bestLen = cards.length;
+              bestSuit = s;
+            }
+          }
+          return argmin(bySuit.get(bestSuit), (c) => c.rank);
+        }
+    
+        const suitsInMoves = new Set(moves.map((c) => c.suit));
+        if (suitsInMoves.has(view.ledSuit)) {
+          // Voi tunnustaa maata: pelaa korkein joka EI voita (alita).
+          const cur = this._currentHighRank(view);
+          const under = moves.filter((c) => c.suit === view.ledSuit && c.rank < cur);
+          if (under.length) return argmax(under, (c) => c.rank); // heitä iso turvaan
+          // Kaikki voittaisivat -> pelaa matalin, ehkä joku ohittaa perässä.
+          return argmin(
+            moves.filter((c) => c.suit === view.ledSuit),
+            (c) => c.rank,
+          );
+        }
+        // Sakkaus nolossa on kultaa: pudota korkein vaarallinen kortti.
+        return argmax(moves, (c) => c.rank * 100 + this._suitDanger(view, c.suit));
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  APUT                                                               //
+      // ------------------------------------------------------------------ //
+      _bySuit(cards) {
+        const bySuit = new Map();
+        for (const c of cards) {
+          if (!bySuit.has(c.suit)) bySuit.set(c.suit, []);
+          bySuit.get(c.suit).push(c);
+        }
+        return bySuit;
+      }
+    
+      _currentHighRank(view) {
+        const led = view.ledSuit;
+        let best = -1;
+        for (const [, c] of view.currentTrick) {
+          if (c.suit === led && c.rank > best) best = c.rank;
+        }
+        return best;
+      }
+    
+      _beatsCurrent(view, card) {
+        if (view.currentTrick.length === 0) return true;
+        const led = view.currentTrick[0][1].suit;
+        if (card.suit !== led) return false;
+        return card.rank > this._currentHighRank(view);
+      }
+    
+      // Onko parin johto turvallinen: onko takana enää pelaajia jotka voisivat
+      // ohittaa? Jos olet 3. tai 4. lyöjä ja pari johtaa, on melko turvallista
+      // säästää.
+      _partnerSafe(view) {
+        return view.currentTrick.length >= 2;
+      }
+    
+      _suitDanger(view, suit) {
+        // Enemmän omia kortteja maassa = vaarallisempi pitää -> pudota mieluummin.
+        return view.hand.filter((c) => c.suit === suit).length;
+      }
+    }
+    
+    function createPlayer() {
+      return new HeuristicPlayer();
+    }
+    
+    exports.HeuristicPlayer = HeuristicPlayer;
+    exports.default = createPlayer;
+    
+  };
+
+  __modules["players/countingPlayer.js"] = function (module, exports, require) {
+    // Korttilaskuri — seuraa pelattuja kortteja ja päättelee vastustajien maat.
+    //
+    // Rakentuu heuristisen pelaajan päälle mutta pelaa tarkemmin: tietää mitkä
+    // kovat kortit ovat vielä pelissä, mitkä omat kortit ovat "varmoja" (boss),
+    // ja mistä maasta kukin vastustaja on jo tyhjä (sakannut).
+    
+    const { isBoss, unseenInSuit, voidsFromHistory } = require("../src/analysis.js");
+    const { HeuristicPlayer } = require("./heuristicPlayer.js");
+    
+    function argmax(arr, key) {
+      let best = arr[0];
+      let bestK = key(best);
+      for (let i = 1; i < arr.length; i++) {
+        const k = key(arr[i]);
+        if (k > bestK) {
+          best = arr[i];
+          bestK = k;
+        }
+      }
+      return best;
+    }
+    function argmin(arr, key) {
+      return argmax(arr, (x) => -key(x));
+    }
+    
+    class CountingPlayer extends HeuristicPlayer {
+      static defaultName = "Laskuri";
+    
+      chooseShow(view) {
+        // Hieman rohkeampi ramaaja kun on nousulla (rami ei voi karata).
+        const threshold = view.match.upTeam === view.team ? 8.0 : 9.0;
+        return this._ramiStrength(view.hand) >= threshold ? "rami" : "nolo";
+      }
+    
+      // --- RAMI ---------------------------------------------------------- //
+      _leadRami(view, moves) {
+        // Lyö ensin varmat voittajat (boss-kortit) kärjestä.
+        const bosses = moves.filter((c) => isBoss(view, c));
+        if (bosses.length) return argmax(bosses, (c) => c.rank);
+        // Muuten pyri vahvistamaan pisin maa: lyö sen korkein.
+        const bySuit = this._bySuit(moves);
+        let bestSuit = null;
+        let bestKey = null;
+        for (const [s, cards] of bySuit) {
+          const key = cards.length * 100 + Math.max(...cards.map((c) => c.rank));
+          if (bestKey === null || key > bestKey) {
+            bestKey = key;
+            bestSuit = s;
+          }
+        }
+        return argmax(bySuit.get(bestSuit), (c) => c.rank);
+      }
+    
+      // Pari johtaa turvallisesti jos takana olevat eivät voi ohittaa: joko he
+      // ovat tyhjiä maasta tai kaikki korkeammat kortit on jo pelattu.
+      _partnerSafe(view) {
+        if (view.currentTrick.length === 0) return false;
+        const led = view.currentTrick[0][1].suit;
+        const cur = this._currentHighRank(view);
+        const voids = voidsFromHistory(view);
+        const seatsBehind = [];
+        for (let k = 1; k < 4 - view.currentTrick.length; k++) {
+          seatsBehind.push((view.seat + k) % 4);
+        }
+        const higherOut = unseenInSuit(view, led).filter((c) => c.rank > cur);
+        for (const s of seatsBehind) {
+          if (voids[s].has(led)) continue; // tyhjä -> ei uhkaa
+          if (higherOut.length) return false; // joku voisi pitää korkeamman
+        }
+        return true;
+      }
+    
+      // --- NOLO ---------------------------------------------------------- //
+      _playNolo(view) {
+        const moves = [...view.legalMoves];
+        if (view.ledSuit === null) return this._leadNoloSafe(view, moves);
+        return super._playNolo(view);
+      }
+    
+      // Aloita maalla jossa on matalia kortteja JA jonka joku vastustaja voi
+      // vielä ylittää (ettet jää itse kiinni). Vältä "riikosta" (maa jota muilla
+      // ei ole -> jäät itse kiinni).
+      _leadNoloSafe(view, moves) {
+        const bySuit = this._bySuit(moves);
+        // Pienin score voittaa: (ei-riikonen, matala kortti, pitkä maa).
+        let bestSuit = null;
+        let bestScore = null;
+        for (const [s, cards] of bySuit) {
+          const sorted = [...cards].sort((a, b) => a.rank - b.rank);
+          const low = sorted[0].rank;
+          const othersHave = unseenInSuit(view, s).length > 0;
+          // score-tuple vertailu: [riikonen?, matala, -pituus]
+          const score = [othersHave ? 0 : 1, low, -cards.length];
+          if (bestScore === null || _lt(score, bestScore)) {
+            bestScore = score;
+            bestSuit = s;
+          }
+        }
+        return argmin(bySuit.get(bestSuit), (c) => c.rank);
+      }
+    }
+    
+    // Leksikografinen "pienempi kuin" kolmikoille.
+    function _lt(a, b) {
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] < b[i]) return true;
+        if (a[i] > b[i]) return false;
+      }
+      return false;
+    }
+    
+    function createPlayer() {
+      return new CountingPlayer();
+    }
+    
+    exports.CountingPlayer = CountingPlayer;
+    exports.default = createPlayer;
+    
+  };
+
+  __modules["players/championPlayer.js"] = function (module, exports, require) {
+    // Mestari — determinoitu Monte Carlo -haku (PIMC). Ammattilaistason tekoäly.
+    //
+    // Idea: emme näe vastustajien kortteja, mutta tiedämme mitkä kortit ovat
+    // vielä pelissä ja mistä maasta kukin on tyhjä (sakannut). Jokaista laillista
+    // siirtoa kohti arvomme monta mahdollista korttijakoa vastustajille (voidit
+    // huomioiden) ja pelaamme jaon loppuun nopealla järkevällä politiikalla.
+    // Valitsemme siirron joka tuottaa parhaan keskimääräisen tuloksen omalle
+    // joukkueelle (ramissa max kasat, nolossa min kasat).
+    
+    const { Card, RNG, SUITS, TuppiPlayer, fullDeck, removeCard, teamOf, trickWinner } = require("../src/index.js");
+    const { cardsRemainingInHand, unseenCards, voidsFromHistory } = require("../src/analysis.js");
+    
+    class ChampionPlayer extends TuppiPlayer {
+      static defaultName = "Mestari";
+    
+      constructor(name = null, { simulations = 60, seed = null, ramBias = 0 } = {}) {
+        super(name);
+        this.sims = simulations;
+        this.rng = new RNG(seed);
+        // ramBias nostaa ramauskynnystä -> valitsee noloa useammin (varovaisempi).
+        this.ramBias = ramBias;
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  NÄYTTÖ: kevyt simulaatio käden voimasta                            //
+      // ------------------------------------------------------------------ //
+      chooseShow(view) {
+        const myTeam = view.team;
+        const seatsOthers = [0, 1, 2, 3].filter((s) => s !== view.seat);
+        const handSet = new Set(view.hand);
+        const unseen = fullDeck().filter((c) => !handSet.has(c));
+        let total = 0;
+        const trials = Math.max(20, Math.floor(this.sims / 2));
+        for (let t = 0; t < trials; t++) {
+          this.rng.shuffle(unseen);
+          const hands = { [view.seat]: [...view.hand] };
+          seatsOthers.forEach((s, i) => {
+            hands[s] = unseen.slice(i * 13, (i + 1) * 13);
+          });
+          const tricks = _rollout(hands, (view.match.dealer + 1) % 4, "rami", this.rng);
+          total += tricks[myTeam];
+        }
+        const avg = total / trials;
+        // ~6.5 on tasapeli; vaadi selvä etu ennen ramia, rohkeampi nousulla.
+        // ramBias nostaa kynnystä (valitsee noloa useammin).
+        const need = (view.match.upTeam === myTeam ? 6.6 : 7.1) + this.ramBias;
+        return avg >= need ? "rami" : "nolo";
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  LYÖNTI: PIMC                                                       //
+      // ------------------------------------------------------------------ //
+      playCard(view) {
+        const moves = [...view.legalMoves];
+        if (moves.length === 1) return moves[0];
+    
+        const myTeam = view.team;
+        const unseen = [...unseenCards(view)];
+        const need = {};
+        for (const s of [0, 1, 2, 3]) {
+          if (s !== view.seat) need[s] = cardsRemainingInHand(view, s);
+        }
+        const voids = voidsFromHistory(view);
+        const maximize = view.wantToWinTricks; // rami: enemmän kasoja parempi
+    
+        let bestCard = moves[0];
+        let bestVal = null;
+        for (const card of moves) {
+          let total = 0;
+          for (let i = 0; i < this.sims; i++) {
+            const hands = this._determinize(view, unseen, need, voids);
+            if (hands === null) continue;
+            const tricks = this._simulateFromHere(view, hands, card);
+            total += tricks[myTeam];
+          }
+          const val = total; // jaettu samalla sims-määrällä -> vertailukelpoinen
+          if (bestVal === null || (maximize ? val > bestVal : val < bestVal)) {
+            bestVal = val;
+            bestCard = card;
+          }
+        }
+        return bestCard;
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  Jaa näkymättömät kortit vastustajille voidit huomioiden            //
+      // ------------------------------------------------------------------ //
+      _determinize(view, unseen, need, voids) {
+        const seats = Object.keys(need).map(Number);
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const pool = [...unseen];
+          this.rng.shuffle(pool);
+          const capacity = { ...need };
+          const assign = {};
+          for (const s of seats) assign[s] = [];
+    
+          const allowed = (card) =>
+            seats.filter((s) => capacity[s] > 0 && !voids[s].has(card.suit));
+    
+          // sijoita rajoitetuimmat kortit ensin
+          pool.sort((a, b) => allowed(a).length - allowed(b).length);
+          let ok = true;
+          for (const card of pool) {
+            const cand = allowed(card);
+            if (cand.length === 0) {
+              ok = false;
+              break;
+            }
+            const s = this.rng.choice(cand);
+            assign[s].push(card);
+            capacity[s] -= 1;
+          }
+          if (ok && seats.every((s) => capacity[s] === 0)) {
+            assign[view.seat] = [...view.hand];
+            return assign;
+          }
+        }
+        // varajako ilman voideja (harvinainen)
+        const pool = [...unseen];
+        this.rng.shuffle(pool);
+        const assign = { [view.seat]: [...view.hand] };
+        let idx = 0;
+        for (const s of seats) {
+          assign[s] = pool.slice(idx, idx + need[s]);
+          idx += need[s];
+        }
+        return assign;
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  Pelaa jaon loppuun annetusta tilasta, kun MINÄ lyön 'card'         //
+      // ------------------------------------------------------------------ //
+      _simulateFromHere(view, handsIn, card) {
+        const hands = {};
+        for (const s of Object.keys(handsIn)) hands[s] = [...handsIn[s]];
+        const tricks = { ...view.tricksByTeam };
+        let trick = view.currentTrick.map((p) => [p[0], p[1]]);
+        let ledSuit = view.ledSuit;
+    
+        // MINÄ lyön valitun kortin
+        removeCard(hands[view.seat], card);
+        if (ledSuit === null) ledSuit = card.suit;
+        trick.push([view.seat, card]);
+    
+        // loput saman kierroksen lyönnit
+        let seat = view.seat;
+        while (trick.length < 4) {
+          seat = (seat + 1) % 4;
+          const c = _policyPlay(hands[seat], ledSuit, trick, seat, view.gameType, this.rng);
+          removeCard(hands[seat], c);
+          trick.push([seat, c]);
+        }
+    
+        let w = trickWinner(trick);
+        tricks[teamOf(w)] += 1;
+        let leader = w;
+    
+        // loput kierrokset
+        const remaining = hands[view.seat].length;
+        for (let r = 0; r < remaining; r++) {
+          trick = [];
+          ledSuit = null;
+          for (let j = 0; j < 4; j++) {
+            const s = (leader + j) % 4;
+            const c = _policyPlay(hands[s], ledSuit, trick, s, view.gameType, this.rng);
+            removeCard(hands[s], c);
+            if (ledSuit === null) ledSuit = c.suit;
+            trick.push([s, c]);
+          }
+          w = trickWinner(trick);
+          tricks[teamOf(w)] += 1;
+          leader = w;
+        }
+        return tricks;
+      }
+    }
+    
+    // ---------------------------------------------------------------------- //
+    //  Nopea moduulitason politiikka (jaettu rollouteissa)                    //
+    // ---------------------------------------------------------------------- //
+    function _legal(hand, ledSuit) {
+      if (ledSuit === null) return hand;
+      const same = hand.filter((c) => c.suit === ledSuit);
+      return same.length ? same : hand;
+    }
+    
+    function _currentHigh(trick, ledSuit) {
+      if (!trick.length || ledSuit === null) return -1;
+      let best = -1;
+      for (const [, c] of trick) if (c.suit === ledSuit && c.rank > best) best = c.rank;
+      return best;
+    }
+    
+    function _partialWinner(trick) {
+      const led = trick[0][1].suit;
+      let bs = trick[0][0];
+      let br = trick[0][1].rank;
+      for (let i = 1; i < trick.length; i++) {
+        const [s, c] = trick[i];
+        if (c.suit === led && c.rank > br) {
+          bs = s;
+          br = c.rank;
+        }
+      }
+      return bs;
+    }
+    
+    function _minBy(arr, key) {
+      let best = arr[0];
+      let bk = key(best);
+      for (let i = 1; i < arr.length; i++) {
+        const k = key(arr[i]);
+        if (k < bk) {
+          best = arr[i];
+          bk = k;
+        }
+      }
+      return best;
+    }
+    function _maxBy(arr, key) {
+      return _minBy(arr, (x) => -key(x));
+    }
+    
+    // Kevyt mutta järkevä rollout-politiikka.
+    function _policyPlay(hand, ledSuit, trick, seat, gameType, rng) {
+      const moves = _legal(hand, ledSuit);
+      if (moves.length === 1) return moves[0];
+      const wantWin = gameType === "rami";
+    
+      if (ledSuit === null || !trick.length) {
+        // aloitus
+        return wantWin ? _maxBy(moves, (c) => c.rank) : _minBy(moves, (c) => c.rank);
+      }
+    
+      const cur = _currentHigh(trick, ledSuit);
+      const winner = _partialWinner(trick);
+      const partnerLeads = winner % 2 === seat % 2;
+      const hasLed = moves.some((c) => c.suit === ledSuit);
+    
+      if (hasLed) {
+        if (wantWin) {
+          if (partnerLeads) return _minBy(moves, (c) => c.rank); // pari johtaa, säästä
+          const wins = moves.filter((c) => c.suit === ledSuit && c.rank > cur);
+          if (wins.length) return _minBy(wins, (c) => c.rank); // voita halvalla
+          return _minBy(moves, (c) => c.rank);
+        }
+        // nolo: alita
+        const under = moves.filter((c) => c.suit === ledSuit && c.rank < cur);
+        if (under.length) return _maxBy(under, (c) => c.rank);
+        return _minBy(
+          moves.filter((c) => c.suit === ledSuit),
+          (c) => c.rank,
+        );
+      }
+      // sakkaus
+      if (wantWin) return _minBy(moves, (c) => c.rank); // säästä kovat
+      return _maxBy(moves, (c) => c.rank); // pudota vaaralliset
+    }
+    
+    function _rollout(handsIn, leaderStart, gameType, rng) {
+      const hands = {};
+      for (const s of Object.keys(handsIn)) hands[s] = [...handsIn[s]];
+      const tricks = { 0: 0, 1: 0 };
+      let leader = leaderStart;
+      for (let r = 0; r < 13; r++) {
+        const trick = [];
+        let ledSuit = null;
+        for (let j = 0; j < 4; j++) {
+          const s = (leader + j) % 4;
+          const c = _policyPlay(hands[s], ledSuit, trick, s, gameType, rng);
+          removeCard(hands[s], c);
+          if (ledSuit === null) ledSuit = c.suit;
+          trick.push([s, c]);
+        }
+        const w = trickWinner(trick);
+        tricks[teamOf(w)] += 1;
+        leader = w;
+      }
+      return tricks;
+    }
+    
+    function createPlayer() {
+      return new ChampionPlayer();
+    }
+    
+    exports.ChampionPlayer = ChampionPlayer;
+    exports.default = createPlayer;
+    
+  };
+
+  __modules["players/codexPlayer.js"] = function (module, exports, require) {
+    const { RNG, SUITS, TuppiPlayer, fullDeck, legalMoves, removeCard, teamOf, trickWinner } = require("../src/index.js");
+    const { cardsRemainingInHand, isBoss, unseenCards, unseenInSuit, voidsFromHistory } = require("../src/analysis.js");
+    
+    function minBy(arr, key) {
+      let best = arr[0];
+      let bestKey = key(best);
+      for (let i = 1; i < arr.length; i++) {
+        const k = key(arr[i]);
+        if (k < bestKey) {
+          best = arr[i];
+          bestKey = k;
+        }
+      }
+      return best;
+    }
+    
+    function maxBy(arr, key) {
+      return minBy(arr, (x) => -key(x));
+    }
+    
+    function bySuit(cards) {
+      const out = new Map();
+      for (const c of cards) {
+        if (!out.has(c.suit)) out.set(c.suit, []);
+        out.get(c.suit).push(c);
+      }
+      return out;
+    }
+    
+    function currentHighRank(trick, ledSuit) {
+      let best = -1;
+      for (const [, c] of trick) {
+        if (c.suit === ledSuit && c.rank > best) best = c.rank;
+      }
+      return best;
+    }
+    
+    function partialWinner(trick) {
+      if (!trick.length) return null;
+      const led = trick[0][1].suit;
+      let bestSeat = trick[0][0];
+      let bestRank = trick[0][1].rank;
+      for (let i = 1; i < trick.length; i++) {
+        const [seat, card] = trick[i];
+        if (card.suit === led && card.rank > bestRank) {
+          bestSeat = seat;
+          bestRank = card.rank;
+        }
+      }
+      return bestSeat;
+    }
+    
+    class CodexPlayer extends TuppiPlayer {
+      static defaultName = "Codex";
+    
+      constructor(name = null, { simulations = 42, seed = 20260705 } = {}) {
+        super(name);
+        this.simulations = simulations;
+        this.rng = new RNG(seed);
+      }
+    
+      chooseShow(view) {
+        const strength = this._ramiStrength(view.hand);
+        const ownUp = view.match.upTeam === view.team;
+        const oppUp = view.match.upTeam === 1 - view.team;
+        const pressure = oppUp && view.match.upScore >= view.match.target - 16 ? -0.35 : 0;
+        const threshold = ownUp ? 8.0 : 9.0 + pressure;
+        return strength >= threshold ? "rami" : "nolo";
+      }
+    
+      playCard(view) {
+        const moves = [...view.legalMoves];
+        if (moves.length === 1) return moves[0];
+    
+        const tactical = view.wantToWinTricks
+          ? this._tacticalRami(view, moves)
+          : this._tacticalNolo(view, moves);
+    
+        if (moves.length <= 2 || view.trickNumber >= 10) return tactical;
+    
+        const searched = this._searchMove(view, moves);
+        return searched ?? tactical;
+      }
+    
+      _ramiStrength(hand) {
+        const suits = bySuit(hand);
+        let points = 0;
+        for (const s of SUITS) {
+          const cards = [...(suits.get(s) ?? [])].sort((a, b) => b.rank - a.rank);
+          const ranks = new Set(cards.map((c) => c.rank));
+          for (const c of cards) {
+            if (c.rank === 14) points += 3.4;
+            else if (c.rank === 13) points += 2.1;
+            else if (c.rank === 12) points += 1.15;
+            else if (c.rank === 11) points += 0.45;
+          }
+          if (ranks.has(14) && ranks.has(13)) points += 0.8;
+          if (ranks.has(14) && ranks.has(13) && ranks.has(12)) points += 0.7;
+          if (cards.length >= 5) points += (cards.length - 4) * 1.25;
+          if (cards.length <= 1) points += 0.8;
+          if (cards.length === 0) points += 0.4;
+        }
+        return points;
+      }
+    
+      _tacticalRami(view, moves) {
+        if (view.ledSuit === null) return this._leadRami(view, moves);
+    
+        if (view.partnerIsWinning() && this._partnerLeadLooksSafe(view)) {
+          return minBy(moves, (c) => this._saveValue(view, c));
+        }
+    
+        const winners = moves.filter((c) => this._beatsCurrent(view, c));
+        if (winners.length) {
+          const bossWinners = winners.filter((c) => isBoss(view, c));
+          if (bossWinners.length && view.currentTrick.length >= 3) {
+            return minBy(bossWinners, (c) => c.rank);
+          }
+          return minBy(winners, (c) => c.rank + (isBoss(view, c) ? 1.5 : 0));
+        }
+    
+        return minBy(moves, (c) => this._saveValue(view, c));
+      }
+    
+      _leadRami(view, moves) {
+        const bosses = moves.filter((c) => isBoss(view, c));
+        if (bosses.length) return maxBy(bosses, (c) => c.rank * 10 + this._suitLength(view.hand, c.suit));
+    
+        const suits = bySuit(moves);
+        let bestSuit = null;
+        let bestScore = -Infinity;
+        for (const [s, cards] of suits) {
+          const high = Math.max(...cards.map((c) => c.rank));
+          const hiddenHigher = unseenInSuit(view, s).filter((c) => c.rank > high).length;
+          const score = cards.length * 2.2 + high * 0.75 - hiddenHigher * 1.7;
+          if (score > bestScore) {
+            bestScore = score;
+            bestSuit = s;
+          }
+        }
+        return maxBy(suits.get(bestSuit), (c) => c.rank);
+      }
+    
+      _tacticalNolo(view, moves) {
+        if (view.ledSuit === null) return this._leadNolo(view, moves);
+    
+        const follows = moves.filter((c) => c.suit === view.ledSuit);
+        if (follows.length) {
+          const cur = this._currentHigh(view);
+          const under = follows.filter((c) => c.rank < cur);
+          if (under.length) return maxBy(under, (c) => c.rank);
+    
+          const lastToAct = view.currentTrick.length === 3;
+          const partnerLeads = view.partnerIsWinning();
+          if (partnerLeads && !lastToAct) return minBy(follows, (c) => c.rank);
+          return minBy(follows, (c) => this._dangerValue(view, c));
+        }
+    
+        return maxBy(moves, (c) => this._dangerValue(view, c));
+      }
+    
+      _leadNolo(view, moves) {
+        const suits = bySuit(moves);
+        let bestCard = moves[0];
+        let bestScore = Infinity;
+        for (const [s, cards] of suits) {
+          const low = minBy(cards, (c) => c.rank);
+          const unseen = unseenInSuit(view, s);
+          const coverAbove = unseen.filter((c) => c.rank > low.rank).length;
+          const ownLength = this._suitLength(view.hand, s);
+          const bossPenalty = isBoss(view, low) ? 20 : 0;
+          const score = low.rank * 1.4 - ownLength * 0.9 - Math.min(coverAbove, 3) * 1.6 + bossPenalty;
+          if (score < bestScore) {
+            bestScore = score;
+            bestCard = low;
+          }
+        }
+        return bestCard;
+      }
+    
+      _searchMove(view, moves) {
+        const unseen = [...unseenCards(view)];
+        const voids = voidsFromHistory(view);
+        const need = {};
+        for (const s of [0, 1, 2, 3]) {
+          if (s !== view.seat) need[s] = cardsRemainingInHand(view, s);
+        }
+    
+        let best = null;
+        let bestScore = view.wantToWinTricks ? -Infinity : Infinity;
+        for (const card of moves) {
+          let total = 0;
+          let used = 0;
+          for (let i = 0; i < this.simulations; i++) {
+            const hands = this._dealHidden(view, unseen, need, voids);
+            if (!hands) continue;
+            const tricks = this._rolloutFrom(view, hands, card);
+            total += tricks[view.team];
+            used++;
+          }
+          if (!used) continue;
+          const avg = total / used;
+          if (
+            best === null ||
+            (view.wantToWinTricks ? avg > bestScore + 0.01 : avg < bestScore - 0.01)
+          ) {
+            best = card;
+            bestScore = avg;
+          }
+        }
+        return best;
+      }
+    
+      _dealHidden(view, unseen, need, voids) {
+        const seats = Object.keys(need).map(Number);
+        for (let attempt = 0; attempt < 10; attempt++) {
+          const pool = [...unseen];
+          this.rng.shuffle(pool);
+          const hands = { [view.seat]: [...view.hand] };
+          const capacity = { ...need };
+          for (const s of seats) hands[s] = [];
+    
+          pool.sort((a, b) => this._allowedSeats(a, seats, capacity, voids).length -
+            this._allowedSeats(b, seats, capacity, voids).length);
+    
+          let ok = true;
+          for (const card of pool) {
+            const allowed = this._allowedSeats(card, seats, capacity, voids);
+            if (!allowed.length) {
+              ok = false;
+              break;
+            }
+            const seat = this.rng.choice(allowed);
+            hands[seat].push(card);
+            capacity[seat]--;
+          }
+          if (ok && seats.every((s) => capacity[s] === 0)) return hands;
+        }
+        return null;
+      }
+    
+      _allowedSeats(card, seats, capacity, voids) {
+        return seats.filter((s) => capacity[s] > 0 && !voids[s].has(card.suit));
+      }
+    
+      _rolloutFrom(view, handsIn, firstCard) {
+        const hands = {};
+        for (const s of Object.keys(handsIn)) hands[s] = [...handsIn[s]];
+        const tricks = { ...view.tricksByTeam };
+        let trick = view.currentTrick.map(([s, c]) => [s, c]);
+        let ledSuit = view.ledSuit;
+    
+        removeCard(hands[view.seat], firstCard);
+        if (ledSuit === null) ledSuit = firstCard.suit;
+        trick.push([view.seat, firstCard]);
+    
+        let seat = view.seat;
+        while (trick.length < 4) {
+          seat = (seat + 1) % 4;
+          const card = rolloutPolicy(hands[seat], ledSuit, trick, seat, view.gameType);
+          removeCard(hands[seat], card);
+          trick.push([seat, card]);
+        }
+    
+        let winner = trickWinner(trick);
+        tricks[teamOf(winner)]++;
+        let leader = winner;
+    
+        while (hands[view.seat].length > 0) {
+          trick = [];
+          ledSuit = null;
+          for (let i = 0; i < 4; i++) {
+            const s = (leader + i) % 4;
+            const card = rolloutPolicy(hands[s], ledSuit, trick, s, view.gameType);
+            removeCard(hands[s], card);
+            if (ledSuit === null) ledSuit = card.suit;
+            trick.push([s, card]);
+          }
+          winner = trickWinner(trick);
+          tricks[teamOf(winner)]++;
+          leader = winner;
+        }
+    
+        return tricks;
+      }
+    
+      _partnerLeadLooksSafe(view) {
+        if (!view.currentTrick.length) return false;
+        if (view.currentTrick.length >= 3) return true;
+    
+        const led = view.currentTrick[0][1].suit;
+        const cur = this._currentHigh(view);
+        const voids = voidsFromHistory(view);
+        const higher = unseenInSuit(view, led).filter((c) => c.rank > cur);
+        for (let offset = 1; offset < 4 - view.currentTrick.length; offset++) {
+          const seat = (view.seat + offset) % 4;
+          if (teamOf(seat) === view.team) continue;
+          if (!voids[seat].has(led) && higher.length > 0) return false;
+        }
+        return true;
+      }
+    
+      _beatsCurrent(view, card) {
+        if (!view.currentTrick.length) return true;
+        const led = view.currentTrick[0][1].suit;
+        return card.suit === led && card.rank > this._currentHigh(view);
+      }
+    
+      _currentHigh(view) {
+        return currentHighRank(view.currentTrick, view.ledSuit);
+      }
+    
+      _suitLength(hand, suit) {
+        return hand.filter((c) => c.suit === suit).length;
+      }
+    
+      _saveValue(view, card) {
+        return card.rank + (isBoss(view, card) ? 8 : 0) + this._suitLength(view.hand, card.suit) * 0.25;
+      }
+    
+      _dangerValue(view, card) {
+        const higherHidden = unseenInSuit(view, card.suit).filter((c) => c.rank > card.rank).length;
+        return card.rank * 2.2 + (isBoss(view, card) ? 10 : 0) - higherHidden * 0.8 +
+          this._suitLength(view.hand, card.suit) * 0.5;
+      }
+    }
+    
+    function rolloutPolicy(hand, ledSuit, trick, seat, gameType) {
+      const moves = legalMoves(hand, ledSuit);
+      if (moves.length === 1) return moves[0];
+    
+      const wantWin = gameType === "rami";
+      if (ledSuit === null || !trick.length) {
+        const suits = bySuit(moves);
+        if (wantWin) {
+          let bestSuit = null;
+          let bestScore = -Infinity;
+          for (const [s, cards] of suits) {
+            const score = cards.length * 2 + Math.max(...cards.map((c) => c.rank));
+            if (score > bestScore) {
+              bestScore = score;
+              bestSuit = s;
+            }
+          }
+          return maxBy(suits.get(bestSuit), (c) => c.rank);
+        }
+        let bestSuit = null;
+        let bestScore = Infinity;
+        for (const [s, cards] of suits) {
+          const score = Math.min(...cards.map((c) => c.rank)) - cards.length * 0.7;
+          if (score < bestScore) {
+            bestScore = score;
+            bestSuit = s;
+          }
+        }
+        return minBy(suits.get(bestSuit), (c) => c.rank);
+      }
+    
+      const cur = currentHighRank(trick, ledSuit);
+      const winner = partialWinner(trick);
+      const partnerLeads = winner !== null && teamOf(winner) === teamOf(seat);
+      const follows = moves.filter((c) => c.suit === ledSuit);
+    
+      if (follows.length) {
+        if (wantWin) {
+          if (partnerLeads) return minBy(follows, (c) => c.rank);
+          const wins = follows.filter((c) => c.rank > cur);
+          if (wins.length) return minBy(wins, (c) => c.rank);
+          return minBy(follows, (c) => c.rank);
+        }
+        const under = follows.filter((c) => c.rank < cur);
+        if (under.length) return maxBy(under, (c) => c.rank);
+        return minBy(follows, (c) => c.rank);
+      }
+    
+      return wantWin ? minBy(moves, (c) => c.rank) : maxBy(moves, (c) => c.rank);
+    }
+    
+    function createPlayer() {
+      return new CodexPlayer();
+    }
+    
+    exports.CodexPlayer = CodexPlayer;
+    exports.default = createPlayer;
+    
+  };
+
+  __modules["players/strategyPlayer.js"] = function (module, exports, require) {
+    // Seniori — sääntöpohjainen tekoäly, joka noudattaa Oulun Seniorit
+    // Tuppikerhon strategiaohjetta (Antti Auer, 19.2.2026).
+    //
+    // Ydinkäsitteet ohjeesta:
+    //  • Kuvakortti = A(14) K(13) Q(12) Kn(11).  E = ei-kuvakortti 2..10.
+    //    Ep = pieni E (2..5), Es = suuri E (6..10).
+    //  • KIINNIOTTO (Rami, pelikontrolli): A, K+1J, Q+2J, Kn+3J samasta maasta.
+    //    Jalka (J) = saman maan suojakortti. Jalat voivat itsekin olla kiinniottoja.
+    //  • ULOSANTI (Nolo, kontrollin luovutus): E2, E3+1J, E4+2J ja puuttuva maa.
+    //  • Tarjous: Ramiin tarvitaan pöytäpelissä/ylhäällä 3-4 ja alhaalla 4-5
+    //    kiinniottoa, ja jokaisesta maasta vähintään yksi — muuten Nolo.
+    //  • Peli: älä koskaan lyö vain suurinta (Rami) / pienintä (Nolo). Ota
+    //    kiinni ja aja Es:llä vastustajien kortteja alas, kotiuta ketjut,
+    //    säästä kun pari johtaa, ja Nolossa duckaa alle ja tyhjennä lyhyt maa.
+    
+    const { TuppiPlayer } = require("../src/index.js");
+    const { isBoss, unseenInSuit, voidsFromHistory } = require("../src/analysis.js");
+    
+    // Maat, joista MOLEMMAT vastustajat ovat tyhjiä (sakanneet). Tupessa ei ole
+    // valttia, joten tällaisen maan johtaminen voittaa tikin varmasti omalle
+    // joukkueelle — vastustajat eivät voi tunnustaa eivätkä siis ohittaa.
+    function bothOppVoidSuits(view) {
+      const voids = voidsFromHistory(view);
+      const opp = [(view.seat + 1) % 4, (view.seat + 3) % 4];
+      const out = new Set();
+      for (const s of [0, 1, 2, 3]) {
+        if (opp.every((o) => voids[o].has(s))) out.add(s);
+      }
+      return out;
+    }
+    
+    // Voiko vastustaja vielä 'leikata' (ohittaa) kortin, jos johdan sillä? Kyllä,
+    // jos maassa on korkeampi näkymätön kortti JA ainakin toinen vastustaja ei ole
+    // tyhjä siitä maasta (voisi siis pitää korkeampaa kädessään).
+    function oppCanOvertake(view, card) {
+      if (!unseenInSuit(view, card.suit).some((c) => c.rank > card.rank)) return false;
+      const voids = voidsFromHistory(view);
+      const opp = [(view.seat + 1) % 4, (view.seat + 3) % 4];
+      return opp.some((o) => !voids[o].has(card.suit));
+    }
+    
+    // Pelikaverin signaloimat maat: maat joita hän on ITSE aloittanut (tikin
+    // ensimmäinen kortti = johtaja) — hänen toivemaansa. Uusin ensin.
+    function partnerSignalSuits(view) {
+      const partner = (view.seat + 2) % 4;
+      const out = [];
+      for (const trick of view.history) {
+        if (trick.length && trick[0][0] === partner) out.unshift(trick[0][1].suit);
+      }
+      return out;
+    }
+    
+    const isFace = (r) => r >= 11;
+    const isEs = (r) => r >= 6 && r <= 10;
+    
+    const byRankAsc = (a, b) => a.rank - b.rank;
+    const minCard = (cs) => cs.reduce((m, c) => (c.rank < m.rank ? c : m), cs[0]);
+    const maxCard = (cs) => cs.reduce((m, c) => (c.rank > m.rank ? c : m), cs[0]);
+    
+    function bySuit(cards) {
+      const m = { 0: [], 1: [], 2: [], 3: [] };
+      for (const c of cards) m[c.suit].push(c);
+      for (const s of [0, 1, 2, 3]) m[s].sort(byRankAsc);
+      return m;
+    }
+    
+    // Kiinniottojen määrä maassa: A, K+1J, Q+2J, Kn+3J (jalat = saman maan kortit).
+    function kiinniottos(cs) {
+      const n = cs.length;
+      const has = (r) => cs.some((c) => c.rank === r);
+      let k = 0;
+      if (has(14)) k++;
+      if (has(13) && n >= 2) k++;
+      if (has(12) && n >= 3) k++;
+      if (has(11) && n >= 4) k++;
+      return k;
+    }
+    
+    // Ulosantien määrä maassa: E2, E3+1J, E4+2J (+puuttuva maa erikseen).
+    function ulosannit(cs) {
+      const n = cs.length;
+      const has = (r) => cs.some((c) => c.rank === r);
+      let u = 0;
+      if (has(2)) u++;
+      if (has(3) && n >= 2) u++;
+      if (has(4) && n >= 3) u++;
+      if (has(5) && n >= 4) u++;
+      return u;
+    }
+    
+    // Korkein maan kortti nykyisessä tikissä (aloitusmaa).
+    function ledHigh(trick, led) {
+      let hi = -1;
+      for (const [, c] of trick) if (c.suit === led && c.rank > hi) hi = c.rank;
+      return hi;
+    }
+    
+    class StrategyPlayer extends TuppiPlayer {
+      static defaultName = "Seniori";
+    
+      // ------------------------------------------------------------------ //
+      //  TARJOUS: laske kiinniotot ohjeen mukaan                            //
+      // ------------------------------------------------------------------ //
+      chooseShow(view) {
+        const suits = bySuit(view.hand);
+        let total = 0;
+        let withControl = 0;
+        for (const s of [0, 1, 2, 3]) {
+          const k = kiinniottos(suits[s]);
+          total += k;
+          if (k > 0) withControl++;
+        }
+        const missing = 4 - withControl; // maat ilman kiinniottoa (−1 tikki / maa)
+        const eff = total - missing;
+    
+        const up = view.match.upTeam === view.team;
+        const table = view.match.upTeam === null;
+    
+        // YLHÄÄLLÄ: epäonnistuneen/ryöstetyn ramin kustannus on vain nousun
+        // romahdus (vastustaja ei hyödy tuplauksesta). Siksi ei ramivarovaisuutta
+        // — valitse vain se muoto, jonka tn. voittaa JAKO on suurempi: vertaa
+        // rami-kontrollia (kiinniotot) nolo-kontrolliin (ulosannit + tyhjät maat).
+        if (up && this.aggressiveUp !== false) {
+          let kii = 0;
+          let ulo = 0;
+          for (const s of [0, 1, 2, 3]) {
+            kii += kiinniottos(suits[s]);
+            ulo += ulosannit(suits[s]);
+            if (suits[s].length === 0) ulo++; // puuttuva maa = ulosanti
+          }
+          return kii >= ulo ? "rami" : "nolo";
+        }
+    
+        // Pöytä / kuoppa: ryöstöriski on oikea → Nolo turvallisempi.
+        // Pöytäpelissä 3-4 kiinniottoa riittää, alhaalla vaadi 4-5.
+        const need = table ? 3.5 : 4.5;
+    
+        // Kahdesta maasta puuttuva kiinniotto → mieluummin Nolo (ohje).
+        if (missing >= 2 && eff < need + 1) return "nolo";
+        return eff >= need ? "rami" : "nolo";
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  LYÖNTI                                                             //
+      // ------------------------------------------------------------------ //
+      playCard(view) {
+        const legal = [...view.legalMoves];
+        if (legal.length === 1) return legal[0];
+        return view.wantToWinTricks
+          ? this._playRami(view, legal)
+          : this._playNolo(view, legal);
+      }
+    
+      // ----------------------------- RAMI -------------------------------- //
+      _playRami(view, legal) {
+        if (view.currentTrick.length === 0) return this._leadRami(view, legal);
+    
+        const led = view.ledSuit;
+        const followers = legal.filter((c) => c.suit === led);
+        const partnerWins = view.currentWinnerSeat() === view.partner;
+        const high = ledHigh(view.currentTrick, led);
+        const lastToPlay = view.currentTrick.length === 3;
+    
+        if (followers.length) {
+          // Pari johtaa: säästä kovat, anna pienin. POIKKEUS: ramaajana kannattaa
+          // joskus ottaa tikki kaverin YLI, jotta pääsee itse päättämään seuraavan
+          // tikin maan — mutta vain jos on tuottava jatko (boss kotiutettavana tai
+          // ilmaistikkimaa) eikä tikki ole viimeinen.
+          if (partnerWins) {
+            if (
+              this.track !== false &&
+              this.advanced !== false &&
+              view.ramaaja === view.seat &&
+              view.trickNumber < 12
+            ) {
+              // Ota johto vain HALVALLA: ohita kaveri ei-kuvakortilla (Ep/Es),
+              // ettei hukkaa oikeaa voittajakorttia pelkän johdon vuoksi.
+              const overtake = followers.filter((c) => c.rank > high && !isFace(c.rank));
+              if (overtake.length && this._hasProductiveLead(view)) {
+                return minCard(overtake); // ota johto itselle
+              }
+            }
+            return minCard(followers);
+          }
+    
+          const winners = followers.filter((c) => c.rank > high);
+          if (winners.length) {
+            // Voita halvimmalla riittävällä. Viimeisenä pelaajana riittää yksi
+            // yli; muuten valitse halvin voittava.
+            return minCard(winners);
+          }
+          // En voi voittaa → luovu pienimmällä (säilytä kiinniotot).
+          return minCard(followers);
+        }
+        // Sakkaus Ramissa: säilytä kovat, pudota hyödyttömin pieni kortti.
+        return this._discardRami(view, legal);
+      }
+    
+      _leadRami(view, legal) {
+        const suits = bySuit(view.hand);
+        const track = this.track !== false; // korttilaskenta päällä oletuksena
+        const adv = track && this.advanced !== false;
+    
+        // 0) ILMAINEN tikki: maa jossa molemmat vastustajat ovat tyhjiä — mikä
+        //    tahansa korttini voittaa. Johda halvin ja säästä kovat.
+        if (adv) {
+          const free = bothOppVoidSuits(view);
+          let pick = null;
+          let len = -1;
+          for (const s of free) {
+            if (suits[s].length > len) {
+              pick = minCard(suits[s]);
+              len = suits[s].length;
+            }
+          }
+          if (pick) return pick;
+        }
+    
+        // 1) Kotiuta VARMAT tikit: pelaa boss-kortti (korkein jäljellä oleva ko.
+        //    maassa) — se voittaa varmasti. Korttilaskenta (isBoss) tietää, kun
+        //    A/K on jo mennyt ja oma Q/Kn on noussut suurimmaksi. Suosi pisintä
+        //    maata (jää sinne enemmän jatkoa). Ilman laskentaa: kotiuta A+K-maat.
+        if (track) {
+          let bossBest = null;
+          let bossLen = -1;
+          for (const s of [0, 1, 2, 3]) {
+            const cs = suits[s];
+            if (!cs.length) continue;
+            const top = maxCard(cs);
+            if (isBoss(view, top) && cs.length > bossLen) {
+              bossBest = top;
+              bossLen = cs.length;
+            }
+          }
+          if (bossBest) return bossBest;
+        } else {
+          let cashBest = null;
+          for (const s of [0, 1, 2, 3]) {
+            const cs = suits[s];
+            if (cs.length < 2) continue;
+            const has = (r) => cs.some((c) => c.rank === r);
+            if (has(14) && has(13)) {
+              const top = maxCard(cs);
+              if (!cashBest || cs.length > suits[cashBest.suit].length) cashBest = top;
+            }
+          }
+          if (cashBest) return cashBest;
+        }
+    
+        // 2) Kasvata: aja Es alas maasta, jossa on kiinniotto mutta huippu ei
+        //    vielä ole suurin. Säilytä huippu, aja MUIDEN vielä jäljellä olevat
+        //    isot pois. Laskennan kanssa tarkistetaan, onko ylhäällä oikeasti
+        //    vielä kortteja; ilman laskentaa oletetaan A suurimmaksi.
+        let growCard = null;
+        let growLen = 0;
+        for (const s of [0, 1, 2, 3]) {
+          const cs = suits[s];
+          if (cs.length < 3 || kiinniottos(cs) === 0) continue;
+          const top = maxCard(cs);
+          if (track) {
+            if (isBoss(view, top)) continue; // huippu jo suurin → kohta 1 hoiti
+            if (!unseenInSuit(view, s).some((c) => c.rank > top.rank)) continue;
+          } else if (top.rank === 14) {
+            continue; // huippu A → ei tarvitse ajaa
+          }
+          const drivers = cs.filter((c) => isEs(c.rank) && c.rank < top.rank);
+          if (drivers.length && cs.length > growLen) {
+            growCard = maxCard(drivers); // suurin Es alle oman huipun
+            growLen = cs.length;
+          }
+        }
+        if (growCard) return growCard;
+    
+        // 3) Aja pienin Es mistä tahansa maasta, jossa on vielä kiinniotto-
+        //    potentiaalia; muuten pienin ei-kuvakortti; muuten pienin.
+        const esCards = legal.filter((c) => isEs(c.rank));
+        if (esCards.length) return minCard(esCards);
+        const lowE = legal.filter((c) => !isFace(c.rank));
+        if (lowE.length) return minCard(lowE);
+        return minCard(legal);
+      }
+    
+      // Onko minulla tuottava jatko, jos otan johdon nyt? Boss-kortti (muusta
+      // maasta) kotiutettavana tai maa jossa molemmat vastustajat tyhjiä.
+      _hasProductiveLead(view) {
+        if (bothOppVoidSuits(view).size) return true;
+        const suits = bySuit(view.hand);
+        for (const s of [0, 1, 2, 3]) {
+          if (s === view.ledSuit) continue;
+          const cs = suits[s];
+          if (cs.length && isBoss(view, maxCard(cs))) return true;
+        }
+        return false;
+      }
+    
+      _discardRami(view, legal) {
+        // Pudota kortti maasta, jonka aion joka tapauksessa menettää: pienin
+        // ei-kuvakortti; säilytä kaikki kiinniotot (kuvakortit + jalat).
+        const nonFace = legal.filter((c) => !isFace(c.rank));
+        if (nonFace.length) return minCard(nonFace);
+        // vain kuvakortteja → luovu pienimmästä kuvakortista (Kn ennen A:ta)
+        return minCard(legal);
+      }
+    
+      // ----------------------------- NOLO -------------------------------- //
+      _playNolo(view, legal) {
+        if (view.currentTrick.length === 0) return this._leadNolo(view, legal);
+    
+        const led = view.ledSuit;
+        const followers = legal.filter((c) => c.suit === led);
+        const high = ledHigh(view.currentTrick, led);
+    
+        if (followers.length) {
+          // Duckaa: pelaa suurin kortti joka jää nykyisen huipun alle (heitä
+          // vaaralliset isot pois turvallisesti). Jos ei alle mahdu, pakko
+          // ottaa — anna pienin, jotta perässä tulevat voivat vielä ohittaa.
+          const under = followers.filter((c) => c.rank < high);
+          if (under.length) return maxCard(under);
+          return minCard(followers);
+        }
+        // Sakkaus Nolossa: pudota vaarallisin (suurin) kortti — mieluiten
+        // pisimmästä maasta, jossa iso kortti muutenkin uhkaa voittaa tikin.
+        return this._discardNolo(view, legal);
+      }
+    
+      _leadNolo(view, legal) {
+        const suits = bySuit(view.hand);
+        // Aloita lyhimmästä maasta (pyri tyhjentämään se → pääset sakkaamaan),
+        // mutta ÄLÄ aloita kortilla joka itse voittaa tikin (esim. yksinäinen A).
+        // Suosi Es:iä (6-10): pari ottaa kiinni ja antaa takaisin. Valitse
+        // maittain lyhin, jossa on ei-kuvakortti johdettavaksi.
+        // Vastustajaluenta: vältä maata jossa MOLEMMAT vastustajat ovat tyhjiä —
+        // silloin jäisit itse voittamaan tikin (Nolossa paha).
+        const adv = this.track !== false && this.advanced !== false;
+        const avoid = adv ? bothOppVoidSuits(view) : new Set();
+    
+        if (adv) {
+          // AUTA KAVERIA SAKKAAMAAN: johda maata, josta pelikaveri on tyhjä
+          // (sakannut). Hän pääsee pudottamaan vaarallisen kortin, vaikka tikki
+          // menisi jollekin. Vältä maita, joissa molemmat vastustajat tyhjiä.
+          const voids = voidsFromHistory(view);
+          const partner = (view.seat + 2) % 4;
+          let helpSuit = null;
+          let helpLen = 99;
+          for (const s of [0, 1, 2, 3]) {
+            if (!suits[s].length || avoid.has(s)) continue;
+            if (voids[partner].has(s) && suits[s].length < helpLen) {
+              helpLen = suits[s].length;
+              helpSuit = suits[s];
+            }
+          }
+          if (helpSuit) return minCard(helpSuit); // pieni kortti, et itse voita
+    
+          // TYHJENNÄ YKSINÄINEN MAA (esim. orpo A) päästäksesi sakkaamaan sitä
+          // maata myöhemmin — kannattaa jos muualla on monta vaarallista isoa.
+          const highElsewhere = view.hand.filter((c) => isFace(c.rank)).length;
+          if (highElsewhere >= 3) {
+            for (const s of [0, 1, 2, 3]) {
+              if (suits[s].length === 1 && !avoid.has(s)) return suits[s][0];
+            }
+          }
+        }
+    
+        let best = null;
+        let bestLen = 99;
+        for (let pass = 0; pass < 2 && !best; pass++) {
+          // 1. kierros: kunnioita avoid-joukkoa; 2. kierros: salli kaikki.
+          for (const s of [0, 1, 2, 3]) {
+            const cs = suits[s];
+            if (!cs.length) continue;
+            if (pass === 0 && avoid.has(s)) continue;
+            const nonFace = cs.filter((c) => !isFace(c.rank));
+            if (nonFace.length && cs.length < bestLen) {
+              bestLen = cs.length;
+              best = nonFace;
+            }
+          }
+        }
+        if (best) {
+          // Vältä johtamasta boss-kortilla (voittaisi tikin — Nolossa paha).
+          let pool = best;
+          if (this.track !== false) {
+            const safe = best.filter((c) => !isBoss(view, c));
+            if (safe.length) pool = safe;
+          }
+          const es = pool.filter((c) => isEs(c.rank));
+          return es.length ? maxCard(es) : maxCard(pool);
+        }
+        // Vain kuvakortteja kaikkialla → luovu pienimmästä (Kn ennen A:ta).
+        return minCard(legal);
+      }
+    
+      _discardNolo(view, legal) {
+        // Pudota vaarallisin kortti: ensisijaisesti boss-kortti (voittaisi
+        // varmasti myöhemmin), muuten korkein. Näin säilytät ulosannit (pienet).
+        if (this.track !== false) {
+          const bosses = legal.filter((c) => isBoss(view, c));
+          if (bosses.length) return maxCard(bosses);
+        }
+        return maxCard(legal);
+      }
+    }
+    
+    function createPlayer() {
+      return new StrategyPlayer();
+    }
+    
+    exports.bothOppVoidSuits = bothOppVoidSuits;
+    exports.oppCanOvertake = oppCanOvertake;
+    exports.partnerSignalSuits = partnerSignalSuits;
+    exports.StrategyPlayer = StrategyPlayer;
+    exports.default = createPlayer;
+    
+  };
+
+  __modules["players/probabilityPlayer.js"] = function (module, exports, require) {
+    // Analyytikko — todennäköisyyspohjainen tekoäly, joka noudattaa Atso
+    // Suopajärven erikoistyötä "Tupen todennäköisyysanalyysi" (Mat-2.108, 2007).
+    //
+    // Työn ydinanti on TARJOUSPÄÄTÖS: milloin ramata, milloin noloa. Simuloinnit
+    // antavat kolme mittaria etulyöntiasemalle (>50 % tn. että oma käsi on paras):
+    //   • Pisteet (A=4 K=3 Q=2 J=1, pakassa 40, ka. 10/käsi): 14 p → 70 % paras,
+    //     13 p ≈ 50 %.
+    //   • Kuvakortit (A,K,Q,J): 6 kuvaa → 86 % paras.
+    //   • Jalalliset kortit: 6 jalallista → 81 % paras. Kortti on "jalallinen",
+    //     kun sillä on samassa maassa vähintään (14 − arvo) pienempää korttia
+    //     (A tarvitsee 0, K 1, Q 2, Kn 3 jalkaa).
+    // Puuttuva maa on ramissa iso riski: 38,8 % tn. vastustajalla ≥6 ko. maata,
+    // jolloin hän leikkaa ja pahimmillaan ryöstää (tuplapisteet). Nolo on aina
+    // turvallisempi. Aloitus vahvasta pitkästä maasta, isot kortit sarjassa alas.
+    //
+    // Nolon pelaaminen (void-systeemi: tyhjennä lyhyt maa, osoita se kaverille)
+    // on käytännössä sama järkevä perusstrategia kuin Seniori-pelaajalla, joten
+    // se peritään; erottava, dokumentoitu osa on tarjous + ramin aloitus.
+    
+    const { StrategyPlayer, bothOppVoidSuits, oppCanOvertake, partnerSignalSuits } = require("./strategyPlayer.js");
+    const { isBoss } = require("../src/analysis.js");
+    
+    const isEs = (r) => r >= 6 && r <= 10;
+    const POINTS = { 14: 4, 13: 3, 12: 2, 11: 1 };
+    
+    const minCard = (cs) => cs.reduce((m, c) => (c.rank < m.rank ? c : m), cs[0]);
+    const maxCard = (cs) => cs.reduce((m, c) => (c.rank > m.rank ? c : m), cs[0]);
+    
+    function bySuit(cards) {
+      const m = { 0: [], 1: [], 2: [], 3: [] };
+      for (const c of cards) m[c.suit].push(c);
+      for (const s of [0, 1, 2, 3]) m[s].sort((a, b) => a.rank - b.rank);
+      return m;
+    }
+    
+    // Jalallisten korttien määrä maassa (Suopajärven määritelmä): kortilla
+    // arvoltaan r on oltava vähintään (14 − r) pienempää samaa maata. cs nouseva.
+    function jalalliset(cs) {
+      let count = 0;
+      for (let i = 0; i < cs.length; i++) {
+        const need = 14 - cs[i].rank; // A:0 K:1 Q:2 Kn:3 10:4 ...
+        if (i >= need) count++; // i = kädessä olevat pienemmät samaa maata
+      }
+      return count;
+    }
+    
+    class ProbabilityPlayer extends StrategyPlayer {
+      static defaultName = "Analyytikko";
+    
+      // ------------------------------------------------------------------ //
+      //  TARJOUS: todennäköisyyspohjainen (>50 % etu ramille)               //
+      // ------------------------------------------------------------------ //
+      chooseShow(view) {
+        const suits = bySuit(view.hand);
+        let points = 0; // rami-pisteet A=4 K=3 Q=2 J=1
+        let faces = 0;
+        let jal = 0;
+        let voids = 0;
+        let noloPts = 0; // nolo-pisteet, peilikuva: 2=4 3=3 4=2 5=1
+        let shortSuits = 0;
+        for (const s of [0, 1, 2, 3]) {
+          const cs = suits[s];
+          if (cs.length === 0) voids++;
+          if (cs.length === 1) shortSuits++;
+          jal += jalalliset(cs);
+          for (const c of cs) {
+            points += POINTS[c.rank] || 0;
+            if (c.rank >= 11) faces++;
+            if (c.rank <= 5) noloPts += 6 - c.rank; // 2→4 … 5→1
+          }
+        }
+    
+        const up = view.match.upTeam === view.team;
+        const down = view.match.upTeam !== null && view.match.upTeam !== view.team;
+    
+        // YLHÄÄLLÄ: ryöstön tuplaus ei satu (romahdat vain nollille, vastustaja ei
+        // hyödy). Ei siis ramivarovaisuutta — valitse vain se muoto, jonka tn.
+        // voittaa JAKO on suurempi: vertaa rami-sopivuutta (korkeat kortit +
+        // jalalliset) nolo-sopivuuteen (matalat kortit + tyhjät/lyhyet maat).
+        if (up && this.aggressiveUp !== false) {
+          const ramiFit = points + 2 * jal;
+          const noloFit = noloPts + 3 * voids + 2 * shortSuits;
+          return ramiFit >= noloFit ? "rami" : "nolo";
+        }
+    
+        // PÖYTÄ / KUOPPA: ryöstöriski on oikea → todennäköisyyspaperin varovainen
+        // tarjous (>50 % etu ramille, Nolo turvallisempi).
+        let ram = jal >= 6 || faces >= 6 || points >= 14;
+        if (!ram && (points >= 13 || jal >= 5)) ram = true;
+        if (voids >= 1) ram = jal >= 6 || points >= 15;
+        if (voids >= 2) ram = false;
+        if (down) ram = ram && (jal >= 6 || points >= 14) && voids === 0;
+    
+        return ram ? "rami" : "nolo";
+      }
+    
+      // ------------------------------------------------------------------ //
+      //  RAMIN ALOITUS: vahvasta pitkästä maasta, isot sarjassa alas        //
+      // ------------------------------------------------------------------ //
+      _leadRami(view, legal) {
+        const suits = bySuit(view.hand);
+        const track = this.track !== false;
+        const adv = track && this.advanced !== false;
+    
+        // A) ILMAINEN tikki: maa jossa MOLEMMAT vastustajat tyhjiä → mikä tahansa
+        //    korttini voittaa. Johda halvin, säästä kovat.
+        if (adv) {
+          const free = bothOppVoidSuits(view);
+          let pick = null;
+          let len = -1;
+          for (const s of free) {
+            if (suits[s].length > len) {
+              pick = minCard(suits[s]);
+              len = suits[s].length;
+            }
+          }
+          if (pick) return pick;
+        }
+    
+        // B) Kotiuta boss-kortti (korkein jäljellä oleva ko. maassa) pisimmästä
+        //    maasta. Näin oma noussut Q/Kn tai A/K realisoituu tikiksi.
+        if (track) {
+          let bossBest = null;
+          let bossLen = -1;
+          for (const s of [0, 1, 2, 3]) {
+            const cs = suits[s];
+            if (!cs.length) continue;
+            const top = maxCard(cs);
+            if (isBoss(view, top) && cs.length > bossLen) {
+              bossBest = top;
+              bossLen = cs.length;
+            }
+          }
+          if (bossBest) return bossBest;
+        }
+    
+        // C) TUE PELIKAVERIA: jos kaveri on aloittanut jotain maata (signaali) ja
+        //    minulla on siellä kortti, jota vastustaja ei voi enää leikata, johda
+        //    se — varma tikki kaverin toivomaan maahan.
+        if (adv) {
+          for (const s of partnerSignalSuits(view)) {
+            const cs = suits[s];
+            if (!cs.length) continue;
+            const top = maxCard(cs);
+            if (!oppCanOvertake(view, top)) return top;
+          }
+        }
+    
+        // Valitse vahvin maa: eniten jalallisia, sitten pisin, sitten korkein.
+        let best = null;
+        let bestKey = -1;
+        for (const s of [0, 1, 2, 3]) {
+          const cs = suits[s];
+          if (!cs.length) continue;
+          const key = jalalliset(cs) * 100 + cs.length * 10 + maxCard(cs).rank;
+          if (key > bestKey) {
+            bestKey = key;
+            best = cs;
+          }
+        }
+        if (!best) return minCard(legal);
+    
+        const has = (r) => best.some((c) => c.rank === r);
+        // Ei boss-korttia missään (isommat vielä pelissä). A → kotiuta A.
+        // Muuten vedä Q/K esiin ajaaksesi vastustajan isot alas.
+        if (has(14)) return best.find((c) => c.rank === 14);
+        // Ei A:ta → aloita Q:lla vetääksesi vastustajan K alas (kaverin apu).
+        if (has(12)) return best.find((c) => c.rank === 12);
+        // Q ei ole, mutta K on → K vetää A:n esiin.
+        if (has(13)) return best.find((c) => c.rank === 13);
+        // Ei kuvakorttia → aja suurella Es:llä.
+        const es = best.filter((c) => isEs(c.rank));
+        return es.length ? maxCard(es) : maxCard(best);
+      }
+    }
+    
+    function createPlayer() {
+      return new ProbabilityPlayer();
+    }
+    
+    exports.ProbabilityPlayer = ProbabilityPlayer;
+    exports.default = createPlayer;
+    
+  };
+
+  var Tuppi = { load: __load, modules: Object.keys(__modules) };
+  if (typeof module !== 'undefined' && module.exports) module.exports = Tuppi;
+  root.Tuppi = Tuppi;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+
+// --- Selainpeli: ihminen vs botit, sama ydin + samat botit kuin testeissä.
+const T = globalThis.Tuppi;
+const core = T.load("src/index.js");
+const { Suit, deal, RNG, legalMoves, trickWinner, teamOf, partnerOf, opponentsOf, scoreDeal, scoreSooli, sooliTrickWinner, sooliRank, pickSooliRamaajaCard, pickSooliSoolaajaCard, estimateSooliSurvival, estimateSooliEV, suitSymbol } = core;
+const cardStr = (c) => c.name + suitSymbol(c.suit);
+const BOTS = {
+  random: T.load("players/randomPlayer.js").default,
+  heuristic: T.load("players/heuristicPlayer.js").default,
+  counting: T.load("players/countingPlayer.js").default,
+  champion: T.load("players/championPlayer.js").default,
+  codex: T.load("players/codexPlayer.js").default,
+  seniori: T.load("players/strategyPlayer.js").default,
+  analyytikko: T.load("players/probabilityPlayer.js").default,
+};
+// Näkymäluokat samasta ytimestä (jotta botit saavat oikeat näkymät):
+const views = T.load("src/views.js");
+const { MatchState, ShowView, PlayView } = views;
+
+const el = (id) => document.getElementById(id);
+const SUIT_CLASS = { 0: "clubs", 1: "diamonds", 2: "hearts", 3: "spades" };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Kädessä maat vuorotellen väreittäin, niin samanväriset maat eivät jää
+// vierekkäin: risti(musta) hertta(puna) pata(musta) ruutu(puna).
+const SUIT_ORDER = { 0: 0, 2: 1, 3: 2, 1: 3 };
+const sortHand = (cards) =>
+  [...cards].sort((a, b) => SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit] || b.rank - a.rank);
+
+let humanResolver = null; // asetetaan kun odotetaan ihmisen korttia
+
+function cardHTML(card, clickable) {
+  const red = card.suit === Suit.DIAMONDS || card.suit === Suit.HEARTS;
+  return '<span class="card ' + (red ? "red" : "black") + (clickable ? " playable" : "") +
+    '" data-r="' + card.rank + '" data-s="' + card.suit + '">' +
+    card.name + suitSymbol(card.suit) + "</span>";
+}
+
+function renderTable(trick, ledSuit) {
+  // Oma paikka aina keskellä alhaalla; muut myötäpäivään. CSS asettaa
+  // lapset ristiin: [ylä, oikea, ala, vasen] → [kaveri, +3, sinä, +1].
+  const order = [(mySeat + 2) % 4, (mySeat + 3) % 4, mySeat, (mySeat + 1) % 4];
+  const nameFor = (s) =>
+    s === mySeat ? "Sinä" : teamOf(s) === teamOf(mySeat) ? "Kaveri" : "Vastustaja";
+  const cells = order.map((s) => {
+    const found = trick.find((p) => p[0] === s);
+    const me = s === mySeat ? " me" : "";
+    return '<div class="seatcell' + me + '"><div class="seatname">' + nameFor(s) +
+      " · p" + s + "</div>" +
+      (found ? cardHTML(found[1], false) : '<span class="empty">·</span>') + "</div>";
+  });
+  el("table").innerHTML = cells.join("");
+}
+
+function log(msg) {
+  const l = el("log");
+  l.innerHTML += msg + "<br>";
+  l.scrollTop = l.scrollHeight;
+}
+
+let yourTeam = 0; // sinun joukkueesi (asetetaan jaon alussa paikan mukaan)
+let mySeat = 0; // oma paikka — piirretään aina keskelle alas
+
+// Puhu paikoista ja joukkueista sinuun nähden, ei numeroilla.
+const seatName = (s) =>
+  s === mySeat ? "Sinä" :
+  s === (mySeat + 2) % 4 ? "Kaveri" :
+  s === (mySeat + 1) % 4 ? "Vasen vastustaja" : "Oikea vastustaja";
+const teamName = (t) => (t === yourTeam ? "Sinun joukkue" : "Vastustajat");
+
+// Elävä kasalaskuri jaon aikana: montako tikkiä kummallakin joukkueella.
+function renderTricks(t, gameType) {
+  const mine = t[yourTeam] || 0;
+  const opp = t[1 - yourTeam] || 0;
+  const goal = gameType === "rami" ? " (voittoon yli 6)" : gameType === "nolo" ? " (vältä)" : gameType === "sooli" ? " (et saa ottaa yhtään)" : "";
+  el("tricks").innerHTML =
+    '<span class="tklabel">Kasat</span> Sinun joukkue <b>' + mine +
+    "</b> – Vastustajat <b>" + opp + "</b>" +
+    '<span class="tkgoal">' + goal + "</span>";
+}
+
+// Muistiapu: mitä kukin on pelannut ja mistä maasta on jo tyhjä (∅).
+const RANKSTR = { 14: "A", 13: "K", 12: "Q", 11: "J" };
+const rankStr = (r) => RANKSTR[r] || r;
+const PLSUIT = { 0: "♣", 1: "♦", 2: "♥", 3: "♠" };
+const PLRED = { 1: true, 2: true };
+const seatShort = (s) =>
+  s === mySeat ? "Sinä" :
+  s === (mySeat + 2) % 4 ? "Kaveri" :
+  s === (mySeat + 1) % 4 ? "Vasen" : "Oikea";
+
+function renderPlayed(history, currentTrick) {
+  const played = { 0: {}, 1: {}, 2: {}, 3: {} };
+  const voids = { 0: new Set(), 1: new Set(), 2: new Set(), 3: new Set() };
+  const tricks = currentTrick && currentTrick.length ? history.concat([currentTrick]) : history;
+  let any = false;
+  for (const trick of tricks) {
+    if (!trick.length) continue;
+    any = true;
+    const led = trick[0][1].suit;
+    for (const [seat, card] of trick) {
+      (played[seat][card.suit] = played[seat][card.suit] || []).push(card.rank);
+      if (card.suit !== led) voids[seat].add(led);
+    }
+  }
+  if (!any) { el("played").innerHTML = '<div class="plempty">Ei vielä pelattuja kortteja.</div>'; return; }
+  const rows = [mySeat, (mySeat + 2) % 4, (mySeat + 1) % 4, (mySeat + 3) % 4];
+  let html = '<table class="pltable"><thead><tr><th></th>';
+  for (const s of [0, 1, 2, 3]) html += '<th class="' + (PLRED[s] ? "plred" : "") + '">' + PLSUIT[s] + "</th>";
+  html += "</tr></thead><tbody>";
+  for (const seat of rows) {
+    html += '<tr><th class="plseat">' + seatShort(seat) + "</th>";
+    for (const s of [0, 1, 2, 3]) {
+      const ranks = (played[seat][s] || []).slice().sort((a, b) => b - a).map(rankStr).join(" ");
+      const isVoid = voids[seat].has(s);
+      const cls = (PLRED[s] ? "plred " : "") + (isVoid ? "plvoid" : "");
+      const content = (ranks + (isVoid ? " ∅" : "")).trim() || "·";
+      html += '<td class="' + cls.trim() + '">' + content + "</td>";
+    }
+    html += "</tr>";
+  }
+  html += "</tbody></table>";
+  el("played").innerHTML = html;
+}
+
+// Näytä pelimuoto ja kuka ramasi (ja onko se sinä, kaverisi vai vastustaja).
+function renderGameType(gameType, ramaaja, humanSeat) {
+  if (gameType !== "rami" || ramaaja === null) {
+    el("gametype").innerHTML = '<span class="gt-nolo">NOLO</span> — kaikki nolasivat';
+    return;
+  }
+  const rel =
+    ramaaja === humanSeat ? "sinä" :
+    teamOf(ramaaja) === teamOf(humanSeat) ? "kaverisi" : "vastustaja";
+  el("gametype").innerHTML =
+    '<span class="gt-rami">RAMI</span> — ramasi: paikka ' + ramaaja + " (" + rel + ")";
+}
+
+// Pysyvä tilannenäyttö. Play-to-52-pelissä voitto tulee yhtäjaksoisesta
+// noususta ≥ 52, joten pääpaino on siinä — ei kumulatiivisessa pankissa.
+function renderScore() {
+  const ms = matchState;
+  let situ;
+  if (ms.upTeam === null) {
+    situ = "Pöytäpeli — ei nousua";
+  } else {
+    const who = ms.upTeam === yourTeam ? "Sinun joukkue" : "Vastustaja";
+    situ = who + " nousulla — " + ms.upScore + " / 52";
+  }
+  let html =
+    '<div class="scitem"><span class="sclabel">Jako</span><span class="scval">' + ms.dealNumber + "</span></div>" +
+    '<div class="scitem" style="flex:2 1 14rem"><span class="sclabel">Tilanne</span><span class="scval">' + situ + "</span></div>";
+  if (ms.lastDrop) {
+    html +=
+      '<div class="scitem"><span class="sclabel">Edellinen</span>' +
+      '<span class="scval scdrop">' + ms.lastDrop + "</span></div>";
+  }
+  el("score").innerHTML = html;
+}
+
+// Ihmispelaaja joka odottaa klikkausta (Promise).
+class BrowserHuman {
+  constructor(name) { this.name = name; }
+  chooseShow() { return "nolo"; } // yksinkertaisuuden vuoksi ihminen pelaa noloa/ramia botin logiikalla alla
+  playCard(view) {
+    return new Promise((resolve) => {
+      humanResolver = resolve;
+      renderHand(view);
+      el("handLabel").textContent = view.wantToWinTricks
+        ? "RAMI — kerää kasoja. Valitse kortti:"
+        : "NOLO — vältä kasoja. Valitse kortti:";
+    });
+  }
+}
+
+function renderHand(view) {
+  const legal = new Set(view.legalMoves);
+  const sorted = sortHand(view.hand);
+  el("hand").innerHTML = sorted.map((c) => cardHTML(c, legal.has(c))).join("");
+  el("hand").querySelectorAll(".card.playable").forEach((node) => {
+    node.onclick = () => {
+      const r = +node.dataset.r, s = +node.dataset.s;
+      const card = view.legalMoves.find((c) => c.rank === r && c.suit === s);
+      if (card && humanResolver) {
+        const res = humanResolver; humanResolver = null;
+        el("hand").innerHTML = ""; el("handLabel").textContent = "";
+        res(card);
+      }
+    };
+  });
+}
+
+// Yhden jaon interaktiivinen ajo (ihminen + botit) samalla säännöstöllä.
+async function playInteractiveDeal(humanSeat, level, rng, mstate) {
+  // Rakenna pelaajat: ihminen omalle paikalleen, botit muualle.
+  const players = [];
+  for (let s = 0; s < 4; s++) {
+    players.push(s === humanSeat ? new BrowserHuman("Sinä") : BOTS[level]());
+  }
+  const hands = deal(rng);
+
+  // Tyhjennä pöytä ja edellisen jaon jäljet ENNEN näyttöä/soolia, jottei
+  // edellisen jaon viimeinen tikki jää näkyviin ramaus-/soolipäätöksen ajaksi.
+  el("table").innerHTML = "";
+  el("played").innerHTML = "";
+  el("status").textContent = "";
+
+  // Näyttö: jakajasta seuraava, ensimmäinen "rami" ratkaisee.
+  const dealer = mstate.dealer;
+  const first = (dealer + 1) % 4;
+  let gameType = "nolo", ramaaja = null, leader = first;
+  for (let i = 0; i < 4; i++) {
+    const seat = (first + i) % 4;
+    const sv = new ShowView({ seat, hand: hands[seat], match: mstate });
+    let choice = seat === humanSeat ? await askHumanShow(hands[seat]) : players[seat].chooseShow(sv);
+    if (choice === "rami") { gameType = "rami"; ramaaja = seat; leader = (seat + 3) % 4; break; }
+  }
+  log("<b>Näyttö:</b> " + gameType.toUpperCase() + (ramaaja !== null ? " — ramaaja: " + seatName(ramaaja) : "") + ", aloittaa " + seatName(leader));
+  renderGameType(gameType, ramaaja, humanSeat);
+
+  // Rami-näytön jälkeen sooli on mahdollinen.
+  if (gameType === "rami" && ramaaja !== null) {
+    if (teamOf(humanSeat) !== teamOf(ramaaja)) {
+      // Ihminen on puolustaja -> voi itse lähteä sooliin.
+      const wantSooli = await askHumanSooli(hands[humanSeat], mstate, teamOf(humanSeat), teamOf(ramaaja));
+      if (wantSooli) return await playSooliDeal(humanSeat, hands, players, ramaaja, mstate);
+    } else {
+      // Ihminen on ramaajan puolella -> puolustajabotti voi lähteä sooliin,
+      // jolloin ihminen pelaa ramaajana soolaajaa vastaan.
+      const defenders = opponentsOf(ramaaja);
+      const defTeam = teamOf(defenders[0]);
+      for (let i = 0; i < 4; i++) {
+        const seat = (ramaaja + 1 + i) % 4;
+        if (defenders.includes(seat) && botWantsSooli(hands[seat], mstate, defTeam, teamOf(ramaaja))) {
+          return await playBotSooliDeal(humanSeat, hands, players, ramaaja, seat, mstate);
+        }
+      }
+    }
+  }
+
+  const tricksByTeam = { 0: 0, 1: 0 };
+  renderTricks(tricksByTeam, gameType);
+  const history = [];
+  let current = leader;
+  for (let tn = 0; tn < 13; tn++) {
+    const trick = [];
+    let ledSuit = null;
+    for (let j = 0; j < 4; j++) {
+      const seat = (current + j) % 4;
+      const moves = legalMoves(hands[seat], ledSuit);
+      const pv = new PlayView({
+        seat, hand: hands[seat], legalMoves: moves, gameType, ramaaja,
+        leader: current, currentTrick: trick, ledSuit, trickNumber: tn,
+        tricksByTeam, history, match: mstate,
+      });
+      el("status").textContent = "Jako " + mstate.dealNumber + " · kasa " + (tn + 1) +
+        "/13 · vuorossa " + seatName(seat);
+      renderTable(trick, ledSuit);
+      renderPlayed(history, trick);
+      let card = seat === humanSeat ? await players[seat].playCard(pv) : players[seat].playCard(pv);
+      if (seat !== humanSeat) await sleep(250);
+      const idx = hands[seat].indexOf(card);
+      hands[seat].splice(idx, 1);
+      if (ledSuit === null) ledSuit = card.suit;
+      trick.push([seat, card]);
+      renderTable(trick, ledSuit);
+      renderPlayed(history, trick);
+    }
+    const w = trickWinner(trick);
+    tricksByTeam[teamOf(w)] += 1;
+    renderTricks(tricksByTeam, gameType);
+    history.push(trick);
+    log("Kasa " + (tn + 1) + ": " + trick.map((p) => seatName(p[0]) + " " + p[1].name + suitSymbol(p[1].suit)).join(", ") +
+      " → " + seatName(w) + " voitti (" + teamName(teamOf(w)) + ")");
+    current = w;
+    await sleep(400);
+  }
+  const rt = ramaaja !== null ? teamOf(ramaaja) : null;
+  const { winner, points, steal } = scoreDeal(tricksByTeam, gameType, rt);
+  log("<b>Kasat:</b> " + teamName(yourTeam) + " " + tricksByTeam[yourTeam] + " – Vastustajat " + tricksByTeam[1 - yourTeam] +
+    " → voittaja: " + teamName(winner) + " (+" + points + "p)" + (steal ? " [RYÖSTÖ!]" : ""));
+  return { winner, points, tricksByTeam };
+}
+
+// Yleinen "valitse kortti" ihmiselle mielivaltaisella ohjetekstillä.
+function askHumanPlay(view, labelText) {
+  return new Promise((resolve) => {
+    humanResolver = resolve;
+    renderHand(view);
+    el("handLabel").textContent = labelText;
+  });
+}
+
+// Sooli-tarjous: vastustaja ramasi, kysy haluaako ihminen pelata soolon.
+// Näyttää arvioidun selviämistodennäköisyyden ja ottelutilanteen (nousulla?).
+function askHumanSooli(hand, mstate, myTeam, oppTeam) {
+  return new Promise((resolve) => {
+    const ev = estimateSooliEV(hand, mstate, myTeam, oppTeam);
+    const surv = Math.round(ev.pSurvive * 100);
+    let tilanne;
+    if (mstate.upTeam === myTeam)
+      tilanne = "<b>Olette nousulla (" + mstate.upScore + "/52)</b> — häviö pudottaa teidät nollaan, joten sooli on riski.";
+    else if (mstate.upTeam === oppTeam)
+      tilanne = "<b>Vastustaja on nousulla (" + mstate.upScore + "/52)</b> — sooli-voitto pudottaa heidät!";
+    else
+      tilanne = "Pöytäpeli — sooli-voitto aloittaa teidän nousun.";
+    const suositus = ev.recommend
+      ? '<b style="color:var(--gold)">Sooli näyttää kannattavan.</b>'
+      : "Puolustus näyttää turvallisemmalta.";
+    el("handLabel").innerHTML =
+      "Vastustaja <b>ramasi</b>. Haluatko pelata <b>soolon</b> — yksin heitä vastaan? " +
+      "Vaihdat yhden kortin kaverisi kanssa, ässä on pienin ja pelaat aina viimeisenä. " +
+      "<b>Et saa ottaa yhtään tikkiä</b>: onnistut → +24p, epäonnistut → vastustajille 24p.<br>" +
+      "Arvioitu selviäminen <b>~" + surv + "%</b>. Odotusarvo: sooli <b>" + ev.evSooli.toFixed(1) +
+      "p</b> vs. puolustus <b>" + ev.evDefense.toFixed(1) + "p</b>. " + suositus + " " + tilanne;
+    el("hand").innerHTML =
+      '<div class="showbtns">' +
+      '<button id="sooliYes">Pelaa sooli</button>' +
+      '<button id="sooliNo" class="ghost">Ei, pelaa normaalisti</button></div>';
+    const done = (v) => { el("hand").innerHTML = ""; el("handLabel").textContent = ""; resolve(v); };
+    el("sooliYes").onclick = () => done(true);
+    el("sooliNo").onclick = () => done(false);
+  });
+}
+
+// Soolaaja antaa yhden kortin parilleen (klikkaa se).
+function askHumanSooliGift(hand) {
+  return new Promise((resolve) => {
+    el("handLabel").innerHTML =
+      "<b>SOOLI</b> — valitse kortti jonka <b>annat kaverillesi</b> (saat matalan tilalle):";
+    el("hand").innerHTML = sortHand(hand).map((c) => cardHTML(c, true)).join("");
+    el("hand").querySelectorAll(".card.playable").forEach((node) => {
+      node.onclick = () => {
+        const r = +node.dataset.r, s = +node.dataset.s;
+        const card = hand.find((c) => c.rank === r && c.suit === s);
+        el("hand").innerHTML = ""; el("handLabel").textContent = "";
+        resolve(card);
+      };
+    });
+  });
+}
+
+// Yhden sooli-jaon interaktiivinen ajo: ihminen (soolaaja) yksin kahta
+// ramaajabottia vastaan. Ässä pienin, soolaaja viimeisenä, pari ei pelaa.
+async function playSooliDeal(humanSeat, hands, players, ramaaja, mstate) {
+  const soolaaja = humanSeat;
+  const soolPartner = partnerOf(soolaaja);
+  const otherRamaaja = partnerOf(ramaaja);
+
+  // Kortinvaihto: ihminen antaa kortin, pari palauttaa matalimman (paras duunikortti).
+  const gift = await askHumanSooliGift(hands[soolaaja]);
+  const ret = [...hands[soolPartner]].sort((a, b) => sooliRank(a) - sooliRank(b))[0];
+  hands[soolaaja].splice(hands[soolaaja].indexOf(gift), 1); hands[soolaaja].push(ret);
+  hands[soolPartner].splice(hands[soolPartner].indexOf(ret), 1); hands[soolPartner].push(gift);
+  log("<b>Sooli!</b> Annoit kaverillesi " + cardStr(gift) + " ja sait " + cardStr(ret) + ". Kaverisi ei pelaa.");
+  el("gametype").innerHTML = '<span class="gt-sooli">SOOLI</span> — sinä yksin ramaajia vastaan (ässä pienin, pelaat viimeisenä)';
+
+  const tricksByTeam = { 0: 0, 1: 0 };
+  renderTricks(tricksByTeam, "sooli");
+  const history = [];
+  let leader = ramaaja; // ramaaja aloittaa
+  let soolaajaTook = false;
+
+  for (let tn = 0; tn < 13; tn++) {
+    const order = leader === ramaaja ? [ramaaja, otherRamaaja, soolaaja] : [otherRamaaja, ramaaja, soolaaja];
+    const trick = [];
+    let ledSuit = null;
+    for (const seat of order) {
+      const moves = legalMoves(hands[seat], ledSuit);
+      const pv = new PlayView({
+        seat, hand: hands[seat], legalMoves: moves, gameType: "rami", ramaaja,
+        leader, currentTrick: trick, ledSuit, trickNumber: tn,
+        tricksByTeam, history, match: mstate, sooli: true, soolaaja,
+      });
+      el("status").textContent = "SOOLI · tikki " + (tn + 1) + "/13 · vuorossa " + seatName(seat);
+      renderTable(trick, ledSuit);
+      renderPlayed(history, trick);
+      let card = seat === soolaaja
+        ? await askHumanPlay(pv, "SOOLI — ÄLÄ ota tikkiä (ässä on pienin). Valitse kortti:")
+        : pickSooliRamaajaCard(pv);
+      if (seat !== soolaaja) await sleep(250);
+      hands[seat].splice(hands[seat].indexOf(card), 1);
+      if (ledSuit === null) ledSuit = card.suit;
+      trick.push([seat, card]);
+      renderTable(trick, ledSuit);
+      renderPlayed(history, trick);
+    }
+    const w = sooliTrickWinner(trick);
+    tricksByTeam[teamOf(w)] += 1;
+    renderTricks(tricksByTeam, "sooli");
+    history.push(trick);
+    log("Tikki " + (tn + 1) + ": " + trick.map((p) => seatName(p[0]) + " " + cardStr(p[1])).join(", ") + " → " + seatName(w) + " voitti");
+    await sleep(400);
+    if (w === soolaaja) { soolaajaTook = true; log("<b>Otit tikin — sooli kaatui!</b>"); break; }
+    leader = w;
+  }
+
+  const { winner, points } = scoreSooli(teamOf(soolaaja), teamOf(ramaaja), soolaajaTook);
+  log("<b>Sooli:</b> " + (soolaajaTook ? "otit tikin → Vastustajat" : "selvisit tikeittä → Sinun joukkue") + " +" + points + "p");
+  el("status").textContent = "Sooli päättyi.";
+  return { winner, points, tricksByTeam };
+}
+
+// Päättääkö puolustajabotti lähteä sooliin? Vertaa soolin ODOTUSARVOA
+// normaalin rami-puolustuksen odotusarvoon (huomioi nousutilanteen).
+function botWantsSooli(hand, mstate, myTeam, oppTeam) {
+  return estimateSooliEV(hand, mstate, myTeam, oppTeam).recommend;
+}
+
+// Sooli-jako jossa BOTTI soolaa ja ihminen pelaa RAMAAJANA (pakota tikki).
+async function playBotSooliDeal(humanSeat, hands, players, ramaaja, soolaaja, mstate) {
+  const soolPartner = partnerOf(soolaaja);
+  const otherRamaaja = partnerOf(ramaaja);
+  // Kortinvaihto piilossa (kortteja ei näytetä): botti antaa korkein, pari palauttaa pienin.
+  const gift = [...hands[soolaaja]].sort((a, b) => sooliRank(b) - sooliRank(a))[0];
+  const ret = [...hands[soolPartner]].sort((a, b) => sooliRank(a) - sooliRank(b))[0];
+  hands[soolaaja].splice(hands[soolaaja].indexOf(gift), 1); hands[soolaaja].push(ret);
+  hands[soolPartner].splice(hands[soolPartner].indexOf(ret), 1); hands[soolPartner].push(gift);
+  log("<b>Sooli!</b> " + seatName(soolaaja) + " lähti soolaamaan yksin — sinä ja " + seatName(otherRamaaja) + " (ramaajat) yritätte pakottaa hänet tikkiin.");
+  el("gametype").innerHTML = '<span class="gt-sooli">SOOLI</span> — ' + seatName(soolaaja) + " soolaa; pakota hänet ottamaan tikki (ässä pienin)";
+
+  const tricksByTeam = { 0: 0, 1: 0 };
+  renderTricks(tricksByTeam, "sooli");
+  const history = [];
+  let leader = ramaaja;
+  let soolaajaTook = false;
+
+  for (let tn = 0; tn < 13; tn++) {
+    const order = leader === ramaaja ? [ramaaja, otherRamaaja, soolaaja] : [otherRamaaja, ramaaja, soolaaja];
+    const trick = [];
+    let ledSuit = null;
+    for (const seat of order) {
+      const moves = legalMoves(hands[seat], ledSuit);
+      const pv = new PlayView({
+        seat, hand: hands[seat], legalMoves: moves, gameType: "rami", ramaaja,
+        leader, currentTrick: trick, ledSuit, trickNumber: tn,
+        tricksByTeam, history, match: mstate, sooli: true, soolaaja,
+      });
+      el("status").textContent = "SOOLI · tikki " + (tn + 1) + "/13 · vuorossa " + seatName(seat);
+      renderTable(trick, ledSuit);
+      renderPlayed(history, trick);
+      let card = seat === humanSeat
+        ? await askHumanPlay(pv, "SOOLI (olet ramaaja) — PAKOTA soolaaja tikkiin: pelaa matalaa (ässä pienin). Valitse kortti:")
+        : seat === soolaaja ? pickSooliSoolaajaCard(pv) : pickSooliRamaajaCard(pv);
+      if (seat !== humanSeat) await sleep(250);
+      hands[seat].splice(hands[seat].indexOf(card), 1);
+      if (ledSuit === null) ledSuit = card.suit;
+      trick.push([seat, card]);
+      renderTable(trick, ledSuit);
+      renderPlayed(history, trick);
+    }
+    const w = sooliTrickWinner(trick);
+    tricksByTeam[teamOf(w)] += 1;
+    renderTricks(tricksByTeam, "sooli");
+    history.push(trick);
+    log("Tikki " + (tn + 1) + ": " + trick.map((p) => seatName(p[0]) + " " + cardStr(p[1])).join(", ") + " → " + seatName(w) + " voitti");
+    await sleep(400);
+    if (w === soolaaja) { soolaajaTook = true; log("<b>Soolaaja otti tikin — te voititte!</b>"); break; }
+    leader = w;
+  }
+
+  const { winner, points } = scoreSooli(teamOf(soolaaja), teamOf(ramaaja), soolaajaTook);
+  log("<b>Sooli:</b> " + (soolaajaTook ? "pakotitte soolaajan tikkiin → Sinun joukkue" : "soolaaja selvisi tikeittä → Vastustaja") + " +" + points + "p");
+  el("status").textContent = "Sooli päättyi.";
+  return { winner, points, tricksByTeam };
+}
+
+function askHumanShow(hand) {
+  return new Promise((resolve) => {
+    const sorted = sortHand(hand);
+    el("handLabel").innerHTML =
+      "Näytä kortti kädestäsi (jää käteesi): " +
+      "<b style=\"color:var(--red)\">punainen = RAMI</b> (kerää), " +
+      "<b>musta = NOLO</b> (vältä).";
+    // Kuten virallisesti: näytetään oikea pakan kortti, väri kertoo tarjouksen.
+    el("hand").innerHTML = sorted.map((c) => cardHTML(c, true)).join("");
+    el("hand").querySelectorAll(".card.playable").forEach((node) => {
+      node.onclick = () => {
+        const s = +node.dataset.s;
+        const red = s === Suit.DIAMONDS || s === Suit.HEARTS;
+        cleanup();
+        resolve(red ? "rami" : "nolo");
+      };
+    });
+    function cleanup() { el("hand").innerHTML = ""; el("handLabel").textContent = ""; }
+  });
+}
+
+let matchState = { upTeam: null, upScore: 0, banked: { 0: 0, 1: 0 }, dealNumber: 0 };
+let rng = null;
+
+el("start").onclick = async () => {
+  const level = el("level").value;
+  const humanSeat = 0; // paikan valinta poistettu — pelaaja istuu aina paikalla 0
+  yourTeam = teamOf(humanSeat);
+  mySeat = humanSeat;
+  if (!rng) rng = new RNG((Math.random() * 1e9) | 0);
+  el("setup").classList.add("hidden");
+  el("board").classList.remove("hidden");
+  matchState.dealNumber += 1;
+  const dealer = (matchState.dealNumber - 1) % 4;
+  const mstate = new MatchState({
+    dealNumber: matchState.dealNumber, dealer,
+    upTeam: matchState.upTeam, upScore: matchState.upScore,
+    banked: { ...matchState.banked }, target: 52,
+  });
+  renderScore();
+  el("gametype").innerHTML = "";
+  el("tricks").innerHTML = "";
+  el("played").innerHTML = "";
+  log("<hr><b>— Jako " + matchState.dealNumber + " (jakaja: " + seatName(dealer) + ") —</b>");
+  const res = await playInteractiveDeal(humanSeat, level, rng, mstate);
+
+  // Nousu/tuppi (sama sääntö kuin engine.js).
+  const prevUp = matchState.upTeam, prevScore = matchState.upScore;
+  if (matchState.upTeam === null) { matchState.upTeam = res.winner; matchState.upScore = res.points; matchState.banked[res.winner] += res.points; }
+  else if (matchState.upTeam === res.winner) { matchState.upScore += res.points; matchState.banked[res.winner] += res.points; }
+  else { matchState.upTeam = null; matchState.upScore = 0; }
+
+  // Romahdus: nousulla ollut joukkue hävisi → putosi nollille.
+  matchState.lastDrop =
+    prevUp !== null && res.winner !== prevUp
+      ? (prevUp === yourTeam ? "sinun joukkue" : "vastustaja") + " putosi " + prevScore + "→0"
+      : "";
+
+  renderScore();
+  const upStr = matchState.upTeam === null
+    ? "pöytäpeli — ei nousua"
+    : teamName(matchState.upTeam) + " nousulla " + matchState.upScore + "/52";
+  log("<b>Tilanne:</b> " + upStr + (matchState.lastDrop ? " · " + matchState.lastDrop : ""));
+  el("status").textContent = "Jako päättyi.";
+
+  if (matchState.upScore >= 52) {
+    log("<b>*** TUPPI! Joukkue " + matchState.upTeam + " voitti ottelun. ***</b>");
+    el("board").insertAdjacentHTML("beforeend", '<button onclick="location.reload()">Uusi ottelu</button>');
+  } else {
+    el("setup").classList.remove("hidden");
+    el("start").textContent = "Pelaa seuraava jako";
+  }
+};
+
+</script>
+</body>
+</html>
