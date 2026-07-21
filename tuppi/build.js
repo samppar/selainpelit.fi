@@ -162,21 +162,21 @@ ${css}
 <body>
 <div id="app">
   <h1>Neljän tuppi <span class="sub">— pelaa botteja vastaan, ei palvelinta</span></h1>
-  <div id="setup" class="panel">
-    <label>Vastustajien taso:
-      <select id="level">
-        <option value="champion" selected>Mestari (kovin)</option>
-        <option value="analyytikko">Analyytikko</option>
-        <option value="codex">Codex</option>
-        <option value="counting">Laskuri</option>
-        <option value="seniori">Seniori</option>
-        <option value="heuristic">Heuristi</option>
-        <option value="random">Satku (helpoin)</option>
-      </select>
-    </label>
-    <button id="start">Aloita jako</button>
-  </div>
-  <div id="board" class="hidden">
+  <div id="board">
+    <div id="setup" class="panel hidden">
+      <label>Vastustajien taso:
+        <select id="level">
+          <option value="champion" selected>Mestari (kovin)</option>
+          <option value="analyytikko">Analyytikko</option>
+          <option value="codex">Codex</option>
+          <option value="counting">Laskuri</option>
+          <option value="seniori">Seniori</option>
+          <option value="heuristic">Heuristi</option>
+          <option value="random">Satku (helpoin)</option>
+        </select>
+      </label>
+      <button id="start">Seuraava jako</button>
+    </div>
     <div id="score" class="scoreboard"></div>
     <div id="gametype" class="gametype"></div>
     <div id="tricks" class="tricks"></div>
@@ -724,56 +724,66 @@ function askHumanShow(hand) {
 
 let matchState = { upTeam: null, upScore: 0, banked: { 0: 0, 1: 0 }, dealNumber: 0 };
 let rng = null;
+let dealBusy = false;
 
-el("start").onclick = async () => {
-  const level = el("level").value;
-  const humanSeat = 0; // paikan valinta poistettu — pelaaja istuu aina paikalla 0
-  yourTeam = teamOf(humanSeat);
-  mySeat = humanSeat;
-  if (!rng) rng = new RNG((Math.random() * 1e9) | 0);
+async function startDeal() {
+  if (dealBusy) return;
+  dealBusy = true;
   el("setup").classList.add("hidden");
-  el("board").classList.remove("hidden");
-  matchState.dealNumber += 1;
-  const dealer = (matchState.dealNumber - 1) % 4;
-  const mstate = new MatchState({
-    dealNumber: matchState.dealNumber, dealer,
-    upTeam: matchState.upTeam, upScore: matchState.upScore,
-    banked: { ...matchState.banked }, target: 52,
-  });
-  renderScore();
-  el("gametype").innerHTML = "";
-  el("tricks").innerHTML = "";
-  el("played").innerHTML = "";
-  log("<hr><b>— Jako " + matchState.dealNumber + " (jakaja: " + seatName(dealer) + ") —</b>");
-  const res = await playInteractiveDeal(humanSeat, level, rng, mstate);
+  try {
+    const level = el("level").value;
+    const humanSeat = 0; // paikan valinta poistettu — pelaaja istuu aina paikalla 0
+    yourTeam = teamOf(humanSeat);
+    mySeat = humanSeat;
+    if (!rng) rng = new RNG((Math.random() * 1e9) | 0);
+    matchState.dealNumber += 1;
+    const dealer = (matchState.dealNumber - 1) % 4;
+    const mstate = new MatchState({
+      dealNumber: matchState.dealNumber, dealer,
+      upTeam: matchState.upTeam, upScore: matchState.upScore,
+      banked: { ...matchState.banked }, target: 52,
+    });
+    renderScore();
+    el("gametype").innerHTML = "";
+    el("tricks").innerHTML = "";
+    el("played").innerHTML = "";
+    log("<hr><b>— Jako " + matchState.dealNumber + " (jakaja: " + seatName(dealer) + ") —</b>");
+    const res = await playInteractiveDeal(humanSeat, level, rng, mstate);
 
-  // Nousu/tuppi (sama sääntö kuin engine.js).
-  const prevUp = matchState.upTeam, prevScore = matchState.upScore;
-  if (matchState.upTeam === null) { matchState.upTeam = res.winner; matchState.upScore = res.points; matchState.banked[res.winner] += res.points; }
-  else if (matchState.upTeam === res.winner) { matchState.upScore += res.points; matchState.banked[res.winner] += res.points; }
-  else { matchState.upTeam = null; matchState.upScore = 0; }
+    // Nousu/tuppi (sama sääntö kuin engine.js).
+    const prevUp = matchState.upTeam, prevScore = matchState.upScore;
+    if (matchState.upTeam === null) { matchState.upTeam = res.winner; matchState.upScore = res.points; matchState.banked[res.winner] += res.points; }
+    else if (matchState.upTeam === res.winner) { matchState.upScore += res.points; matchState.banked[res.winner] += res.points; }
+    else { matchState.upTeam = null; matchState.upScore = 0; }
 
-  // Romahdus: nousulla ollut joukkue hävisi → putosi nollille.
-  matchState.lastDrop =
-    prevUp !== null && res.winner !== prevUp
-      ? (prevUp === yourTeam ? "sinun joukkue" : "vastustaja") + " putosi " + prevScore + "→0"
-      : "";
+    // Romahdus: nousulla ollut joukkue hävisi → putosi nollille.
+    matchState.lastDrop =
+      prevUp !== null && res.winner !== prevUp
+        ? (prevUp === yourTeam ? "sinun joukkue" : "vastustaja") + " putosi " + prevScore + "→0"
+        : "";
 
-  renderScore();
-  const upStr = matchState.upTeam === null
-    ? "pöytäpeli — ei nousua"
-    : teamName(matchState.upTeam) + " nousulla " + matchState.upScore + "/52";
-  log("<b>Tilanne:</b> " + upStr + (matchState.lastDrop ? " · " + matchState.lastDrop : ""));
-  el("status").textContent = "Jako päättyi.";
+    renderScore();
+    const upStr = matchState.upTeam === null
+      ? "pöytäpeli — ei nousua"
+      : teamName(matchState.upTeam) + " nousulla " + matchState.upScore + "/52";
+    log("<b>Tilanne:</b> " + upStr + (matchState.lastDrop ? " · " + matchState.lastDrop : ""));
+    el("status").textContent = "Jako päättyi.";
 
-  if (matchState.upScore >= 52) {
-    log("<b>*** TUPPI! Joukkue " + matchState.upTeam + " voitti ottelun. ***</b>");
-    el("board").insertAdjacentHTML("beforeend", '<button onclick="location.reload()">Uusi ottelu</button>');
-  } else {
-    el("setup").classList.remove("hidden");
-    el("start").textContent = "Pelaa seuraava jako";
+    if (matchState.upScore >= 52) {
+      log("<b>*** TUPPI! Joukkue " + matchState.upTeam + " voitti ottelun. ***</b>");
+      el("board").insertAdjacentHTML("beforeend", '<button onclick="location.reload()">Uusi ottelu</button>');
+    } else {
+      el("start").textContent = "Seuraava jako";
+      el("setup").classList.remove("hidden");
+    }
+  } finally {
+    dealBusy = false;
   }
-};
+}
+
+el("start").onclick = () => { startDeal(); };
+// Ensimmäinen jako heti — lauta näkyy ilman erillistä tason/aloitusvalintaa.
+startDeal();
 `;
 
 const CSS = String.raw`
