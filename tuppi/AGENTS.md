@@ -76,3 +76,23 @@ node compare-ram-down.mjs --pairs 40 --sims 60 --bias 0.3,0.5,0.7
 Mitattu (40 peilattua paria, sims=60): `ramBiasDown ≈ 0.5` → ~57.5 %
 voitto-osuus perus-Mestaria vastaan (alhaalla ramaa ~19 % vs perus ~33 %).
 Yksityiskohdat: `IDEAT.md` §2b.
+
+## Mitä pelaajat arvostavat (tutkimus → selain-UX)
+
+**Koko monorepon pakollinen ohje:** juuren [`../AGENTS.md`](../AGENTS.md)
+(pelaajien arvostamat asiat **ja** terve koukuttavuus). Kaikki selainpelit
+toteutetaan ne asiat huomioiden.
+
+Tuppi-kohtaiset sovellukset samaan kehykseen:
+
+1. **Competence / progress feedback** — matka tuppiin (52), kasatilanne,
+   toast/korostus jokaisen kasan jälkeen; yhteenvedot jaon lopussa.
+2. **Goals clarity** — RAMI / NOLO / SOOLI näkyviin yhdellä silmäyksellä.
+3. **Ease of control** — lailliset kortit kultakehyksellä, laittomat himmennettyinä.
+4. **Autonomy** — säännöt ja taso saatavilla; ensimmäinen jako ilman
+   valintaporttia.
+5. **Relatedness** — joukkue (sinä + kaveri) vs vastustajat erottuviksi.
+6. **Challenge** — vastustajat aina Mestari (kovin taso); ei tasovalintaa.
+7. **Mastery-palaute** — jaon lopussa lyhyt yhteenveto (nousu/pudotus), ei vain loki.
+
+Botin vahvuusmittausta (yllä) UX-muutos ei korvaa eikä päinvastoin.

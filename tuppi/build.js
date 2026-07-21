@@ -154,38 +154,44 @@ function buildHtml(bundle, appJs, css) {
 <title>Neljän tuppi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 ${css}
 </style>
 </head>
 <body>
 <div id="app">
-  <h1>Neljän tuppi <span class="sub">— pelaa botteja vastaan, ei palvelinta</span></h1>
+  <header class="topbar">
+    <h1>Neljän tuppi <span class="sub">— sinä ja kaveribotti vs. kaksi vastustajaa</span></h1>
+    <button type="button" id="btnRules" class="ghost rulesbtn" aria-expanded="false">Säännöt</button>
+  </header>
+  <aside id="rules" class="rules hidden" aria-hidden="true">
+    <p><b>Tavoite:</b> nouse yhtäjaksoisesti <b>52 pisteeseen</b> (tuppi). Häviö nousulla pudottaa nollaan.</p>
+    <p><b>Näyttö:</b> punainen kortti = <b>RAMI</b> (kerää kasoja), musta = <b>NOLO</b> (vältä kasoja).</p>
+    <p><b>Joukkue:</b> sinä + kaveri (vastapäätä) vs. vasen + oikea vastustaja.</p>
+    <p><b>Sooli:</b> jos vastustaja ramasi, voit yrittää yksin — et saa ottaa yhtään tikkiä (+24p / −24p).</p>
+    <p class="rulesnote">Kultaiset kortit ovat laillisia siirtoja. Vastustajat pelaavat aina kovimmalla tasolla (Mestari).</p>
+  </aside>
   <div id="board">
     <div id="setup" class="panel hidden">
-      <label>Vastustajien taso:
-        <select id="level">
-          <option value="champion" selected>Mestari (kovin)</option>
-          <option value="analyytikko">Analyytikko</option>
-          <option value="codex">Codex</option>
-          <option value="counting">Laskuri</option>
-          <option value="seniori">Seniori</option>
-          <option value="heuristic">Heuristi</option>
-          <option value="random">Satku (helpoin)</option>
-        </select>
-      </label>
       <button id="start">Seuraava jako</button>
     </div>
     <div id="score" class="scoreboard"></div>
+    <div id="goalbar" class="goalbar" aria-hidden="true"></div>
+    <div id="outcome" class="outcome hidden" role="status"></div>
     <div id="gametype" class="gametype"></div>
     <div id="tricks" class="tricks"></div>
     <div id="status" class="status"></div>
+    <div id="toast" class="toast" aria-live="polite"></div>
     <div id="table" class="table"></div>
     <div id="handLabel" class="handlabel"></div>
     <div id="hand" class="hand"></div>
+    <div class="toolrow">
+      <button type="button" id="btnVoids" class="ghost" aria-expanded="false">Tyhjät maat</button>
+    </div>
+    <div id="voids" class="voids hidden" aria-hidden="true" role="region" aria-label="Tyhjät maat"></div>
     <details class="playedwrap">
-      <summary>🂠 Pelatut kortit &amp; tyhjät maat</summary>
+      <summary>Pelatut kortit</summary>
       <div id="played" class="played"></div>
     </details>
     <div id="log" class="log"></div>
@@ -233,14 +239,23 @@ const sortHand = (cards) =>
 
 let humanResolver = null; // asetetaan kun odotetaan ihmisen korttia
 
-function cardHTML(card, clickable) {
+function cardHTML(card, clickable, dimIllegal) {
   const red = card.suit === Suit.DIAMONDS || card.suit === Suit.HEARTS;
-  return '<span class="card ' + (red ? "red" : "black") + (clickable ? " playable" : "") +
-    '" data-r="' + card.rank + '" data-s="' + card.suit + '">' +
+  const cls = "card " + (red ? "red" : "black") +
+    (clickable ? " playable" : (dimIllegal ? " dim" : ""));
+  return '<span class="' + cls + '" data-r="' + card.rank + '" data-s="' + card.suit + '">' +
     card.name + suitSymbol(card.suit) + "</span>";
 }
 
-function renderTable(trick, ledSuit) {
+function showToast(msg, kind) {
+  const t = el("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (kind ? " " + kind : "");
+  clearTimeout(showToast._tid);
+  showToast._tid = setTimeout(() => { t.className = "toast"; }, 1400);
+}
+
+function renderTable(trick, ledSuit, winnerSeat) {
   // Oma paikka aina keskellä alhaalla; muut myötäpäivään. CSS asettaa
   // lapset ristiin: [ylä, oikea, ala, vasen] → [kaveri, +3, sinä, +1].
   const order = [(mySeat + 2) % 4, (mySeat + 3) % 4, mySeat, (mySeat + 1) % 4];
@@ -249,8 +264,10 @@ function renderTable(trick, ledSuit) {
   const cells = order.map((s) => {
     const found = trick.find((p) => p[0] === s);
     const me = s === mySeat ? " me" : "";
-    return '<div class="seatcell' + me + '"><div class="seatname">' + nameFor(s) +
-      " · p" + s + "</div>" +
+    const ally = teamOf(s) === teamOf(mySeat) ? " ally" : " foe";
+    const win = winnerSeat === s ? " win" : "";
+    return '<div class="seatcell' + me + ally + win + '"><div class="seatname">' + nameFor(s) +
+      "</div>" +
       (found ? cardHTML(found[1], false) : '<span class="empty">·</span>') + "</div>";
   });
   el("table").innerHTML = cells.join("");
@@ -276,11 +293,14 @@ const teamName = (t) => (t === yourTeam ? "Sinun joukkue" : "Vastustajat");
 function renderTricks(t, gameType) {
   const mine = t[yourTeam] || 0;
   const opp = t[1 - yourTeam] || 0;
-  const goal = gameType === "rami" ? " (voittoon yli 6)" : gameType === "nolo" ? " (vältä)" : gameType === "sooli" ? " (et saa ottaa yhtään)" : "";
+  let goal = "";
+  if (gameType === "rami") goal = "Tavoite: yli 6 kasaa";
+  else if (gameType === "nolo") goal = "Tavoite: vähemmän kasoja kuin vastustaja";
+  else if (gameType === "sooli") goal = "Tavoite: 0 omaa tikkiä";
   el("tricks").innerHTML =
     '<span class="tklabel">Kasat</span> Sinun joukkue <b>' + mine +
     "</b> – Vastustajat <b>" + opp + "</b>" +
-    '<span class="tkgoal">' + goal + "</span>";
+    (goal ? '<span class="tkgoal">' + goal + "</span>" : "");
 }
 
 // Muistiapu: mitä kukin on pelannut ja mistä maasta on jo tyhjä (∅).
@@ -293,20 +313,60 @@ const seatShort = (s) =>
   s === (mySeat + 2) % 4 ? "Kaveri" :
   s === (mySeat + 1) % 4 ? "Vasen" : "Oikea";
 
+function computeVoids(history, currentTrick) {
+  const voids = { 0: new Set(), 1: new Set(), 2: new Set(), 3: new Set() };
+  const tricks = currentTrick && currentTrick.length ? history.concat([currentTrick]) : history;
+  for (const trick of tricks) {
+    if (!trick.length) continue;
+    const led = trick[0][1].suit;
+    for (const [seat, card] of trick) {
+      if (card.suit !== led) voids[seat].add(led);
+    }
+  }
+  return voids;
+}
+
+function renderVoidsPanel(history, currentTrick) {
+  const box = el("voids");
+  if (!box) return;
+  const voids = computeVoids(history, currentTrick);
+  const rows = [mySeat, (mySeat + 2) % 4, (mySeat + 1) % 4, (mySeat + 3) % 4];
+  let any = false;
+  let html = '<div class="voidtitle">Kenellä ei enää ole maata (nähty sakkaamalla)</div><ul class="voidlist">';
+  for (const seat of rows) {
+    const suits = [...voids[seat]].sort((a, b) => a - b);
+    if (!suits.length) {
+      html += '<li><span class="voidwho">' + seatShort(seat) + '</span> <span class="voidnone">— ei vielä tyhjiä</span></li>';
+      continue;
+    }
+    any = true;
+    html += '<li><span class="voidwho">' + seatShort(seat) + '</span> ' +
+      suits.map((s) =>
+        '<span class="voidsuit' + (PLRED[s] ? " plred" : "") + '">' + PLSUIT[s] + "</span>"
+      ).join(" ") + "</li>";
+  }
+  html += "</ul>";
+  if (!any) {
+    html =
+      '<div class="voidtitle">Tyhjät maat</div>' +
+      '<p class="plempty">Ei vielä tietoa — tyhjä maa näkyy, kun joku ei seuraa aloitusmaata.</p>';
+  }
+  box.innerHTML = html;
+}
+
 function renderPlayed(history, currentTrick) {
   const played = { 0: {}, 1: {}, 2: {}, 3: {} };
-  const voids = { 0: new Set(), 1: new Set(), 2: new Set(), 3: new Set() };
+  const voids = computeVoids(history, currentTrick);
   const tricks = currentTrick && currentTrick.length ? history.concat([currentTrick]) : history;
   let any = false;
   for (const trick of tricks) {
     if (!trick.length) continue;
     any = true;
-    const led = trick[0][1].suit;
     for (const [seat, card] of trick) {
       (played[seat][card.suit] = played[seat][card.suit] || []).push(card.rank);
-      if (card.suit !== led) voids[seat].add(led);
     }
   }
+  renderVoidsPanel(history, currentTrick);
   if (!any) { el("played").innerHTML = '<div class="plempty">Ei vielä pelattuja kortteja.</div>'; return; }
   const rows = [mySeat, (mySeat + 2) % 4, (mySeat + 1) % 4, (mySeat + 3) % 4];
   let html = '<table class="pltable"><thead><tr><th></th>';
@@ -330,36 +390,78 @@ function renderPlayed(history, currentTrick) {
 // Näytä pelimuoto ja kuka ramasi (ja onko se sinä, kaverisi vai vastustaja).
 function renderGameType(gameType, ramaaja, humanSeat) {
   if (gameType !== "rami" || ramaaja === null) {
-    el("gametype").innerHTML = '<span class="gt-nolo">NOLO</span> — kaikki nolasivat';
+    el("gametype").innerHTML =
+      '<span class="gt-nolo">NOLO</span> — vältä kasoja · kaikki nolasivat';
     return;
   }
   const rel =
     ramaaja === humanSeat ? "sinä" :
     teamOf(ramaaja) === teamOf(humanSeat) ? "kaverisi" : "vastustaja";
   el("gametype").innerHTML =
-    '<span class="gt-rami">RAMI</span> — ramasi: paikka ' + ramaaja + " (" + rel + ")";
+    '<span class="gt-rami">RAMI</span> — kerää kasoja · ramasi: ' + rel;
 }
 
-// Pysyvä tilannenäyttö. Play-to-52-pelissä voitto tulee yhtäjaksoisesta
-// noususta ≥ 52, joten pääpaino on siinä — ei kumulatiivisessa pankissa.
+// Pysyvä tilannenäyttö + edistymispalkki (PXI: progress feedback / goals).
 function renderScore() {
   const ms = matchState;
   let situ;
+  let pct = 0;
+  let barCls = "neutral";
   if (ms.upTeam === null) {
     situ = "Pöytäpeli — ei nousua";
+  } else if (ms.upTeam === yourTeam) {
+    situ = "Sinun joukkue nousulla — " + ms.upScore + " / 52";
+    pct = Math.min(100, Math.round((ms.upScore / 52) * 100));
+    barCls = "us";
   } else {
-    const who = ms.upTeam === yourTeam ? "Sinun joukkue" : "Vastustaja";
-    situ = who + " nousulla — " + ms.upScore + " / 52";
+    situ = "Vastustaja nousulla — " + ms.upScore + " / 52";
+    pct = Math.min(100, Math.round((ms.upScore / 52) * 100));
+    barCls = "them";
   }
   let html =
     '<div class="scitem"><span class="sclabel">Jako</span><span class="scval">' + ms.dealNumber + "</span></div>" +
-    '<div class="scitem" style="flex:2 1 14rem"><span class="sclabel">Tilanne</span><span class="scval">' + situ + "</span></div>";
+    '<div class="scitem" style="flex:2 1 14rem"><span class="sclabel">Tavoite: tuppi 52</span><span class="scval">' + situ + "</span></div>";
   if (ms.lastDrop) {
     html +=
       '<div class="scitem"><span class="sclabel">Edellinen</span>' +
       '<span class="scval scdrop">' + ms.lastDrop + "</span></div>";
   }
   el("score").innerHTML = html;
+  const bar = el("goalbar");
+  if (!bar) return;
+  if (ms.upTeam === null) {
+    bar.className = "goalbar";
+    bar.innerHTML = '<div class="goaltrack"><span class="goalfill" style="width:0%"></span></div><span class="goallab">Ei nousua vielä</span>';
+  } else {
+    bar.className = "goalbar " + barCls;
+    bar.innerHTML =
+      '<div class="goaltrack"><span class="goalfill" style="width:' + pct + '%"></span></div>' +
+      '<span class="goallab">' + pct + "% matkalla tuppiin</span>";
+  }
+}
+
+function showDealOutcome(res) {
+  const won = res.winner === yourTeam;
+  const box = el("outcome");
+  let title = won ? "Jako teille +" + res.points + "p" : "Jako vastustajille +" + res.points + "p";
+  let detail = "";
+  if (matchState.upScore >= 52 && matchState.upTeam === yourTeam) {
+    title = "TUPPI! Voititte ottelun";
+    detail = "Yhtäjaksoinen nousu saavutti 52 pistettä.";
+  } else if (matchState.upScore >= 52) {
+    title = "Vastustajat tuppivat";
+    detail = "He saavuttivat 52 pistettä.";
+  } else if (matchState.lastDrop) {
+    detail = matchState.lastDrop + ".";
+  } else if (matchState.upTeam === yourTeam) {
+    detail = "Nousulla " + matchState.upScore + "/52 — pidä putki elossa.";
+  } else if (matchState.upTeam !== null) {
+    detail = "Vastustaja nousulla " + matchState.upScore + "/52 — yritä pudottaa.";
+  } else {
+    detail = "Seuraava jako aloittaa uuden nousun.";
+  }
+  box.className = "outcome show " + (won ? "good" : "bad");
+  box.innerHTML = "<strong>" + title + "</strong><span>" + detail + "</span>";
 }
 
 // Ihmispelaaja joka odottaa klikkausta (Promise).
@@ -380,7 +482,7 @@ class BrowserHuman {
 function renderHand(view) {
   const legal = new Set(view.legalMoves);
   const sorted = sortHand(view.hand);
-  el("hand").innerHTML = sorted.map((c) => cardHTML(c, legal.has(c))).join("");
+  el("hand").innerHTML = sorted.map((c) => cardHTML(c, legal.has(c), true)).join("");
   el("hand").querySelectorAll(".card.playable").forEach((node) => {
     node.onclick = () => {
       const r = +node.dataset.r, s = +node.dataset.s;
@@ -474,10 +576,16 @@ async function playInteractiveDeal(humanSeat, level, rng, mstate) {
     tricksByTeam[teamOf(w)] += 1;
     renderTricks(tricksByTeam, gameType);
     history.push(trick);
+    renderTable(trick, ledSuit, w);
+    const ours = teamOf(w) === yourTeam;
+    showToast(
+      (ours ? "Teille kasa" : "Vastustajille kasa") + " · " + seatName(w),
+      ours ? "good" : "bad",
+    );
     log("Kasa " + (tn + 1) + ": " + trick.map((p) => seatName(p[0]) + " " + p[1].name + suitSymbol(p[1].suit)).join(", ") +
       " → " + seatName(w) + " voitti (" + teamName(teamOf(w)) + ")");
     current = w;
-    await sleep(400);
+    await sleep(550);
   }
   const rt = ramaaja !== null ? teamOf(ramaaja) : null;
   const { winner, points, steal } = scoreDeal(tricksByTeam, gameType, rt);
@@ -625,8 +733,13 @@ async function playSooliDeal(humanSeat, hands, players, ramaaja, mstate) {
     tricksByTeam[teamOf(w)] += 1;
     renderTricks(tricksByTeam, "sooli");
     history.push(trick);
+    renderTable(trick, ledSuit, w);
+    showToast(
+      w === soolaaja ? "Otit tikin — sooli kaatui" : seatName(w) + " vei tikin",
+      w === soolaaja ? "bad" : "good",
+    );
     log("Tikki " + (tn + 1) + ": " + trick.map((p) => seatName(p[0]) + " " + cardStr(p[1])).join(", ") + " → " + seatName(w) + " voitti");
-    await sleep(400);
+    await sleep(550);
     if (w === soolaaja) { soolaajaTook = true; log("<b>Otit tikin — sooli kaatui!</b>"); break; }
     leader = w;
   }
@@ -689,8 +802,13 @@ async function playBotSooliDeal(humanSeat, hands, players, ramaaja, soolaaja, ms
     tricksByTeam[teamOf(w)] += 1;
     renderTricks(tricksByTeam, "sooli");
     history.push(trick);
+    renderTable(trick, ledSuit, w);
+    showToast(
+      w === soolaaja ? "Soolaaja otti — teille pisteet" : seatName(w) + " vei tikin",
+      w === soolaaja ? "good" : "bad",
+    );
     log("Tikki " + (tn + 1) + ": " + trick.map((p) => seatName(p[0]) + " " + cardStr(p[1])).join(", ") + " → " + seatName(w) + " voitti");
-    await sleep(400);
+    await sleep(550);
     if (w === soolaaja) { soolaajaTook = true; log("<b>Soolaaja otti tikin — te voititte!</b>"); break; }
     leader = w;
   }
@@ -730,8 +848,9 @@ async function startDeal() {
   if (dealBusy) return;
   dealBusy = true;
   el("setup").classList.add("hidden");
+  el("outcome").className = "outcome hidden";
   try {
-    const level = el("level").value;
+    const level = "champion"; // aina kovin taso (Mestari)
     const humanSeat = 0; // paikan valinta poistettu — pelaaja istuu aina paikalla 0
     yourTeam = teamOf(humanSeat);
     mySeat = humanSeat;
@@ -747,6 +866,7 @@ async function startDeal() {
     el("gametype").innerHTML = "";
     el("tricks").innerHTML = "";
     el("played").innerHTML = "";
+    renderVoidsPanel([], []);
     log("<hr><b>— Jako " + matchState.dealNumber + " (jakaja: " + seatName(dealer) + ") —</b>");
     const res = await playInteractiveDeal(humanSeat, level, rng, mstate);
 
@@ -763,6 +883,7 @@ async function startDeal() {
         : "";
 
     renderScore();
+    showDealOutcome(res);
     const upStr = matchState.upTeam === null
       ? "pöytäpeli — ei nousua"
       : teamName(matchState.upTeam) + " nousulla " + matchState.upScore + "/52";
@@ -780,6 +901,21 @@ async function startDeal() {
     dealBusy = false;
   }
 }
+
+el("btnRules").onclick = () => {
+  const r = el("rules");
+  const open = r.classList.toggle("hidden") === false;
+  r.setAttribute("aria-hidden", open ? "false" : "true");
+  el("btnRules").setAttribute("aria-expanded", open ? "true" : "false");
+};
+
+el("btnVoids").onclick = () => {
+  const v = el("voids");
+  const open = v.classList.toggle("hidden") === false;
+  v.setAttribute("aria-hidden", open ? "false" : "true");
+  el("btnVoids").setAttribute("aria-expanded", open ? "true" : "false");
+  el("btnVoids").classList.toggle("active", open);
+};
 
 el("start").onclick = () => { startDeal(); };
 // Ensimmäinen jako heti — lauta näkyy ilman erillistä tason/aloitusvalintaa.
@@ -800,10 +936,12 @@ const CSS = String.raw`
   --glass: rgba(20,32,26,.72);
   --red: #d1274b;
   --black: #1a2028;
+  --ally: #7ec8a3;
+  --foe: #e08a9a;
 }
 * { box-sizing: border-box; }
 body {
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
   margin: 0; padding: clamp(1rem, 3vw, 2.2rem); color: var(--ink);
   background:
     radial-gradient(1200px 700px at 50% -10%, #123a2a 0%, transparent 60%),
@@ -812,14 +950,28 @@ body {
   min-height: 100vh; -webkit-font-smoothing: antialiased;
 }
 #app { max-width: 820px; margin: 0 auto; }
+.topbar {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 1rem; margin-bottom: 1rem;
+}
+.topbar h1 { margin: 0; flex: 1; }
+.rulesbtn { flex-shrink: 0; margin-top: .2rem; }
 h1 {
   font-family: "Fraunces", Georgia, serif; font-weight: 600;
   font-size: clamp(1.7rem, 4vw, 2.4rem); letter-spacing: -.01em;
-  margin: 0 0 1.4rem; line-height: 1.1;
+  line-height: 1.1;
 }
-h1 .sub { display: block; font-family: "Inter", sans-serif; font-size: .82rem;
+h1 .sub { display: block; font-family: "Source Sans 3", sans-serif; font-size: .82rem;
   font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
   color: var(--muted); margin-top: .4rem; }
+
+.rules {
+  background: var(--glass); border: 1px solid var(--line); border-radius: 14px;
+  padding: .9rem 1.1rem; margin-bottom: 1rem; font-size: .92rem; line-height: 1.45;
+  animation: fadein .25s ease;
+}
+.rules p { margin: .35rem 0; }
+.rulesnote { color: var(--muted); font-size: .85rem; }
 
 .panel {
   display: flex; gap: 1rem; flex-wrap: wrap; align-items: end;
@@ -841,10 +993,10 @@ button {
 }
 button:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(232,193,90,.4); filter: brightness(1.03); }
 button:active { transform: translateY(0); }
-.hidden { display: none; }
+.hidden { display: none !important; }
 
 .scoreboard {
-  display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .9rem;
+  display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .55rem;
 }
 .scitem {
   display: flex; flex-direction: column; gap: .15rem; flex: 1 1 auto;
@@ -856,6 +1008,33 @@ button:active { transform: translateY(0); }
   text-transform: uppercase; color: var(--muted);
 }
 .scval { font-size: .95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.goalbar {
+  display: flex; align-items: center; gap: .7rem; margin-bottom: .85rem;
+}
+.goaltrack {
+  flex: 1; height: .55rem; border-radius: 999px; background: rgba(0,0,0,.35);
+  border: 1px solid var(--line); overflow: hidden;
+}
+.goalfill {
+  display: block; height: 100%; width: 0; border-radius: inherit;
+  background: linear-gradient(90deg, #3a9b6e, var(--gold));
+  transition: width .45s ease;
+}
+.goalbar.them .goalfill { background: linear-gradient(90deg, #8a3a4a, #e08a9a); }
+.goallab { font-size: .72rem; color: var(--muted); white-space: nowrap; font-weight: 600; }
+
+.outcome {
+  display: none; gap: .35rem; flex-direction: column;
+  border-radius: 12px; padding: .75rem 1rem; margin-bottom: .85rem;
+  border: 1px solid var(--line); animation: fadein .3s ease;
+}
+.outcome.show { display: flex; }
+.outcome.good { background: rgba(126,200,163,.14); border-color: rgba(126,200,163,.35); }
+.outcome.bad { background: rgba(209,39,75,.12); border-color: rgba(209,39,75,.3); }
+.outcome strong { font-size: 1.05rem; }
+.outcome span { color: var(--muted); font-size: .88rem; }
+
 .gametype { font-size: .95rem; font-weight: 600; margin-bottom: .7rem; min-height: 1.2em; }
 .gametype:empty { margin: 0; min-height: 0; }
 .tricks {
@@ -883,8 +1062,17 @@ button.ghost {
 button.ghost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.3); filter: none; }
 .status {
   font-size: .82rem; letter-spacing: .03em; color: var(--muted);
-  margin-bottom: .8rem; min-height: 1.2em; font-variant-numeric: tabular-nums;
+  margin-bottom: .45rem; min-height: 1.2em; font-variant-numeric: tabular-nums;
 }
+
+.toast {
+  opacity: 0; transform: translateY(-4px); pointer-events: none;
+  font-size: .9rem; font-weight: 700; letter-spacing: .02em;
+  min-height: 1.3em; margin-bottom: .55rem; transition: opacity .2s, transform .2s;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.good { color: var(--ally); }
+.toast.bad { color: #ff8aa0; }
 
 /* Pöytä: neljä paikkaa ristin muotoon (0 ylä, 1 oikea, 2 ala, 3 vasen). */
 .table {
@@ -898,7 +1086,7 @@ button.ghost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,
 }
 .seatcell {
   text-align: center; display: flex; flex-direction: column; align-items: center;
-  gap: .45rem; padding: .3rem;
+  gap: .45rem; padding: .3rem; transition: filter .2s;
 }
 .seatcell:nth-child(1) { grid-column: 2; grid-row: 1; }
 .seatcell:nth-child(2) { grid-column: 3; grid-row: 2; }
@@ -909,6 +1097,10 @@ button.ghost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,
   color: rgba(255,255,255,.6); background: rgba(0,0,0,.22);
   padding: .18rem .5rem; border-radius: 999px;
 }
+.seatcell.ally .seatname { color: #d8ffe8; background: rgba(30,90,60,.55); }
+.seatcell.foe .seatname { color: #ffe0e6; background: rgba(90,30,45,.5); }
+.seatcell.win { filter: drop-shadow(0 0 12px rgba(232,193,90,.55)); }
+.seatcell.win .seatname { background: linear-gradient(180deg, #f2d074, var(--gold)); color: #2a1e00; }
 .empty {
   width: 2.9rem; height: 4rem; border-radius: 10px;
   border: 1.5px dashed rgba(255,255,255,.22); color: transparent;
@@ -928,10 +1120,11 @@ button.ghost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,
   color: var(--black); font-weight: 700; font-size: 1.15rem;
   font-variant-numeric: lining-nums; border: 1px solid rgba(0,0,0,.14);
   box-shadow: 0 3px 8px rgba(0,0,0,.35); user-select: none;
-  transition: transform .12s ease, box-shadow .12s ease;
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s, filter .12s;
 }
 .card.red { color: var(--red); }
 .card.black { color: var(--black); }
+.card.dim { opacity: .38; filter: grayscale(.25); cursor: default; }
 .card.playable { cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,.35), 0 0 0 2px var(--gold); }
 .card.playable:hover { transform: translateY(-8px); box-shadow: 0 12px 22px rgba(0,0,0,.45), 0 0 0 2px var(--gold); }
 .card.got-card { box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(232,193,90,.45); transform: translateY(-6px); }
@@ -940,9 +1133,44 @@ button.ghost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,
 
 .seatcell.me .seatname { background: linear-gradient(180deg, #f2d074, var(--gold)); color: #2a1e00; }
 .seatcell.me { filter: drop-shadow(0 0 10px rgba(232,193,90,.35)); }
+.seatcell.me.win { filter: drop-shadow(0 0 14px rgba(232,193,90,.65)); }
 
 .showbtns { display: flex; gap: .7rem; margin-top: 1rem; width: 100%; }
 .scdrop { color: #ff6b8a; font-weight: 600; }
+
+.toolrow {
+  display: flex; gap: .6rem; flex-wrap: wrap; margin: .2rem 0 .7rem;
+}
+.toolrow .ghost.active {
+  border-color: var(--gold-soft); color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(232,193,90,.25);
+}
+.voids {
+  background: var(--glass); border: 1px solid var(--line); border-radius: 14px;
+  padding: .85rem 1rem; margin-bottom: .9rem; animation: fadein .25s ease;
+}
+.voidtitle {
+  font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: .55rem;
+}
+.voidlist { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
+.voidlist li {
+  display: flex; align-items: center; gap: .55rem; flex-wrap: wrap;
+  font-size: .95rem;
+}
+.voidwho {
+  min-width: 4.5rem; font-weight: 700; font-size: .78rem;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ink);
+}
+.voidnone { color: var(--muted); font-size: .88rem; }
+.voidsuit {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2rem; height: 2rem; border-radius: 8px;
+  background: rgba(255,255,255,.92); color: var(--black);
+  font-size: 1.15rem; font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.voidsuit.plred { color: var(--red); }
 
 .playedwrap {
   margin: .2rem 0 1rem; border: 1px solid var(--line); border-radius: 12px;
@@ -980,6 +1208,13 @@ button.ghost:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,
 }
 .log b { color: var(--ink); }
 .log hr { border: none; border-top: 1px solid var(--line); margin: .6rem 0; }
+
+@keyframes fadein { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 520px) {
+  .topbar { flex-direction: column; }
+  .goallab { display: none; }
+}
 `;
 
 // --- Aja käännös ------------------------------------------------------- //

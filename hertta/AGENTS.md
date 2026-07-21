@@ -4,6 +4,9 @@ Ohjeet **koodausagentille**, joka tuottaa Hearts-pelibotin tähän projektiin.
 Ihmiselle tarkoitettu yleiskuvaus on `README.md`. Tämä tiedosto on toimintaohje:
 lue tämä, tuota yksi botti-tiedosto, verifioi se, äläkä muuta muuta koodia.
 
+Selainpelin UX (jos kosket UI:hin): noudata monorepon juuren
+[`../AGENTS.md`](../AGENTS.md) pelaajakokemusvaatimuksia.
+
 ## Tehtävä
 
 Kirjoita yksi tekoälybotti, joka pelaa Heartsia. Botti on **politiikka**
