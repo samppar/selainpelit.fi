@@ -50,8 +50,21 @@ const buckets = {}; // gameType -> { margins: [] }
 const add = (gt, m) => { (buckets[gt] ??= { margins: [] }).margins.push(m); };
 
 const t0 = Date.now();
+let lastPrint = t0;
 let mismatched = 0;
 for (let g = 0; g < DEALS; g++) {
+  // Väliaikatulostus ~60 s välein (pitkät ajot näkyviksi).
+  if (Date.now() - lastPrint >= 60000) {
+    lastPrint = Date.now();
+    const el = ((Date.now() - t0) / 1000).toFixed(0);
+    const parts = ["rami", "nolo", "sooli"].map((gt) => {
+      const b = buckets[gt];
+      if (!b || !b.margins.length) return `${gt} –`;
+      const m = b.margins.reduce((a, x) => a + x, 0) / b.margins.length;
+      return `${gt} ${(m >= 0 ? "+" : "") + m.toFixed(2)}p (n=${b.margins.length})`;
+    });
+    console.log(`  [${el}s] ${g}/${DEALS} jakoa | ${parts.join(" | ")}`);
+  }
   const engineSeed = 90000 + g;
   const seatSeeds = [0, 1, 2, 3].map((s) => engineSeed * 4 + s);
   // Puoli 1: A joukkueessa 0 (paikat 0,2)

@@ -56,6 +56,27 @@ siirto joukkueelta toiselle — käytä `handRotate`.
 Kun vertaat kahta bottia/asetusta, raportoi peilattujen parien perusteella
 (voitto-% 52-peleissä, ei pelkkä pistemarginaali fixed-dealista).
 
+### 4. Erittele tarvittaessa pelimuodon mukaan (rami / nolo)
+
+Ottelutason voitto-% voi **laimentaa tai kätkeä** efektin, joka koskee vain
+toista pelimuotoa. Jos muutos vaikuttaa lähtökohtaisesti vain ramiin tai vain
+noloon (esim. aloituslogiikkaan), mittaa myös **jakotasolla pelimuodoittain**.
+
+Valmis ajuri: `node compare-by-type.mjs --a players/X.js [--sims 60] [--deals N]`
+— pelaa peilattuja riippumattomia jakoja (samat kortit, joukkueet päinvastoin,
+ei nousukertymää) ja raportoi A:n pistemarginaalin erikseen rami/nolo/sooli.
+
+Esimerkki tästä tarpeesta: `Silta`-signaali aktivoituu vain ramin aloituksissa,
+joten sen nolo-marginaali on rakenteellisesti 0 ja koko efekti näkyy vasta
+rami-rivillä (ottelutaso aliarvioi sen). Yksityiskohdat: `IDEAT.md` §5.
+
+### 5. Pitkät ajot: väliaikatulostus
+
+Vahvuusajot ovat raskaita (sims=60 → minuutteja–tunteja). Vertailuajurit
+tulostavat väliaikatuloksen ~60 s välein (`compare-players.mjs`,
+`compare-by-type.mjs`, `compare-show.mjs`), jotta edistyminen näkyy eikä ajoa
+tarvitse keskeyttää sen tarkistamiseksi. Kun kirjoitat uuden ajurin, tee samoin.
+
 ## Mitä nämä eivät koske
 
 - Yksikkötestit, sääntötestit, “ei kaadu / ei laitonta siirtoa”

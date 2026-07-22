@@ -37,7 +37,15 @@ const mk = (make, seed, sig = null) => {
 
 let aWins = 0, bWins = 0, ties = 0;
 const t0 = Date.now();
+let lastPrint = t0;
 for (let g = 0; g < PAIRS; g++) {
+  // Väliaikatulostus ~60 s välein (pitkät ajot näkyviksi).
+  if (Date.now() - lastPrint >= 60000) {
+    lastPrint = Date.now();
+    const el = ((Date.now() - t0) / 1000).toFixed(0);
+    const wr = aWins + bWins ? (100 * aWins / (aWins + bWins)).toFixed(1) : "-";
+    console.log(`  [${el}s] ${g}/${PAIRS} paria | A ${aWins} – B ${bWins} (tasan ${ties}) | A voitto-% ${wr}`);
+  }
   const seed = 5000 + g * 4;
   // Puoli 1: A joukkueessa 0
   {
