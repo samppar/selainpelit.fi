@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        game: [tuppi, sanaseppa, sanapalat, sanasato, rypas, holdem, mylly, tammi, mosaiikki, palikat]
+        game: [tuppi, sanaseppa, sanapalat, sanasato, rypas, holdem, mylly, tammi, mosaiikki, palikat, labyrintti]
     defaults:
       run:
         working-directory: ${{ matrix.game }}
@@ -58,8 +58,9 @@ jobs:
           (cd tammi && node build.js)
           (cd mosaiikki && node build.js)
           (cd palikat && node build.js)
+          (cd labyrintti && node build.js)
 
-          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/mylly _site/tammi _site/mosaiikki _site/palikat _site/katko
+          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/mylly _site/tammi _site/mosaiikki _site/palikat _site/labyrintti _site/katko
 
           cp -R hertta/dist/. _site/hertta/
           cp tuppi/tuppi.html _site/tuppi/index.html
@@ -72,6 +73,7 @@ jobs:
           cp tammi/index.html _site/tammi/index.html
           cp mosaiikki/index.html _site/mosaiikki/index.html
           cp palikat/index.html _site/palikat/index.html
+          cp labyrintti/index.html _site/labyrintti/index.html
           cp katko/index.html _site/katko/index.html
 
           cat > _site/index.html <<'EOF'
@@ -97,6 +99,7 @@ jobs:
               <li><a href="/tammi/">Tammi</a></li>
               <li><a href="/mosaiikki/">Mosaiikki</a></li>
               <li><a href="/palikat/">Palikat</a></li>
+              <li><a href="/labyrintti/">Labyrintti</a></li>
             </ul>
           </body>
           </html>

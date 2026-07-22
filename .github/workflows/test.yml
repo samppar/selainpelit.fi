@@ -37,6 +37,8 @@ jobs:
             needs_install: false
           - game: palikat
             needs_install: false
+          - game: labyrintti
+            needs_install: false
     defaults:
       run:
         working-directory: ${{ matrix.game }}
