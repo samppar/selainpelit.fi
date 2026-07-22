@@ -1,0 +1,10 @@
+{
+  "name": "labyrintti",
+  "version": "1.0.0",
+  "description": "Labyrintti — kallistettava kuulapeli (selainpeli).",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run_tests.js"
+  },
+  "license": "MIT"
+}
