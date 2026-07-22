@@ -115,12 +115,14 @@ jobs:
           set -euo pipefail
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
+          HOST="${DEPLOY_HOST:-viikkokisat.fi}"
           PORT="${DEPLOY_PORT:-22}"
-          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts
 
-      # Secrets (tuotanto: selainpelit@viikkokisat.fi → /var/www/selainpelit.fi/prod/public):
+      # Tuotanto = Cloudflare-origin (viikkokisat.fi), EI testi2.
+      # Secrets:
       #   DEPLOY_HOST=viikkokisat.fi
-      #   DEPLOY_USER=selainpelit
+      #   DEPLOY_USER=root
       #   DEPLOY_PATH=/var/www/selainpelit.fi/prod/public
       #   DEPLOY_SSH_KEY=<~/.ssh/selainpelit_ed25519>
       #   DEPLOY_PORT=22 (valinnainen)
@@ -132,8 +134,13 @@ jobs:
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
         run: |
           set -euo pipefail
+          HOST="${DEPLOY_HOST:-viikkokisat.fi}"
+          USERNAME="${DEPLOY_USER:-root}"
+          DEST="${DEPLOY_PATH:-/var/www/selainpelit.fi/prod/public}"
           PORT="${DEPLOY_PORT:-22}"
-          rsync -az --delete \
+          # Älä korvaa käsin ylläpidettyä etusivua stubilla
+          rm -f _site/index.html
+          rsync -az \
             -e "ssh -p $PORT -o StrictHostKeyChecking=yes" \
             ./_site/ \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+            "${USERNAME}@${HOST}:${DEST}/"
