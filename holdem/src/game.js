@@ -17,7 +17,7 @@
   var lastAction = null; // { seat, type, headline, pill }
 
   // Tahti — hidasta vain kun pelaaja tarvitsee aikaa lukea / tuntea tilanne.
-  // Hyötyä: uudet kortit, korotus/panos, jaon loppu. Turhaa: check/fold-ketjut.
+  // Hyötyä: uudet kortit, korotus, jaon loppu. Turhaa: check/fold-ketjut.
   var PACE = {
     afterHuman: 350,       // oma siirto ehti näkyä; bottien ei tarvitse odottaa kauaa
     thinkQuiet: 280,       // fold/check — nopea “klik”
@@ -290,7 +290,7 @@
         }
       }
       var stack = seat.querySelector('[data-role="stack"]');
-      setChipPile(stack, p.chips, 7);
+      setChipPile(stack, p.chips, 5);
       var chips = seat.querySelector(".chips");
       if (chips) chips.textContent = String(p.chips);
       var badges = seat.querySelector(".badges");
@@ -324,8 +324,8 @@
     }
     if (act.type === "bet") {
       return you
-        ? { verb: "panostat " + act.amount, pill: "Panos " + act.amount, headline: "PANOSTAT " + act.amount }
-        : { verb: "panostaa " + act.amount, pill: "Panos " + act.amount, headline: "PANOSTAA " + act.amount };
+        ? { verb: "korotat " + act.amount, pill: "Korotus " + act.amount, headline: "KOROTAT " + act.amount }
+        : { verb: "korottaa " + act.amount, pill: "Korotus " + act.amount, headline: "KOROTTAA " + act.amount };
     }
     if (act.type === "raise") {
       return you
@@ -366,8 +366,8 @@
       "<p>Kerää chippejä ja pudota vastustajat. Kaksi taskukorttia, viisi yhteistä — paras viiden kortin käsi voittaa potin.</p>" +
       '<div class="diff-row" id="diffRow">' +
         '<label><input type="radio" name="diff" value="helppo"> Helppo</label>' +
-        '<label><input type="radio" name="diff" value="normaali" checked> Normaali</label>' +
-        '<label><input type="radio" name="diff" value="vaikea"> Vaikea</label>' +
+        '<label><input type="radio" name="diff" value="normaali"> Normaali</label>' +
+        '<label><input type="radio" name="diff" value="vaikea" checked> Vaikea</label>' +
       "</div>" +
       '<div class="actions">' +
         '<button type="button" class="go" id="btnStart">Aloita peli</button>' +
@@ -376,7 +376,7 @@
     );
     el("btnStart").onclick = function () {
       var d = document.querySelector('input[name="diff"]:checked');
-      newGame({ difficulty: d ? d.value : "normaali" });
+      newGame({ difficulty: d ? d.value : "vaikea" });
     };
     el("btnRulesOv").onclick = showRules;
   }
@@ -389,7 +389,7 @@
         "<li>Jokaisella 2 taskukorttia. Pöytään aukeaa flop (3), turn ja river.</li>" +
         "<li>Paras 5 kortin pokerikäsi voittaa potin (tasku + pöytä).</li>" +
         "<li><strong>Passaa / Check</strong> jos ei tarvitse maksaa. <strong>Maksa</strong> tasoittaa panoksen.</li>" +
-        "<li><strong>Panosta / Korota</strong> pakottaa muut maksamaan tai luovuttamaan.</li>" +
+        "<li><strong>Korota</strong> pakottaa muut maksamaan tai luovuttamaan.</li>" +
         "<li>Blindit: pieni " + (G ? G.sb : 5) + " / iso " + (G ? G.bb : 10) + ".</li>" +
       "</ul>" +
       '<div class="actions"><button type="button" class="go" id="btnRulesClose">Selvä</button></div>'
@@ -406,7 +406,7 @@
     gameGen++;
     clearLastAction();
     G = E.newGame(opts);
-    opponentBot = Reg.botForDifficulty(opts.difficulty || G.difficulty || "normaali");
+    opponentBot = Reg.botForDifficulty(opts.difficulty || G.difficulty || "vaikea");
     busy = false;
     lastStreet = G.street;
     el("game").classList.remove("hidden");
@@ -768,13 +768,13 @@
       range.oninput = function () {
         raiseAmt = +range.value;
         amt.textContent = String(raiseAmt);
-        betBtn.textContent = (typ === "bet" ? "Panosta " : "Korota ") + raiseAmt;
+        betBtn.textContent = "Korota " + raiseAmt;
       };
       wrap.appendChild(range);
       wrap.appendChild(amt);
       box.appendChild(wrap);
       var betBtn = addBtn(
-        (typ === "bet" ? "Panosta " : "Korota ") + info.min,
+        "Korota " + info.min,
         "",
         function () { humanAct({ type: typ, amount: raiseAmt }); }
       );

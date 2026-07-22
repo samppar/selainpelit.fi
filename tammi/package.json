@@ -1,0 +1,10 @@
+{
+  "name": "tammi",
+  "version": "1.0.0",
+  "description": "Tammi — English draughts vs. computer (selainpeli).",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run_tests.js"
+  },
+  "license": "MIT"
+}

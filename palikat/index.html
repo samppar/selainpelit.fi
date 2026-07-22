@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Palikat — Blokus-tyylinen palapeli tietokonetta vastaan.">
+<title>Palikat — selainpelit.fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg0: #d7e0ea;
+  --bg1: #c2cedb;
+  --ink: #15202b;
+  --muted: #5a6b7c;
+  --panel: rgba(247, 250, 252, 0.88);
+  --panel-edge: rgba(21, 32, 43, 0.1);
+  --accent: #0d7a8c;
+  --accent-soft: rgba(13, 122, 140, 0.14);
+  --human: #e4453a;
+  --human-deep: #b83228;
+  --human-soft: rgba(228, 69, 58, 0.18);
+  --ai: #1f6f8b;
+  --ai-deep: #145068;
+  --ai-soft: rgba(31, 111, 139, 0.18);
+  --board: #f4f7fa;
+  --grid: #c8d3de;
+  --legal: rgba(13, 122, 140, 0.22);
+  --ghost-ok: rgba(228, 69, 58, 0.45);
+  --ghost-bad: rgba(180, 40, 40, 0.28);
+  --hint: #d4a017;
+  --focus: #0d7a8c;
+  --warn: #b86a1a;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "DM Sans", system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse 70% 50% at 8% 5%, rgba(228, 69, 58, 0.16), transparent 55%),
+    radial-gradient(ellipse 65% 45% at 95% 90%, rgba(31, 111, 139, 0.2), transparent 50%),
+    linear-gradient(160deg, var(--bg1), var(--bg0) 48%, #b8c6d4);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+button, select {
+  font: inherit;
+  color: inherit;
+}
+
+.shell {
+  position: relative;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: clamp(12px, 2.5vw, 26px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 360px);
+  gap: clamp(14px, 2.5vw, 30px);
+  align-items: start;
+  min-height: 100vh;
+}
+
+.board-col {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand {
+  text-align: center;
+  animation: rise 500ms ease both;
+}
+
+.brand h1 {
+  margin: 0;
+  font-family: "Syne", "Arial Black", sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.brand p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.board-frame {
+  width: min(92vw, 68vh, 540px);
+  padding: clamp(8px, 1.6vw, 14px);
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, #2a3644, #1a222c 55%, #121820);
+  box-shadow:
+    0 26px 50px rgba(21, 32, 43, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: rise 600ms 40ms ease both;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  grid-template-rows: repeat(14, 1fr);
+  width: 100%;
+  aspect-ratio: 1;
+  gap: 1px;
+  padding: 1px;
+  background: var(--grid);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cell {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--board);
+  cursor: pointer;
+  transition: background 120ms ease, transform 80ms ease;
+}
+
+.cell:hover {
+  filter: brightness(0.97);
+}
+
+.cell.human {
+  background: linear-gradient(145deg, #f06458, var(--human) 40%, var(--human-deep));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.cell.ai {
+  background: linear-gradient(145deg, #3a8eab, var(--ai) 40%, var(--ai-deep));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.cell.start-human::after,
+.cell.start-ai::after {
+  content: "";
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  border: 2px solid rgba(21, 32, 43, 0.35);
+  pointer-events: none;
+}
+
+.cell.start-human:not(.human)::after {
+  border-color: var(--human);
+  background: var(--human-soft);
+}
+
+.cell.start-ai:not(.ai)::after {
+  border-color: var(--ai);
+  background: var(--ai-soft);
+}
+
+.cell.legal {
+  background: color-mix(in srgb, var(--board) 70%, var(--accent) 30%);
+  box-shadow: inset 0 0 0 1px rgba(13, 122, 140, 0.35);
+}
+
+.cell.ghost-ok {
+  background: var(--ghost-ok) !important;
+  box-shadow: inset 0 0 0 1px rgba(228, 69, 58, 0.55);
+}
+
+.cell.ghost-bad {
+  background: var(--ghost-bad) !important;
+}
+
+.cell.last {
+  animation: flashLast 700ms ease;
+}
+
+.cell.hint {
+  box-shadow: inset 0 0 0 2px var(--hint);
+  z-index: 1;
+}
+
+.tray-wrap {
+  width: min(92vw, 68vh, 540px);
+  animation: rise 640ms 80ms ease both;
+}
+
+.tray-wrap h2 {
+  margin: 0 0 8px;
+  font-family: "Syne", sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-height: 72px;
+}
+
+.tray-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.tray-piece {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 6px;
+  border: 1px solid rgba(21, 32, 43, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.tray-piece:hover {
+  transform: translateY(-2px);
+  border-color: rgba(228, 69, 58, 0.45);
+}
+
+.tray-piece.selected {
+  border-color: var(--human);
+  box-shadow: 0 0 0 3px var(--human-soft);
+  background: #fff;
+}
+
+.mini-piece {
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  height: 100%;
+}
+
+.mini-on {
+  background: var(--human);
+  border-radius: 1px;
+}
+
+.mini-piece.ai .mini-on {
+  background: var(--ai);
+}
+
+.mini-off {
+  background: transparent;
+}
+
+.side {
+  display: grid;
+  gap: 14px;
+  padding: clamp(14px, 2vw, 18px);
+  border-radius: 16px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 16px 40px rgba(21, 32, 43, 0.08);
+  animation: rise 560ms 60ms ease both;
+  align-self: center;
+}
+
+.status-box .phase {
+  margin: 0;
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+}
+
+.status-box .message {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.players {
+  display: grid;
+  gap: 8px;
+}
+
+.player {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.45);
+  opacity: 0.72;
+  transition: opacity 160ms ease, border-color 160ms ease;
+}
+
+.player.active {
+  opacity: 1;
+  border-color: rgba(13, 122, 140, 0.35);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.player strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.player span:last-child {
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.sample {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.sample.human {
+  background: linear-gradient(145deg, #f06458, var(--human));
+}
+
+.sample.ai {
+  background: linear-gradient(145deg, #3a8eab, var(--ai));
+}
+
+.rules h2 {
+  margin: 0 0 6px;
+  font-family: "Syne", sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rules p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.rules p:last-child {
+  margin-bottom: 0;
+}
+
+.controls {
+  display: grid;
+  gap: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.field select {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(21, 32, 43, 0.14);
+  background: #fff;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.actions button {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(21, 32, 43, 0.14);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 120ms ease, transform 80ms ease;
+}
+
+.actions button:hover:not(:disabled) {
+  background: #f0f4f8;
+}
+
+.actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.actions .primary {
+  grid-column: 1 / -1;
+  background: var(--ink);
+  color: #f4f7fa;
+  border-color: var(--ink);
+}
+
+.actions .primary:hover:not(:disabled) {
+  background: #243040;
+}
+
+.actions .hint {
+  color: var(--accent);
+  border-color: rgba(13, 122, 140, 0.35);
+}
+
+.actions .orient {
+  background: var(--accent-soft);
+  border-color: rgba(13, 122, 140, 0.25);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(12px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(21, 32, 43, 0.92);
+  color: #f4f7fa;
+  font-weight: 600;
+  font-size: 0.95rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+  z-index: 20;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes flashLast {
+  0%, 100% { filter: brightness(1); }
+  40% { filter: brightness(1.25); }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .side {
+    order: 2;
+  }
+
+  .board-frame,
+  .tray-wrap {
+    width: min(94vw, 520px);
+  }
+}
+
+</style>
+</head>
+<body>
+<main class="shell">
+  <section class="board-col" aria-label="Palikat-pelilauta">
+    <div class="brand">
+      <h1>PALIKAT</h1>
+      <p>Kulma · peitä · pisteet</p>
+    </div>
+    <div class="board-frame">
+      <div id="board" class="board" role="grid" aria-label="14×14 pelilauta"></div>
+    </div>
+    <div class="tray-wrap">
+      <h2>Omat palat</h2>
+      <div id="tray" class="tray" aria-label="Palatarjotin"></div>
+    </div>
+  </section>
+
+  <aside class="side" aria-live="polite">
+    <div class="status-box">
+      <p id="phase" class="phase">Sinun vuorosi</p>
+      <p id="message" class="message">Valitse pala ja peitä aloitusruutu.</p>
+    </div>
+
+    <div class="players">
+      <div id="playerHuman" class="player active">
+        <span class="sample human" aria-hidden="true"></span>
+        <div>
+          <strong>Sinä</strong>
+          <span id="humanStats">0 pistettä</span>
+        </div>
+      </div>
+      <div id="playerAi" class="player">
+        <span class="sample ai" aria-hidden="true"></span>
+        <div>
+          <strong>Tietokone</strong>
+          <span id="aiStats">0 pistettä</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules">
+      <h2>Pelin kulku</h2>
+      <p>Aseta polyominopaloja 14×14-laudalle. Ensimmäisen palan on peitettävä aloituspisteesi. Seuraavat omat palat saavat koskettaa toisiaan vain kulmasta — ei reunasta.</p>
+      <p>Pisteitä saat peitetyistä ruuduista. Jos käytät kaikki 21 palaa, saat +15 (ja +5 jos viimeinen oli yhden ruudun pala). Enemmän pisteitä voittaa.</p>
+    </div>
+
+    <div class="controls">
+      <label class="field" for="starter">
+        Aloittaja
+        <select id="starter">
+          <option value="alternate" selected>Vuorotellen</option>
+          <option value="human">Sinä</option>
+          <option value="computer">Tietokone</option>
+        </select>
+      </label>
+      <label class="field" for="difficulty">
+        Vaikeus
+        <select id="difficulty">
+          <option value="350">Nopea</option>
+          <option value="1000" selected>Vahva</option>
+          <option value="2500">Erittäin vahva</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button id="btnRotate" class="orient" type="button" title="R (kierrä)">Kierrä</button>
+        <button id="btnFlip" class="orient" type="button" title="F (peilaa)">Peilaa</button>
+        <button id="btnHint" class="hint" type="button">Vihje</button>
+        <button id="btnUndo" type="button">Peru siirto</button>
+        <button id="btnNew" class="primary" type="button">Uusi peli</button>
+      </div>
+    </div>
+  </aside>
+</main>
+<div id="toast" class="toast" role="status"></div>
+<script>
+// Palikat (Blokus Duo -tyylinen) — pelimoottori + tekoäly (Node + selain).
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.PalikatEngine = factory();
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  var HUMAN = 1;
+  var AI = 2;
+  var EMPTY = 0;
+  var SIZE = 14;
+  var N = SIZE * SIZE;
+
+  // Aloitusruudut (Blokus Duo): (4,4) ja (9,9)
+  var START = {};
+  START[HUMAN] = 4 * SIZE + 4;
+  START[AI] = 9 * SIZE + 9;
+
+  var ORTHO = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  var DIAG = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+
+  // Kaikki vapaat polyominot koot 1–5 (21 kpl)
+  var PIECE_DEFS = [
+    { id: "1", size: 1, cells: [[0, 0]] },
+    { id: "2", size: 2, cells: [[0, 0], [0, 1]] },
+    { id: "I3", size: 3, cells: [[0, 0], [0, 1], [0, 2]] },
+    { id: "V3", size: 3, cells: [[0, 0], [0, 1], [1, 1]] },
+    { id: "I4", size: 4, cells: [[0, 0], [0, 1], [0, 2], [0, 3]] },
+    { id: "O4", size: 4, cells: [[0, 0], [0, 1], [1, 0], [1, 1]] },
+    { id: "T4", size: 4, cells: [[0, 0], [0, 1], [0, 2], [1, 1]] },
+    { id: "L4", size: 4, cells: [[0, 0], [1, 0], [2, 0], [2, 1]] },
+    { id: "S4", size: 4, cells: [[0, 1], [0, 2], [1, 0], [1, 1]] },
+    { id: "F", size: 5, cells: [[0, 1], [0, 2], [1, 0], [1, 1], [2, 1]] },
+    { id: "I5", size: 5, cells: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]] },
+    { id: "L5", size: 5, cells: [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1]] },
+    { id: "N", size: 5, cells: [[0, 1], [1, 1], [2, 0], [2, 1], [3, 0]] },
+    { id: "P", size: 5, cells: [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0]] },
+    { id: "T5", size: 5, cells: [[0, 0], [0, 1], [0, 2], [1, 1], [2, 1]] },
+    { id: "U", size: 5, cells: [[0, 0], [0, 2], [1, 0], [1, 1], [1, 2]] },
+    { id: "V5", size: 5, cells: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]] },
+    { id: "W", size: 5, cells: [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]] },
+    { id: "X", size: 5, cells: [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]] },
+    { id: "Y", size: 5, cells: [[0, 1], [1, 0], [1, 1], [1, 2], [1, 3]] },
+    { id: "Z5", size: 5, cells: [[0, 0], [0, 1], [1, 1], [2, 1], [2, 2]] }
+  ];
+
+  var PIECE_BY_ID = {};
+  var ALL_IDS = [];
+  for (var pi = 0; pi < PIECE_DEFS.length; pi++) {
+    PIECE_BY_ID[PIECE_DEFS[pi].id] = PIECE_DEFS[pi];
+    ALL_IDS.push(PIECE_DEFS[pi].id);
+  }
+
+  function opp(side) {
+    return side === HUMAN ? AI : HUMAN;
+  }
+
+  function rc(r, c) {
+    return r * SIZE + c;
+  }
+
+  function rowOf(sq) {
+    return (sq / SIZE) | 0;
+  }
+
+  function colOf(sq) {
+    return sq % SIZE;
+  }
+
+  function inBounds(r, c) {
+    return r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+  }
+
+  function normalizeShape(cells) {
+    var minR = Infinity;
+    var minC = Infinity;
+    var i;
+    for (i = 0; i < cells.length; i++) {
+      if (cells[i][0] < minR) minR = cells[i][0];
+      if (cells[i][1] < minC) minC = cells[i][1];
+    }
+    var out = [];
+    for (i = 0; i < cells.length; i++) {
+      out.push([cells[i][0] - minR, cells[i][1] - minC]);
+    }
+    out.sort(function (a, b) {
+      return a[0] - b[0] || a[1] - b[1];
+    });
+    return out;
+  }
+
+  function shapeKey(cells) {
+    var n = normalizeShape(cells);
+    var parts = [];
+    for (var i = 0; i < n.length; i++) parts.push(n[i][0] + "," + n[i][1]);
+    return parts.join(";");
+  }
+
+  function rotate90(cells) {
+    var out = [];
+    for (var i = 0; i < cells.length; i++) out.push([cells[i][1], -cells[i][0]]);
+    return normalizeShape(out);
+  }
+
+  function reflect(cells) {
+    var out = [];
+    for (var i = 0; i < cells.length; i++) out.push([cells[i][0], -cells[i][1]]);
+    return normalizeShape(out);
+  }
+
+  function allOrientations(baseCells) {
+    var seen = {};
+    var orients = [];
+    var cur = normalizeShape(baseCells);
+    for (var flip = 0; flip < 2; flip++) {
+      for (var rot = 0; rot < 4; rot++) {
+        var key = shapeKey(cur);
+        if (!seen[key]) {
+          seen[key] = true;
+          orients.push(cur);
+        }
+        cur = rotate90(cur);
+      }
+      cur = reflect(baseCells);
+    }
+    return orients;
+  }
+
+  var ORIENTS = {};
+  for (var oi = 0; oi < PIECE_DEFS.length; oi++) {
+    ORIENTS[PIECE_DEFS[oi].id] = allOrientations(PIECE_DEFS[oi].cells);
+  }
+
+  function cloneRemaining(rem) {
+    return {
+      1: rem[1].slice(),
+      2: rem[2].slice()
+    };
+  }
+
+  function initState(starter) {
+    var board = new Array(N);
+    for (var i = 0; i < N; i++) board[i] = EMPTY;
+    return {
+      board: board,
+      remaining: { 1: ALL_IDS.slice(), 2: ALL_IDS.slice() },
+      squares: { 1: 0, 2: 0 },
+      usedAll: { 1: false, 2: false },
+      lastWasMono: { 1: false, 2: false },
+      first: { 1: true, 2: true },
+      turn: starter || HUMAN,
+      passes: 0,
+      over: false
+    };
+  }
+
+  function cloneState(st) {
+    return {
+      board: st.board.slice(),
+      remaining: cloneRemaining(st.remaining),
+      squares: { 1: st.squares[1], 2: st.squares[2] },
+      usedAll: { 1: st.usedAll[1], 2: st.usedAll[2] },
+      lastWasMono: { 1: st.lastWasMono[1], 2: st.lastWasMono[2] },
+      first: { 1: st.first[1], 2: st.first[2] },
+      turn: st.turn,
+      passes: st.passes,
+      over: st.over
+    };
+  }
+
+  function hasRemaining(st, side, id) {
+    return st.remaining[side].indexOf(id) >= 0;
+  }
+
+  function removePiece(st, side, id) {
+    var arr = st.remaining[side];
+    var idx = arr.indexOf(id);
+    if (idx >= 0) arr.splice(idx, 1);
+  }
+
+  function coversStart(cells, side) {
+    var start = START[side];
+    var sr = rowOf(start);
+    var sc = colOf(start);
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i][0] === sr && cells[i][1] === sc) return true;
+    }
+    return false;
+  }
+
+  function canPlace(st, side, cells) {
+    var board = st.board;
+    var i, r, c, sq, nr, nc, j;
+    var touchesCorner = false;
+
+    for (i = 0; i < cells.length; i++) {
+      r = cells[i][0];
+      c = cells[i][1];
+      if (!inBounds(r, c)) return false;
+      sq = rc(r, c);
+      if (board[sq] !== EMPTY) return false;
+
+      // saman värin reunakosketus kielletty
+      for (j = 0; j < 4; j++) {
+        nr = r + ORTHO[j][0];
+        nc = c + ORTHO[j][1];
+        if (inBounds(nr, nc) && board[rc(nr, nc)] === side) return false;
+      }
+
+      // kulmakosketus saman värin kanssa
+      for (j = 0; j < 4; j++) {
+        nr = r + DIAG[j][0];
+        nc = c + DIAG[j][1];
+        if (inBounds(nr, nc) && board[rc(nr, nc)] === side) touchesCorner = true;
+      }
+    }
+
+    if (st.first[side]) return coversStart(cells, side);
+    return touchesCorner;
+  }
+
+  function translateOrient(orient, baseR, baseC) {
+    var cells = [];
+    for (var i = 0; i < orient.length; i++) {
+      cells.push([baseR + orient[i][0], baseC + orient[i][1]]);
+    }
+    return cells;
+  }
+
+  function moveKey(mv) {
+    var parts = [mv.pieceId];
+    var cells = mv.cells.slice().sort(function (a, b) {
+      return a[0] - b[0] || a[1] - b[1];
+    });
+    for (var i = 0; i < cells.length; i++) {
+      parts.push(cells[i][0] + "," + cells[i][1]);
+    }
+    return parts.join("|");
+  }
+
+  function genMovesForPiece(st, side, pieceId) {
+    var orients = ORIENTS[pieceId];
+    var moves = [];
+    var seen = {};
+    var o, r, c, cells, key, mv;
+    for (o = 0; o < orients.length; o++) {
+      var orient = orients[o];
+      var maxR = 0;
+      var maxC = 0;
+      for (var k = 0; k < orient.length; k++) {
+        if (orient[k][0] > maxR) maxR = orient[k][0];
+        if (orient[k][1] > maxC) maxC = orient[k][1];
+      }
+      for (r = 0; r < SIZE - maxR; r++) {
+        for (c = 0; c < SIZE - maxC; c++) {
+          cells = translateOrient(orient, r, c);
+          if (!canPlace(st, side, cells)) continue;
+          key = moveKey({ pieceId: pieceId, cells: cells });
+          if (seen[key]) continue;
+          seen[key] = true;
+          mv = {
+            pieceId: pieceId,
+            cells: cells,
+            size: cells.length
+          };
+          moves.push(mv);
+        }
+      }
+    }
+    return moves;
+  }
+
+  function genMoves(st) {
+    if (st.over) return [];
+    var side = st.turn;
+    var rem = st.remaining[side];
+    var moves = [];
+    for (var i = 0; i < rem.length; i++) {
+      var part = genMovesForPiece(st, side, rem[i]);
+      for (var j = 0; j < part.length; j++) moves.push(part[j]);
+    }
+    return moves;
+  }
+
+  function genMovesForSelected(st, pieceId) {
+    if (!hasRemaining(st, st.turn, pieceId)) return [];
+    return genMovesForPiece(st, st.turn, pieceId);
+  }
+
+  function applyMove(st, mv) {
+    var next = cloneState(st);
+    if (!mv) {
+      // pass
+      next.passes += 1;
+      next.turn = opp(st.turn);
+      if (next.passes >= 2) next.over = true;
+      return next;
+    }
+    var side = st.turn;
+    for (var i = 0; i < mv.cells.length; i++) {
+      next.board[rc(mv.cells[i][0], mv.cells[i][1])] = side;
+    }
+    removePiece(next, side, mv.pieceId);
+    next.squares[side] += mv.size;
+    next.first[side] = false;
+    next.lastWasMono[side] = mv.pieceId === "1";
+    if (next.remaining[side].length === 0) {
+      next.usedAll[side] = true;
+    }
+    next.passes = 0;
+    next.turn = opp(side);
+
+    // jos seuraavalla ei siirtoja → passaa automaattisesti kunnes joku voi tai peli päättyy
+    var guard = 0;
+    while (!next.over && genMoves(next).length === 0 && guard < 3) {
+      next.passes += 1;
+      next.turn = opp(next.turn);
+      if (next.passes >= 2) next.over = true;
+      guard++;
+    }
+    return next;
+  }
+
+  function scoreOf(st, side) {
+    var s = st.squares[side];
+    if (st.usedAll[side]) {
+      s += 15;
+      if (st.lastWasMono[side]) s += 5;
+    }
+    return s;
+  }
+
+  function winnerOf(st) {
+    if (!st.over) return 0;
+    var h = scoreOf(st, HUMAN);
+    var a = scoreOf(st, AI);
+    if (h > a) return HUMAN;
+    if (a > h) return AI;
+    return 0; // tasapeli
+  }
+
+  function remainingSquares(st, side) {
+    var rem = st.remaining[side];
+    var n = 0;
+    for (var i = 0; i < rem.length; i++) n += PIECE_BY_ID[rem[i]].size;
+    return n;
+  }
+
+  function countCorners(board, side) {
+    var count = 0;
+    var seen = {};
+    for (var sq = 0; sq < N; sq++) {
+      if (board[sq] !== side) continue;
+      var r = rowOf(sq);
+      var c = colOf(sq);
+      for (var d = 0; d < 4; d++) {
+        var nr = r + DIAG[d][0];
+        var nc = c + DIAG[d][1];
+        if (!inBounds(nr, nc)) continue;
+        var nsq = rc(nr, nc);
+        if (board[nsq] !== EMPTY || seen[nsq]) continue;
+        // ei saa koskettaa saman värin reunaan
+        var blocked = false;
+        for (var o = 0; o < 4; o++) {
+          var er = nr + ORTHO[o][0];
+          var ec = nc + ORTHO[o][1];
+          if (inBounds(er, ec) && board[rc(er, ec)] === side) {
+            blocked = true;
+            break;
+          }
+        }
+        if (!blocked) {
+          seen[nsq] = true;
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  function evaluateMove(st, mv, me) {
+    var next = applyMove(st, mv);
+    var you = opp(me);
+    var score = mv.size * 12;
+    score += (scoreOf(next, me) - scoreOf(st, me)) * 2;
+
+    // keskeisyys
+    var cx = 0;
+    var cy = 0;
+    for (var i = 0; i < mv.cells.length; i++) {
+      cx += mv.cells[i][0];
+      cy += mv.cells[i][1];
+    }
+    cx /= mv.size;
+    cy /= mv.size;
+    var dist = Math.abs(cx - 6.5) + Math.abs(cy - 6.5);
+    score += (14 - dist) * 0.4;
+
+    // kulma-avaukset
+    score += countCorners(next.board, me) * 1.6;
+    score -= countCorners(next.board, you) * 1.2;
+
+    // jätä pienet palat loppuun — suosi isoja aikaisin
+    var remLeft = st.remaining[me].length;
+    if (remLeft > 10) score += mv.size * 3;
+    else if (remLeft <= 4 && mv.size === 1) score += 8;
+
+    if (next.usedAll[me]) score += 40;
+    if (next.over) {
+      var w = winnerOf(next);
+      if (w === me) score += 500;
+      else if (w === you) score -= 500;
+    }
+    return score;
+  }
+
+  function evaluate(st, me) {
+    var you = opp(me);
+    var score = scoreOf(st, me) * 10 - scoreOf(st, you) * 10;
+    score += remainingSquares(st, you) - remainingSquares(st, me);
+    score += countCorners(st.board, me) * 2;
+    score -= countCorners(st.board, you) * 2;
+    if (st.over) {
+      var w = winnerOf(st);
+      if (w === me) return 100000;
+      if (w === you) return -100000;
+      return 0;
+    }
+    return score;
+  }
+
+  function bestMove(st, timeMs) {
+    var me = st.turn;
+    var deadline = Date.now() + (timeMs || 800);
+    var moves = genMoves(st);
+    if (moves.length === 0) return null;
+    if (moves.length === 1) return moves[0];
+
+    // pisteytä siirrot
+    var scored = [];
+    for (var i = 0; i < moves.length; i++) {
+      if (Date.now() > deadline) break;
+      scored.push({ mv: moves[i], val: evaluateMove(st, moves[i], me) });
+    }
+    // jos aika loppui kesken, pisteytä loput kevyesti koolla
+    for (var j = scored.length; j < moves.length; j++) {
+      scored.push({ mv: moves[j], val: moves[j].size * 10 });
+    }
+    scored.sort(function (a, b) { return b.val - a.val; });
+
+    var best = scored[0].mv;
+    var bestVal = scored[0].val;
+
+    // yksi ply: top-kandidaateille vastustajan paras vastaus
+    var topN = Math.min(scored.length, timeMs >= 2000 ? 28 : timeMs >= 900 ? 18 : 10);
+    try {
+      for (var t = 0; t < topN; t++) {
+        if (Date.now() > deadline) throw new Error("time");
+        var cand = scored[t].mv;
+        var after = applyMove(st, cand);
+        var reply = genMoves(after);
+        var worst = scored[t].val;
+        if (reply.length && !after.over) {
+          var oppBest = -Infinity;
+          var limit = Math.min(reply.length, 40);
+          // pisteytä vastustajan siirrot karkeasti
+          var oppScored = [];
+          for (var r = 0; r < reply.length; r++) {
+            oppScored.push({ mv: reply[r], val: reply[r].size * 12 + evaluateMove(after, reply[r], opp(me)) * 0.01 });
+          }
+          oppScored.sort(function (a, b) { return b.val - a.val; });
+          limit = Math.min(oppScored.length, timeMs >= 2000 ? 16 : 10);
+          for (var o = 0; o < limit; o++) {
+            if (Date.now() > deadline) throw new Error("time");
+            var v = -evaluate(applyMove(after, oppScored[o].mv), me);
+            if (v > oppBest) oppBest = v;
+          }
+          worst = scored[t].val * 0.35 + (-oppBest) * 0.65;
+        } else {
+          worst = evaluate(after, me);
+        }
+        if (worst > bestVal) {
+          bestVal = worst;
+          best = cand;
+        }
+      }
+    } catch (e) {
+      /* aika loppui */
+    }
+    return best;
+  }
+
+  function piecePreview(pieceId, orientIndex) {
+    var orients = ORIENTS[pieceId];
+    if (!orients || !orients.length) return [];
+    var idx = ((orientIndex % orients.length) + orients.length) % orients.length;
+    return orients[idx];
+  }
+
+  function orientCount(pieceId) {
+    return ORIENTS[pieceId] ? ORIENTS[pieceId].length : 0;
+  }
+
+  function legalTargets(st, pieceId, orientIndex) {
+    var shape = piecePreview(pieceId, orientIndex);
+    if (!shape.length || !hasRemaining(st, st.turn, pieceId)) return [];
+    var maxR = 0;
+    var maxC = 0;
+    var k;
+    for (k = 0; k < shape.length; k++) {
+      if (shape[k][0] > maxR) maxR = shape[k][0];
+      if (shape[k][1] > maxC) maxC = shape[k][1];
+    }
+    var out = [];
+    for (var r = 0; r < SIZE - maxR; r++) {
+      for (var c = 0; c < SIZE - maxC; c++) {
+        var cells = translateOrient(shape, r, c);
+        if (canPlace(st, st.turn, cells)) {
+          out.push({ r: r, c: c, cells: cells });
+        }
+      }
+    }
+    return out;
+  }
+
+  function placementAt(st, pieceId, orientIndex, baseR, baseC) {
+    var shape = piecePreview(pieceId, orientIndex);
+    if (!shape.length) return null;
+    var cells = translateOrient(shape, baseR, baseC);
+    if (!canPlace(st, st.turn, cells)) return null;
+    return { pieceId: pieceId, cells: cells, size: cells.length };
+  }
+
+  function sqLabel(sq) {
+    return String.fromCharCode(97 + colOf(sq)) + String(SIZE - rowOf(sq));
+  }
+
+  return {
+    HUMAN: HUMAN,
+    AI: AI,
+    EMPTY: EMPTY,
+    SIZE: SIZE,
+    START: START,
+    PIECE_DEFS: PIECE_DEFS,
+    PIECE_BY_ID: PIECE_BY_ID,
+    ALL_IDS: ALL_IDS,
+    ORIENTS: ORIENTS,
+    opp: opp,
+    rc: rc,
+    rowOf: rowOf,
+    colOf: colOf,
+    inBounds: inBounds,
+    initState: initState,
+    cloneState: cloneState,
+    canPlace: canPlace,
+    genMoves: genMoves,
+    genMovesForSelected: genMovesForSelected,
+    genMovesForPiece: genMovesForPiece,
+    applyMove: applyMove,
+    scoreOf: scoreOf,
+    winnerOf: winnerOf,
+    remainingSquares: remainingSquares,
+    evaluate: evaluate,
+    evaluateMove: evaluateMove,
+    bestMove: bestMove,
+    moveKey: moveKey,
+    piecePreview: piecePreview,
+    orientCount: orientCount,
+    legalTargets: legalTargets,
+    placementAt: placementAt,
+    sqLabel: sqLabel
+  };
+});
+
+</script>
+<script>
+// Palikat — selainsovellus (DOM). Ydin: globalThis.PalikatEngine.
+(function () {
+  "use strict";
+  var E = globalThis.PalikatEngine;
+  var HUMAN = E.HUMAN;
+  var AI = E.AI;
+  var SIZE = E.SIZE;
+
+  var els = {
+    board: document.getElementById("board"),
+    tray: document.getElementById("tray"),
+    phase: document.getElementById("phase"),
+    message: document.getElementById("message"),
+    humanStats: document.getElementById("humanStats"),
+    aiStats: document.getElementById("aiStats"),
+    playerHuman: document.getElementById("playerHuman"),
+    playerAi: document.getElementById("playerAi"),
+    starter: document.getElementById("starter"),
+    difficulty: document.getElementById("difficulty"),
+    btnRotate: document.getElementById("btnRotate"),
+    btnFlip: document.getElementById("btnFlip"),
+    btnHint: document.getElementById("btnHint"),
+    btnUndo: document.getElementById("btnUndo"),
+    btnNew: document.getElementById("btnNew"),
+    toast: document.getElementById("toast")
+  };
+
+  var cells = [];
+  var st = null;
+  var selectedId = null;
+  var orientIndex = 0;
+  var winner = 0;
+  var lastCells = null;
+  var history = [];
+  var hintCells = null;
+  var thinking = false;
+  var hinting = false;
+  var aiTimer = null;
+  var toastTimer = null;
+  var nextAltStarter = HUMAN;
+  var hoverBase = null;
+
+  function clearTimers() {
+    if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+  }
+
+  function aiTimeMs() {
+    return parseInt(els.difficulty.value, 10) || 1000;
+  }
+
+  function resolveStarter() {
+    var mode = els.starter.value;
+    if (mode === "human") return HUMAN;
+    if (mode === "computer") return AI;
+    var s = nextAltStarter;
+    nextAltStarter = E.opp(nextAltStarter);
+    return s;
+  }
+
+  function showToast(text) {
+    els.toast.textContent = text;
+    els.toast.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      els.toast.classList.remove("show");
+    }, 1700);
+  }
+
+  function effectiveOrient(pieceId) {
+    var n = E.orientCount(pieceId);
+    if (!n) return 0;
+    return ((orientIndex % n) + n) % n;
+  }
+
+  function statsLine(side) {
+    var pts = E.scoreOf(st, side);
+    var left = E.remainingSquares(st, side);
+    var pcs = st.remaining[side].length;
+    return pts + " pistettä · " + pcs + " palaa (" + left + " ruutua)";
+  }
+
+  function statusMessage() {
+    if (st.over) {
+      var h = E.scoreOf(st, HUMAN);
+      var a = E.scoreOf(st, AI);
+      if (winner === HUMAN) return "Voitit " + h + "–" + a + "!";
+      if (winner === AI) return "Tietokone voitti " + a + "–" + h + ".";
+      return "Tasapeli " + h + "–" + a + ".";
+    }
+    if (thinking) return "Tietokone miettii sijoitusta…";
+    if (hinting) return "Etsitään vihjettä…";
+    if (st.turn === HUMAN) {
+      if (!selectedId) {
+        if (st.first[HUMAN]) {
+          return "Valitse pala ja peitä aloitusruutu (korostettu).";
+        }
+        return "Valitse pala tarjottimelta — uuden palan pitää koskettaa omaa palaa kulmasta.";
+      }
+      return "Kierrä palaa tarvittaessa ja klikkaa laudan kohtaa.";
+    }
+    return "Tietokoneen vuoro.";
+  }
+
+  function buildBoard() {
+    els.board.innerHTML = "";
+    cells = [];
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var sq = E.rc(r, c);
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cell";
+        btn.dataset.sq = String(sq);
+        btn.dataset.r = String(r);
+        btn.dataset.c = String(c);
+        btn.setAttribute("aria-label", E.sqLabel(sq));
+        btn.addEventListener("click", onCellClick);
+        btn.addEventListener("mouseenter", onCellEnter);
+        btn.addEventListener("mouseleave", onCellLeave);
+        els.board.appendChild(btn);
+        cells[sq] = btn;
+      }
+    }
+  }
+
+  function miniPieceSvg(shape, cls) {
+    var maxR = 0;
+    var maxC = 0;
+    var i;
+    for (i = 0; i < shape.length; i++) {
+      if (shape[i][0] > maxR) maxR = shape[i][0];
+      if (shape[i][1] > maxC) maxC = shape[i][1];
+    }
+    var wrap = document.createElement("div");
+    wrap.className = "mini-piece " + (cls || "");
+    wrap.style.gridTemplateColumns = "repeat(" + (maxC + 1) + ", 1fr)";
+    wrap.style.gridTemplateRows = "repeat(" + (maxR + 1) + ", 1fr)";
+    var map = {};
+    for (i = 0; i < shape.length; i++) map[shape[i][0] + "," + shape[i][1]] = true;
+    for (var r = 0; r <= maxR; r++) {
+      for (var c = 0; c <= maxC; c++) {
+        var d = document.createElement("span");
+        d.className = map[r + "," + c] ? "mini-on" : "mini-off";
+        wrap.appendChild(d);
+      }
+    }
+    return wrap;
+  }
+
+  function buildTray() {
+    els.tray.innerHTML = "";
+    var rem = st.remaining[HUMAN];
+    // järjestä koon mukaan suurimmasta
+    var ids = rem.slice().sort(function (a, b) {
+      return E.PIECE_BY_ID[b].size - E.PIECE_BY_ID[a].size || a.localeCompare(b);
+    });
+    for (var i = 0; i < ids.length; i++) {
+      var id = ids[i];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tray-piece" + (selectedId === id ? " selected" : "");
+      btn.dataset.id = id;
+      btn.title = "Pala " + id + " (" + E.PIECE_BY_ID[id].size + " ruutua)";
+      btn.setAttribute("aria-label", "Pala " + id);
+      btn.appendChild(miniPieceSvg(E.piecePreview(id, 0), "human"));
+      btn.addEventListener("click", onTrayClick);
+      els.tray.appendChild(btn);
+    }
+    if (!ids.length) {
+      var empty = document.createElement("p");
+      empty.className = "tray-empty";
+      empty.textContent = "Kaikki palat käytetty!";
+      els.tray.appendChild(empty);
+    }
+  }
+
+  function clearGhost() {
+    for (var sq = 0; sq < cells.length; sq++) {
+      if (cells[sq]) cells[sq].classList.remove("ghost-ok", "ghost-bad");
+    }
+    hoverBase = null;
+  }
+
+  function showGhostAt(baseR, baseC) {
+    clearGhost();
+    if (!selectedId || st.turn !== HUMAN || st.over || thinking) return;
+    var shape = E.piecePreview(selectedId, effectiveOrient(selectedId));
+    var cellsPos = [];
+    var i, r, c, ok = true;
+    for (i = 0; i < shape.length; i++) {
+      r = baseR + shape[i][0];
+      c = baseC + shape[i][1];
+      cellsPos.push([r, c]);
+      if (!E.inBounds(r, c)) ok = false;
+    }
+    if (ok) ok = E.canPlace(st, HUMAN, cellsPos);
+    for (i = 0; i < cellsPos.length; i++) {
+      if (!E.inBounds(cellsPos[i][0], cellsPos[i][1])) continue;
+      var sq = E.rc(cellsPos[i][0], cellsPos[i][1]);
+      cells[sq].classList.add(ok ? "ghost-ok" : "ghost-bad");
+    }
+    hoverBase = { r: baseR, c: baseC, ok: ok };
+  }
+
+  function render() {
+    var startH = E.START[HUMAN];
+    var startA = E.START[AI];
+    var legalMap = {};
+    var i;
+
+    if (selectedId && st.turn === HUMAN && !st.over && !thinking) {
+      var targets = E.legalTargets(st, selectedId, effectiveOrient(selectedId));
+      for (i = 0; i < targets.length; i++) {
+        for (var j = 0; j < targets[i].cells.length; j++) {
+          legalMap[E.rc(targets[i].cells[j][0], targets[i].cells[j][1])] = true;
+        }
+      }
+    }
+
+    for (var sq = 0; sq < cells.length; sq++) {
+      var btn = cells[sq];
+      btn.className = "cell";
+      var v = st.board[sq];
+      if (v === HUMAN) btn.classList.add("human");
+      else if (v === AI) btn.classList.add("ai");
+      if (sq === startH && st.first[HUMAN]) btn.classList.add("start-human");
+      if (sq === startA && st.first[AI]) btn.classList.add("start-ai");
+      if (legalMap[sq]) btn.classList.add("legal");
+      if (lastCells && lastCells[sq]) btn.classList.add("last");
+      if (hintCells && hintCells[sq]) btn.classList.add("hint");
+    }
+
+    if (hoverBase) showGhostAt(hoverBase.r, hoverBase.c);
+
+    buildTray();
+
+    els.humanStats.textContent = statsLine(HUMAN);
+    els.aiStats.textContent = statsLine(AI);
+    els.playerHuman.classList.toggle("active", st.turn === HUMAN && !st.over);
+    els.playerAi.classList.toggle("active", st.turn === AI && !st.over);
+
+    if (st.over) {
+      els.phase.textContent = winner === HUMAN ? "Voitto!" : winner === AI ? "Häviö" : "Tasapeli";
+    } else if (thinking) {
+      els.phase.textContent = "Tietokone miettii…";
+    } else if (st.turn === HUMAN) {
+      els.phase.textContent = "Sinun vuorosi";
+    } else {
+      els.phase.textContent = "Tietokoneen vuoro";
+    }
+    els.message.textContent = statusMessage();
+
+    var busy = thinking || hinting || st.over || st.turn !== HUMAN;
+    els.btnRotate.disabled = busy || !selectedId;
+    els.btnFlip.disabled = busy || !selectedId;
+    els.btnHint.disabled = busy;
+    els.btnUndo.disabled = thinking || hinting || history.length === 0;
+  }
+
+  function pushHistory() {
+    history.push({
+      st: E.cloneState(st),
+      lastCells: lastCells ? Object.assign({}, lastCells) : null,
+      selectedId: selectedId,
+      orientIndex: orientIndex
+    });
+    if (history.length > 40) history.shift();
+  }
+
+  function markLast(cellsArr) {
+    lastCells = {};
+    if (!cellsArr) return;
+    for (var i = 0; i < cellsArr.length; i++) {
+      lastCells[E.rc(cellsArr[i][0], cellsArr[i][1])] = true;
+    }
+  }
+
+  function afterHumanMove(mv) {
+    pushHistory();
+    st = E.applyMove(st, mv);
+    markLast(mv.cells);
+    hintCells = null;
+    selectedId = null;
+    orientIndex = 0;
+    clearGhost();
+
+    var size = mv.size;
+    if (size >= 5) showToast("Iso pala! +" + size);
+    else if (st.usedAll[HUMAN]) showToast("Kaikki palat pelattu! +15");
+    else showToast("+" + size + " ruutua");
+
+    if (st.over) {
+      winner = E.winnerOf(st);
+      render();
+      if (winner === HUMAN) showToast("Voitit!");
+      else if (winner === AI) showToast("Tietokone voitti");
+      else showToast("Tasapeli");
+      return;
+    }
+    render();
+    if (st.turn === AI) scheduleAi();
+  }
+
+  function onTrayClick(ev) {
+    if (thinking || st.over || st.turn !== HUMAN) return;
+    var id = ev.currentTarget.dataset.id;
+    if (selectedId === id) {
+      selectedId = null;
+    } else {
+      selectedId = id;
+      orientIndex = 0;
+    }
+    hintCells = null;
+    clearGhost();
+    render();
+  }
+
+  function onCellEnter(ev) {
+    if (!selectedId || st.turn !== HUMAN || st.over || thinking) return;
+    var r = parseInt(ev.currentTarget.dataset.r, 10);
+    var c = parseInt(ev.currentTarget.dataset.c, 10);
+    // ankkuroi hiiren ruutu palan (0,0)-soluun — parempi UX: etsi läheisin laillinen
+    showGhostAt(r, c);
+  }
+
+  function onCellLeave() {
+    clearGhost();
+  }
+
+  function onCellClick(ev) {
+    if (!selectedId || st.turn !== HUMAN || st.over || thinking) return;
+    var r = parseInt(ev.currentTarget.dataset.r, 10);
+    var c = parseInt(ev.currentTarget.dataset.c, 10);
+    var shape = E.piecePreview(selectedId, effectiveOrient(selectedId));
+
+    // kokeile ankkurointia hiiren ruutuun eri muodon soluihin
+    var mv = null;
+    for (var i = 0; i < shape.length; i++) {
+      var br = r - shape[i][0];
+      var bc = c - shape[i][1];
+      var trial = E.placementAt(st, selectedId, effectiveOrient(selectedId), br, bc);
+      if (trial) {
+        // varmista että klikattu ruutu kuuluu sijoitukseen
+        var hit = false;
+        for (var k = 0; k < trial.cells.length; k++) {
+          if (trial.cells[k][0] === r && trial.cells[k][1] === c) { hit = true; break; }
+        }
+        if (hit) { mv = trial; break; }
+      }
+    }
+    if (!mv) {
+      showToast("Laiton sijoitus");
+      return;
+    }
+    afterHumanMove(mv);
+  }
+
+  function scheduleAi() {
+    thinking = true;
+    render();
+    clearTimers();
+    aiTimer = setTimeout(runAi, 80);
+  }
+
+  function runAi() {
+    var mv = E.bestMove(st, aiTimeMs());
+    thinking = false;
+    history.push({
+      st: E.cloneState(st),
+      lastCells: lastCells ? Object.assign({}, lastCells) : null,
+      selectedId: null,
+      orientIndex: 0
+    });
+    if (history.length > 40) history.shift();
+
+    if (!mv) {
+      st = E.applyMove(st, null);
+      showToast("Tietokone ohittaa");
+    } else {
+      st = E.applyMove(st, mv);
+      markLast(mv.cells);
+      showToast("Tietokone: +" + mv.size);
+    }
+    hintCells = null;
+    if (st.over) {
+      winner = E.winnerOf(st);
+      if (winner === HUMAN) showToast("Voitit!");
+      else if (winner === AI) showToast("Tietokone voitti");
+      else showToast("Tasapeli");
+    }
+    render();
+    if (!st.over && st.turn === AI) scheduleAi();
+  }
+
+  function newGame() {
+    clearTimers();
+    thinking = false;
+    hinting = false;
+    selectedId = null;
+    orientIndex = 0;
+    winner = 0;
+    lastCells = null;
+    hintCells = null;
+    history = [];
+    clearGhost();
+    st = E.initState(resolveStarter());
+    render();
+    if (st.turn === AI) scheduleAi();
+    else showToast("Uusi peli");
+  }
+
+  function undo() {
+    if (thinking || hinting || !history.length) return;
+    clearTimers();
+    thinking = false;
+    var snap = history.pop();
+    // jos viimeisin on AI:n jälkeinen välitila, palaa vielä yksi (ihmiseen)
+    st = snap.st;
+    lastCells = snap.lastCells;
+    selectedId = snap.selectedId;
+    orientIndex = snap.orientIndex;
+    hintCells = null;
+    winner = st.over ? E.winnerOf(st) : 0;
+    // jos vuorossa AI heti undon jälkeen, undo vielä kerran jos mahdollista
+    if (st.turn === AI && history.length && !st.over) {
+      snap = history.pop();
+      st = snap.st;
+      lastCells = snap.lastCells;
+      selectedId = snap.selectedId;
+      orientIndex = snap.orientIndex;
+      winner = st.over ? E.winnerOf(st) : 0;
+    }
+    clearGhost();
+    render();
+    showToast("Siirto peruttu");
+  }
+
+  function rotate() {
+    if (!selectedId) return;
+    orientIndex += 1;
+    hintCells = null;
+    clearGhost();
+    render();
+  }
+
+  function flip() {
+    if (!selectedId) return;
+    // peilaus: hyppää orientoinneissa — allOrientations tuottaa peilatut
+    var n = E.orientCount(selectedId);
+    if (n <= 1) {
+      showToast("Pala on symmetrinen");
+      return;
+    }
+    // siirry peilattuun "ryhmään": yleensä n/2 jos peilit eroavat
+    var half = Math.max(1, (n / 2) | 0);
+    orientIndex = (orientIndex + half) % n;
+    hintCells = null;
+    clearGhost();
+    render();
+  }
+
+  function hint() {
+    if (thinking || hinting || st.over || st.turn !== HUMAN) return;
+    hinting = true;
+    render();
+    setTimeout(function () {
+      var mv = E.bestMove(st, Math.min(aiTimeMs(), 1200));
+      hinting = false;
+      if (!mv) {
+        showToast("Ei laillisia siirtoja");
+        render();
+        return;
+      }
+      selectedId = mv.pieceId;
+      var n = E.orientCount(mv.pieceId);
+      orientIndex = 0;
+      var minR = Infinity, minC = Infinity, i;
+      for (i = 0; i < mv.cells.length; i++) {
+        if (mv.cells[i][0] < minR) minR = mv.cells[i][0];
+        if (mv.cells[i][1] < minC) minC = mv.cells[i][1];
+      }
+      var sk = mv.cells.map(function (c) {
+        return (c[0] - minR) + "," + (c[1] - minC);
+      }).sort().join(";");
+      for (var o = 0; o < n; o++) {
+        var shape = E.piecePreview(mv.pieceId, o);
+        var so = shape.map(function (c) { return c[0] + "," + c[1]; }).sort().join(";");
+        if (sk === so) {
+          orientIndex = o;
+          break;
+        }
+      }
+      hintCells = {};
+      for (var h = 0; h < mv.cells.length; h++) {
+        hintCells[E.rc(mv.cells[h][0], mv.cells[h][1])] = true;
+      }
+      showToast("Vihje: pala " + mv.pieceId);
+      render();
+    }, 30);
+  }
+
+  // keyboard
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "r" || ev.key === "R") { rotate(); ev.preventDefault(); }
+    if (ev.key === "f" || ev.key === "F") { flip(); ev.preventDefault(); }
+  });
+
+  els.btnRotate.addEventListener("click", rotate);
+  els.btnFlip.addEventListener("click", flip);
+  els.btnHint.addEventListener("click", hint);
+  els.btnUndo.addEventListener("click", undo);
+  els.btnNew.addEventListener("click", newGame);
+
+  buildBoard();
+  newGame();
+})();
+
+</script>
+</body>
+</html>

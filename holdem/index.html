@@ -228,8 +228,8 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
   filter: none;
 }
 .chip-stack.mini {
-  --chip-size: 18px;
-  --chip-lift: 3px;
+  --chip-size: 16px;
+  --chip-lift: 2.4px;
   --chip-thick: 2px;
 }
 .chip {
@@ -393,11 +393,11 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
 .board {
   position: absolute;
   left: 50%;
-  top: 42%;
+  top: 52%;
   transform: translate(-50%, -50%);
   display: flex;
   gap: 6px;
-  z-index: 2;
+  z-index: 5; /* lautakortit istuinten / chip-kasojen yläpuolelle */
 }
 .board .card.slot {
   background: rgba(0, 0, 0, 0.18);
@@ -539,9 +539,9 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
 
 /* Seat positions around oval */
 .seat[data-pos="0"] { left: 50%; bottom: -8px; transform: translateX(-50%); }
-.seat[data-pos="1"] { left: -4px; top: 38%; transform: translateY(-50%); }
-.seat[data-pos="2"] { left: 50%; top: -6px; transform: translateX(-50%); }
-.seat[data-pos="3"] { right: -4px; top: 38%; transform: translateY(-50%); left: auto; }
+.seat[data-pos="1"] { left: -4px; top: 36%; transform: translateY(-50%); }
+.seat[data-pos="2"] { left: 50%; top: -42px; transform: translateX(-50%); }
+.seat[data-pos="3"] { right: -4px; top: 36%; transform: translateY(-50%); left: auto; }
 
 @media (max-width: 560px) {
   .felt { aspect-ratio: 1.25 / 1; }
@@ -1072,7 +1072,7 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
       toAct: -1,
       potTotal: 0,
       handNumber: 0,
-      difficulty: opts.difficulty || "normaali",
+      difficulty: opts.difficulty || "vaikea",
       winners: null,
       lastHand: null,
       phase: "playing", // playing | handOver | gameOver
@@ -1657,7 +1657,7 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
       toAct: opts.toAct != null ? opts.toAct : 0,
       potTotal: opts.pot != null ? opts.pot : bets.reduce(function (s, b) { return s + (b || 0); }, 0),
       handNumber: 1,
-      difficulty: opts.difficulty || "normaali",
+      difficulty: opts.difficulty || "vaikea",
       winners: null,
       lastHand: null,
       phase: "playing",
@@ -2029,7 +2029,7 @@ globalThis.__HoldemBotFiles.normal =
     if (req.indexOf("botRegistry") >= 0) return globalThis.HoldemRegistry;
     throw new Error("bundle require: " + req);
   };
-  // normalBot.js — oletusvastustaja ("normaali"). Lievä anti-limp.
+  // normalBot.js — keskitaso ("normaali"). Lievä anti-limp.
 "use strict";
 
 var U = require("../botUtil.js");
@@ -2096,7 +2096,7 @@ globalThis.__HoldemBotFiles.hard =
     if (req.indexOf("botRegistry") >= 0) return globalThis.HoldemRegistry;
     throw new Error("bundle require: " + req);
   };
-  // hardBot.js — "vaikea". Julkisia Pluribus-tyylivihjeitä (ei limppiä, donk),
+  // hardBot.js — oletusvastustaja ("vaikea"). Julkisia Pluribus-tyylivihjeitä (ei limppiä, donk),
 // ei MCCFR/blueprint-hakua (lähdekoodia ei julkaistu; selainpeliin liian raskas).
 // Lähde: https://en.wikipedia.org/wiki/Pluribus_(poker_bot)
 "use strict";
@@ -2282,7 +2282,7 @@ module.exports = {
   var lastAction = null; // { seat, type, headline, pill }
 
   // Tahti — hidasta vain kun pelaaja tarvitsee aikaa lukea / tuntea tilanne.
-  // Hyötyä: uudet kortit, korotus/panos, jaon loppu. Turhaa: check/fold-ketjut.
+  // Hyötyä: uudet kortit, korotus, jaon loppu. Turhaa: check/fold-ketjut.
   var PACE = {
     afterHuman: 350,       // oma siirto ehti näkyä; bottien ei tarvitse odottaa kauaa
     thinkQuiet: 280,       // fold/check — nopea “klik”
@@ -2555,7 +2555,7 @@ module.exports = {
         }
       }
       var stack = seat.querySelector('[data-role="stack"]');
-      setChipPile(stack, p.chips, 7);
+      setChipPile(stack, p.chips, 5);
       var chips = seat.querySelector(".chips");
       if (chips) chips.textContent = String(p.chips);
       var badges = seat.querySelector(".badges");
@@ -2589,8 +2589,8 @@ module.exports = {
     }
     if (act.type === "bet") {
       return you
-        ? { verb: "panostat " + act.amount, pill: "Panos " + act.amount, headline: "PANOSTAT " + act.amount }
-        : { verb: "panostaa " + act.amount, pill: "Panos " + act.amount, headline: "PANOSTAA " + act.amount };
+        ? { verb: "korotat " + act.amount, pill: "Korotus " + act.amount, headline: "KOROTAT " + act.amount }
+        : { verb: "korottaa " + act.amount, pill: "Korotus " + act.amount, headline: "KOROTTAA " + act.amount };
     }
     if (act.type === "raise") {
       return you
@@ -2631,8 +2631,8 @@ module.exports = {
       "<p>Kerää chippejä ja pudota vastustajat. Kaksi taskukorttia, viisi yhteistä — paras viiden kortin käsi voittaa potin.</p>" +
       '<div class="diff-row" id="diffRow">' +
         '<label><input type="radio" name="diff" value="helppo"> Helppo</label>' +
-        '<label><input type="radio" name="diff" value="normaali" checked> Normaali</label>' +
-        '<label><input type="radio" name="diff" value="vaikea"> Vaikea</label>' +
+        '<label><input type="radio" name="diff" value="normaali"> Normaali</label>' +
+        '<label><input type="radio" name="diff" value="vaikea" checked> Vaikea</label>' +
       "</div>" +
       '<div class="actions">' +
         '<button type="button" class="go" id="btnStart">Aloita peli</button>' +
@@ -2641,7 +2641,7 @@ module.exports = {
     );
     el("btnStart").onclick = function () {
       var d = document.querySelector('input[name="diff"]:checked');
-      newGame({ difficulty: d ? d.value : "normaali" });
+      newGame({ difficulty: d ? d.value : "vaikea" });
     };
     el("btnRulesOv").onclick = showRules;
   }
@@ -2654,7 +2654,7 @@ module.exports = {
         "<li>Jokaisella 2 taskukorttia. Pöytään aukeaa flop (3), turn ja river.</li>" +
         "<li>Paras 5 kortin pokerikäsi voittaa potin (tasku + pöytä).</li>" +
         "<li><strong>Passaa / Check</strong> jos ei tarvitse maksaa. <strong>Maksa</strong> tasoittaa panoksen.</li>" +
-        "<li><strong>Panosta / Korota</strong> pakottaa muut maksamaan tai luovuttamaan.</li>" +
+        "<li><strong>Korota</strong> pakottaa muut maksamaan tai luovuttamaan.</li>" +
         "<li>Blindit: pieni " + (G ? G.sb : 5) + " / iso " + (G ? G.bb : 10) + ".</li>" +
       "</ul>" +
       '<div class="actions"><button type="button" class="go" id="btnRulesClose">Selvä</button></div>'
@@ -2671,7 +2671,7 @@ module.exports = {
     gameGen++;
     clearLastAction();
     G = E.newGame(opts);
-    opponentBot = Reg.botForDifficulty(opts.difficulty || G.difficulty || "normaali");
+    opponentBot = Reg.botForDifficulty(opts.difficulty || G.difficulty || "vaikea");
     busy = false;
     lastStreet = G.street;
     el("game").classList.remove("hidden");
@@ -3033,13 +3033,13 @@ module.exports = {
       range.oninput = function () {
         raiseAmt = +range.value;
         amt.textContent = String(raiseAmt);
-        betBtn.textContent = (typ === "bet" ? "Panosta " : "Korota ") + raiseAmt;
+        betBtn.textContent = "Korota " + raiseAmt;
       };
       wrap.appendChild(range);
       wrap.appendChild(amt);
       box.appendChild(wrap);
       var betBtn = addBtn(
-        (typ === "bet" ? "Panosta " : "Korota ") + info.min,
+        "Korota " + info.min,
         "",
         function () { humanAct({ type: typ, amount: raiseAmt }); }
       );

@@ -1,0 +1,10 @@
+{
+  "name": "mylly",
+  "version": "1.0.0",
+  "description": "Mylly — Nine Men's Morris vs. computer (selainpeli).",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run_tests.js"
+  },
+  "license": "MIT"
+}

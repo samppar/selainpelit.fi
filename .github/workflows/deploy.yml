@@ -16,15 +16,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        game: [tuppi, sanaseppa, sanapalat, sanasato, rypas, holdem]
+        game: [tuppi, sanaseppa, sanapalat, sanasato, rypas, holdem, mylly, tammi, mosaiikki, palikat]
     defaults:
       run:
         working-directory: ${{ matrix.game }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
       - run: npm test
 
   deploy:
@@ -32,11 +32,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
           cache-dependency-path: hertta/package-lock.json
 
@@ -54,8 +54,12 @@ jobs:
           (cd sanasato && node build.js)
           (cd rypas && node build.js)
           (cd holdem && node build.js)
+          (cd mylly && node build.js)
+          (cd tammi && node build.js)
+          (cd mosaiikki && node build.js)
+          (cd palikat && node build.js)
 
-          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/katko
+          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/mylly _site/tammi _site/mosaiikki _site/palikat _site/katko
 
           cp -R hertta/dist/. _site/hertta/
           cp tuppi/tuppi.html _site/tuppi/index.html
@@ -64,6 +68,10 @@ jobs:
           cp sanasato/index.html _site/sanasato/index.html
           cp rypas/index.html _site/rypas/index.html
           cp holdem/index.html _site/holdem/index.html
+          cp mylly/index.html _site/mylly/index.html
+          cp tammi/index.html _site/tammi/index.html
+          cp mosaiikki/index.html _site/mosaiikki/index.html
+          cp palikat/index.html _site/palikat/index.html
           cp katko/index.html _site/katko/index.html
 
           cat > _site/index.html <<'EOF'
@@ -85,13 +93,17 @@ jobs:
               <li><a href="/sanapalat/">Sanapalat</a></li>
               <li><a href="/rypas/">Rypäs</a></li>
               <li><a href="/holdem/">Hold'em</a></li>
+              <li><a href="/mylly/">Mylly</a></li>
+              <li><a href="/tammi/">Tammi</a></li>
+              <li><a href="/mosaiikki/">Mosaiikki</a></li>
+              <li><a href="/palikat/">Palikat</a></li>
             </ul>
           </body>
           </html>
           EOF
 
       - name: Start ssh-agent
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
@@ -106,11 +118,11 @@ jobs:
           PORT="${DEPLOY_PORT:-22}"
           ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
-      # Secrets (tuotanto: root@testi2.biitsiareena.fi → /home/selainpelit/public_html):
-      #   DEPLOY_HOST=testi2.biitsiareena.fi
-      #   DEPLOY_USER=root
-      #   DEPLOY_PATH=/home/selainpelit/public_html
-      #   DEPLOY_SSH_KEY=<yksityinen avain>
+      # Secrets (tuotanto: selainpelit@viikkokisat.fi → /var/www/selainpelit.fi/prod/public):
+      #   DEPLOY_HOST=viikkokisat.fi
+      #   DEPLOY_USER=selainpelit
+      #   DEPLOY_PATH=/var/www/selainpelit.fi/prod/public
+      #   DEPLOY_SSH_KEY=<~/.ssh/selainpelit_ed25519>
       #   DEPLOY_PORT=22 (valinnainen)
       - name: Rsync to server
         env:

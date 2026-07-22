@@ -1,4 +1,4 @@
-// normalBot.js — oletusvastustaja ("normaali"). Lievä anti-limp.
+// normalBot.js — keskitaso ("normaali"). Lievä anti-limp.
 "use strict";
 
 var U = require("../botUtil.js");

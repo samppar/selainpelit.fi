@@ -134,6 +134,29 @@ Malli: `sanapalat/`, `sanaseppa/`, `sanasato/` — ydin testattavissa Nodella,
 UI erikseen. Botiarenat (`tuppi/`, `hertta/`): omat vahvuus-/turnausajurit
 pelikohtaisissa `AGENTS.md`-tiedostoissa.
 
+### Testattavuus kuuluu suunnitteluun (ei jälkikäteen)
+
+Ennen kuin kirjoitat pehmeää UI:ta tai “valmis”-siirtoa, suunnittele ydin
+niin että regressiot ovat *helppoja kirjoittaa*:
+
+1. **Fixtuurit ensin** — asema / käsi / jako rakennetaan luettavalla notaatiolla
+   (`makeState`, ASCII-lauta, FEN, seedattu RNG), ei `board[rc(4,3)] = …` -keitolla.
+2. **Siirrot nimetään** — `formatMove` / `findMove` / vastaava; asserttaa
+   odotettu siirtojoukko merkkijonoina, ei indekseillä.
+3. **Puhdas ydin** — ei `Date.now` / `Math.random` / DOM:ia ilman injektiota
+   (`now`, `rng`, `seed`). AI-testit eivät saa olla flakyjä.
+4. **Sääntö → testi** — jokainen uusi sääntöhaara (pakollinen syönti, korotus,
+   avausraja…) syntyy yhdessä regressiotestin kanssa samassa muutoksessa.
+5. **UI ilman DOM:ia** — klikkaus-/vuorologiikka erilliseen session/tilakoneeseen
+   (`createSession`, `getView`, `play`/`click`); DOM vain sitoo. Selain-smoke
+   käyttää samaa API:a (`window.*UI`), ei vain manuaalisia klikkejä.
+6. **AI skenaarioina** — pakotettu siirto, voitto-N:ssä, “älä jätä syötäväksi”;
+   `bestMove({ now, maxDepth })` tai seedattu `rng`. Vahvuusväitteet peilatuilla
+   areenoilla (ks. holdem/tuppi), ei yhdellä onnekkaalla pelillä.
+
+Jos API:a on vaikea testata, API on väärä — älä peitä sitä useammalla
+`ok(!!x)`-tarkistuksella.
+
 ### Agentin velvollisuudet ennen “valmis”
 
 1. **Kirjoita / päivitä `npm test`** kattamaan uudet säännöt ja regressiot.

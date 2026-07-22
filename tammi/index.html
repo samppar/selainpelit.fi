@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Tammi — klassinen lautapeli tietokonetta vastaan.">
+<title>Tammi — selainpelit.fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg0: #e8efe8;
+  --bg1: #d5e2d8;
+  --ink: #1a2a22;
+  --muted: #5a6e62;
+  --panel: rgba(255, 252, 246, 0.82);
+  --panel-edge: rgba(26, 42, 34, 0.12);
+  --accent: #0f6b5c;
+  --accent-soft: rgba(15, 107, 92, 0.14);
+  --warn: #b86a1a;
+  --danger: #b33a2e;
+  --hint: #1a6fa8;
+  --light-sq: #f3e6c8;
+  --dark-sq: #3d6b52;
+  --dark-sq-2: #2f5542;
+  --frame: #2a1f14;
+  --frame-edge: #6b5340;
+  --human: #f7f1e4;
+  --human-edge: #c9b896;
+  --ai: #1c1612;
+  --ai-edge: #4a3c32;
+  --focus: #d4a017;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Outfit", system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse 80% 55% at 10% 0%, rgba(15, 107, 92, 0.18), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, rgba(184, 106, 26, 0.12), transparent 50%),
+    linear-gradient(165deg, var(--bg1), var(--bg0) 45%, #cfdccf);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+button, select {
+  font: inherit;
+  color: inherit;
+}
+
+.shell {
+  position: relative;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: clamp(14px, 3vw, 28px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 340px);
+  gap: clamp(16px, 3vw, 36px);
+  align-items: center;
+  min-height: 100vh;
+}
+
+.board-col {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.brand {
+  text-align: center;
+  animation: rise 520ms ease both;
+}
+
+.brand h1 {
+  margin: 0;
+  font-family: "Fraunces", "Times New Roman", serif;
+  font-weight: 600;
+  font-optical-sizing: auto;
+  font-size: clamp(2.6rem, 6.5vw, 3.8rem);
+  letter-spacing: 0.08em;
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.brand p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.board-frame {
+  width: min(92vw, 72vh, 560px);
+  padding: clamp(10px, 2vw, 16px);
+  border-radius: 10px;
+  background:
+    linear-gradient(145deg, #4a3728, var(--frame) 40%, #1a120c);
+  box-shadow:
+    0 28px 55px rgba(26, 42, 34, 0.28),
+    inset 0 0 0 1px rgba(255, 220, 170, 0.18);
+  animation: rise 620ms 50ms ease both;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.cell {
+  position: relative;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  appearance: none;
+  background: var(--light-sq);
+  cursor: default;
+}
+
+.cell.dark {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.08), transparent 45%),
+    linear-gradient(160deg, #4a8164, var(--dark-sq) 55%, var(--dark-sq-2));
+}
+
+.cell.light {
+  background:
+    linear-gradient(180deg, #f8edd4, var(--light-sq));
+}
+
+.cell:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  z-index: 2;
+}
+
+.cell.movable {
+  cursor: pointer;
+  box-shadow: inset 0 0 0 2px rgba(255, 236, 170, 0.85);
+}
+
+.cell.movable::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 220, 120, 0.12);
+  pointer-events: none;
+}
+
+.cell.selected {
+  box-shadow: inset 0 0 0 3px #ffe08a;
+  z-index: 1;
+}
+
+.cell.target {
+  cursor: pointer;
+}
+
+.cell.target::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 28%;
+  height: 28%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(247, 241, 228, 0.88);
+  box-shadow: 0 0 0 2px rgba(26, 42, 34, 0.25);
+  pointer-events: none;
+  animation: pulse 900ms ease infinite;
+}
+
+.cell.last-from,
+.cell.last-to {
+  box-shadow: inset 0 0 0 2px rgba(212, 160, 23, 0.7);
+}
+
+.cell.hint-from,
+.cell.hint-to {
+  box-shadow: inset 0 0 0 3px var(--hint);
+}
+
+.cell.flash {
+  animation: flashEat 450ms ease;
+}
+
+.piece {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72%;
+  height: 72%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  transition: transform 160ms ease;
+}
+
+.cell.movable:hover .piece,
+.cell.selected .piece {
+  transform: translate(-50%, -54%) scale(1.04);
+}
+
+.piece.human {
+  background:
+    radial-gradient(circle at 32% 28%, #fffdf8, var(--human) 42%, #e4d5b5 78%);
+  box-shadow:
+    0 6px 10px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 2px var(--human-edge),
+    inset 0 -6px 10px rgba(120, 90, 40, 0.18);
+}
+
+.piece.ai {
+  background:
+    radial-gradient(circle at 32% 28%, #4a3c34, var(--ai) 48%, #0c0907 80%);
+  box-shadow:
+    0 6px 10px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 2px var(--ai-edge),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.45);
+}
+
+.piece.king::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 34%;
+  height: 22%;
+  transform: translate(-50%, -50%);
+  background:
+    linear-gradient(180deg, #f0d78a, #c9962a);
+  clip-path: polygon(0 100%, 20% 35%, 35% 70%, 50% 15%, 65% 70%, 80% 35%, 100% 100%);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
+.side {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  animation: rise 700ms 90ms ease both;
+}
+
+.status-box {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(26, 42, 34, 0.08);
+}
+
+.phase {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.message {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.4;
+  font-size: 0.95rem;
+  min-height: 2.7em;
+}
+
+.players {
+  display: grid;
+  gap: 8px;
+}
+
+.player {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid transparent;
+  opacity: 0.72;
+  transition: opacity 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.player.active {
+  opacity: 1;
+  border-color: var(--accent);
+  background: linear-gradient(180deg, #fff, var(--panel));
+  transform: translateX(2px);
+}
+
+.player strong {
+  display: block;
+  font-size: 0.98rem;
+}
+
+.player span:last-child {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.sample {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: block;
+}
+
+.sample.light {
+  background: radial-gradient(circle at 32% 28%, #fff, var(--human));
+  box-shadow: inset 0 0 0 2px var(--human-edge);
+}
+
+.sample.dark {
+  background: radial-gradient(circle at 32% 28%, #4a3c34, var(--ai));
+  box-shadow: inset 0 0 0 2px var(--ai-edge);
+}
+
+.rules {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(15, 107, 92, 0.18);
+}
+
+.rules h2 {
+  margin: 0 0 8px;
+  font-family: "Fraunces", serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.rules p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.rules p:last-child { margin-bottom: 0; }
+
+.controls {
+  display: grid;
+  gap: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.field select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-edge);
+  background: #fffef9;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.actions .primary {
+  grid-column: 1 / -1;
+}
+
+button.hint,
+button:not(.primary),
+button.primary {
+  padding: 11px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--panel-edge);
+  background: #fffef9;
+  cursor: pointer;
+  transition: transform 140ms ease, background 140ms ease, opacity 140ms ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: linear-gradient(180deg, #148072, var(--accent));
+  color: #f4fffB;
+  border-color: transparent;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+button.hint {
+  border-color: rgba(26, 111, 168, 0.35);
+  color: var(--hint);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(12px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(26, 42, 34, 0.92);
+  color: #f4fffB;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+  z-index: 20;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.95; }
+  50% { transform: translate(-50%, -50%) scale(1.12); opacity: 0.7; }
+}
+
+@keyframes flashEat {
+  0% { filter: brightness(1); }
+  40% { filter: brightness(1.35); }
+  100% { filter: brightness(1); }
+}
+
+@media (max-width: 860px) {
+  .shell {
+    grid-template-columns: 1fr;
+    align-items: start;
+    min-height: auto;
+    padding-bottom: 40px;
+  }
+
+  .side {
+    order: 2;
+  }
+}
+
+</style>
+</head>
+<body>
+<main class="shell">
+  <section class="board-col" aria-label="Tammi-pelilauta">
+    <div class="brand">
+      <h1>TAMMI</h1>
+      <p>Siirrä · syö · daami</p>
+    </div>
+    <div class="board-frame">
+      <div id="board" class="board" role="grid" aria-label="8×8 tammilauta"></div>
+    </div>
+  </section>
+
+  <aside class="side" aria-live="polite">
+    <div class="status-box">
+      <p id="phase" class="phase">Sinun vuorosi</p>
+      <p id="message" class="message">Valitse nappula ja siirrä vinottain eteenpäin.</p>
+    </div>
+
+    <div class="players">
+      <div id="playerLight" class="player active">
+        <span class="sample light" aria-hidden="true"></span>
+        <div>
+          <strong>Sinä</strong>
+          <span id="lightStats">12 nappulaa</span>
+        </div>
+      </div>
+      <div id="playerDark" class="player">
+        <span class="sample dark" aria-hidden="true"></span>
+        <div>
+          <strong>Tietokone</strong>
+          <span id="darkStats">12 nappulaa</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules">
+      <h2>Pelin kulku</h2>
+      <p>Siirrä nappuloita vinottain tummilla ruuduilla eteenpäin. Hyppää vastustajan yli tyhjään ruutuun syödäksesi — syönti on pakollinen.</p>
+      <p>Vastapäähän päässyt nappula nousee daamiksi ja liikkuu kaikkiin vinottaissuuntiin. Voitat, kun vastustajalla ei ole laillista siirtoa.</p>
+    </div>
+
+    <div class="controls">
+      <label class="field" for="starter">
+        Aloittaja
+        <select id="starter">
+          <option value="alternate" selected>Vuorotellen</option>
+          <option value="human">Sinä</option>
+          <option value="computer">Tietokone</option>
+        </select>
+      </label>
+      <label class="field" for="difficulty">
+        Vaikeus
+        <select id="difficulty">
+          <option value="350">Nopea</option>
+          <option value="1000" selected>Vahva</option>
+          <option value="2500">Erittäin vahva</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button id="btnHint" class="hint" type="button">Vihje</button>
+        <button id="btnUndo" type="button">Peru siirto</button>
+        <button id="btnNew" class="primary" type="button">Uusi peli</button>
+      </div>
+    </div>
+  </aside>
+</main>
+<div id="toast" class="toast" role="status"></div>
+<script>
+// Tammi (English draughts / American checkers) — pelimoottori + tekoäly (Node + selain).
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.TammiEngine = factory();
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  var HUMAN = 1;
+  var AI = 2;
+  var SIZE = 8;
+  var EMPTY = 0;
+  var MAN = 1;
+  var KING = 2;
+
+  // board[sq] = 0 | (side | (type << 2))  side 1|2, type 1=man 2=king
+  function pack(side, type) { return side | (type << 2); }
+  function sideOf(p) { return p & 3; }
+  function typeOf(p) { return p >> 2; }
+  function isKing(p) { return typeOf(p) === KING; }
+  function opp(p) { return 3 - p; }
+
+  function rc(r, c) { return r * SIZE + c; }
+  function rowOf(sq) { return (sq / SIZE) | 0; }
+  function colOf(sq) { return sq % SIZE; }
+  function onBoard(r, c) { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
+  function isDark(r, c) { return ((r + c) & 1) === 1; }
+
+  var DIRS_N = [[-1, -1], [-1, 1]];
+  var DIRS_S = [[1, -1], [1, 1]];
+  var DIRS_ALL = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+
+  function manDirs(side) {
+    return side === HUMAN ? DIRS_N : DIRS_S;
+  }
+
+  function pieceDirs(piece) {
+    return isKing(piece) ? DIRS_ALL : manDirs(sideOf(piece));
+  }
+
+  function initBoard() {
+    var b = new Array(SIZE * SIZE);
+    var i;
+    for (i = 0; i < b.length; i++) b[i] = EMPTY;
+    // AI ylhäällä (rivit 0–2), ihminen alhaalla (5–7) — tummilla ruuduilla
+    for (var r = 0; r < 3; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        if (isDark(r, c)) b[rc(r, c)] = pack(AI, MAN);
+      }
+    }
+    for (r = 5; r < 8; r++) {
+      for (c = 0; c < SIZE; c++) {
+        if (isDark(r, c)) b[rc(r, c)] = pack(HUMAN, MAN);
+      }
+    }
+    return b;
+  }
+
+  function emptyBoard() {
+    var b = new Array(SIZE * SIZE);
+    for (var i = 0; i < b.length; i++) b[i] = EMPTY;
+    return b;
+  }
+
+  function initState(starter) {
+    return {
+      board: initBoard(),
+      turn: starter || HUMAN
+    };
+  }
+
+  function cloneState(st) {
+    return {
+      board: st.board.slice(),
+      turn: st.turn
+    };
+  }
+
+  // "c5" / "a1" → ruutuindeksi (a1 = alavasen ihmisen näkökulmasta)
+  function parseSq(label) {
+    if (typeof label !== "string" || label.length < 2) throw new Error("bad square: " + label);
+    var c = label.toLowerCase().charCodeAt(0) - 97;
+    var r = 8 - parseInt(label.slice(1), 10);
+    if (!onBoard(r, c)) throw new Error("off board: " + label);
+    return rc(r, c);
+  }
+
+  function sqLabel(sq) {
+    return String.fromCharCode(97 + colOf(sq)) + String(8 - rowOf(sq));
+  }
+
+  // Merkintä: o/O = ihminen mies/daami, x/X = AI mies/daami, . = tyhjä tumma
+  // Annetaan joko { c5: "o", d6: "x" } tai 8-rivinen ASCII (rivi 8 ylinnä).
+  function parseBoard(spec) {
+    var b = emptyBoard();
+    function put(label, ch) {
+      var sq = parseSq(label);
+      if (!isDark(rowOf(sq), colOf(sq))) throw new Error("light square: " + label);
+      if (ch === "." || ch === " ") return;
+      if (ch === "o") b[sq] = pack(HUMAN, MAN);
+      else if (ch === "O") b[sq] = pack(HUMAN, KING);
+      else if (ch === "x") b[sq] = pack(AI, MAN);
+      else if (ch === "X") b[sq] = pack(AI, KING);
+      else throw new Error("bad piece '" + ch + "' at " + label);
+    }
+    if (typeof spec === "string") {
+      var rows = spec.trim().split(/\n/).map(function (line) {
+        return line.replace(/\s+/g, "");
+      });
+      if (rows.length !== SIZE) throw new Error("board must have 8 rows");
+      for (var r = 0; r < SIZE; r++) {
+        if (rows[r].length !== SIZE) throw new Error("row " + (8 - r) + " length");
+        for (var c = 0; c < SIZE; c++) {
+          var ch = rows[r][c];
+          if (ch === "-") continue; // vaalea ruutu
+          put(sqLabel(rc(r, c)), ch);
+        }
+      }
+    } else {
+      var keys = Object.keys(spec);
+      for (var i = 0; i < keys.length; i++) put(keys[i], spec[keys[i]]);
+    }
+    return b;
+  }
+
+  function makeState(opts) {
+    opts = opts || {};
+    var board;
+    if (opts.board == null) board = initBoard();
+    else if (typeof opts.board === "string" || (opts.board && !Array.isArray(opts.board))) {
+      board = parseBoard(opts.board);
+    } else {
+      board = opts.board.slice();
+    }
+    return {
+      board: board,
+      turn: opts.turn || HUMAN
+    };
+  }
+
+  // Siirtoavaimet testeihin: "a3-b4", "c5xe3", "c5xe3xg3" (path + overs päätellään)
+  function findMove(st, notation) {
+    var key = String(notation).toLowerCase().replace(/\s+/g, "");
+    var moves = genMoves(st);
+    for (var i = 0; i < moves.length; i++) {
+      if (formatMove(moves[i]) === key || moveKey(moves[i]) === key) return moves[i];
+    }
+    return null;
+  }
+
+  function formatMove(mv) {
+    if (!mv.overs.length) return sqLabel(mv.from) + "-" + sqLabel(mv.to);
+    var s = sqLabel(mv.from);
+    for (var i = 0; i < mv.overs.length; i++) {
+      s += "x" + sqLabel(mv.path[i]);
+    }
+    return s;
+  }
+
+  function moveKeys(st) {
+    return genMoves(st).map(formatMove).sort();
+  }
+
+  function countSide(board, side) {
+    var n = 0, k = 0;
+    for (var i = 0; i < board.length; i++) {
+      if (sideOf(board[i]) === side) {
+        n++;
+        if (isKing(board[i])) k++;
+      }
+    }
+    return { pieces: n, kings: k };
+  }
+
+  function promoteRank(side) {
+    return side === HUMAN ? 0 : SIZE - 1;
+  }
+
+  function shouldPromote(side, sq, piece) {
+    if (isKing(piece)) return false;
+    return rowOf(sq) === promoteRank(side);
+  }
+
+  // Kerää yksi hyppyaskel: { to, over }
+  function singleJumps(board, from, piece) {
+    var side = sideOf(piece);
+    var dirs = pieceDirs(piece);
+    var out = [];
+    var r0 = rowOf(from);
+    var c0 = colOf(from);
+    for (var d = 0; d < dirs.length; d++) {
+      var mr = r0 + dirs[d][0];
+      var mc = c0 + dirs[d][1];
+      var lr = r0 + dirs[d][0] * 2;
+      var lc = c0 + dirs[d][1] * 2;
+      if (!onBoard(lr, lc)) continue;
+      var mid = rc(mr, mc);
+      var land = rc(lr, lc);
+      if (sideOf(board[mid]) === opp(side) && board[land] === EMPTY) {
+        out.push({ to: land, over: mid });
+      }
+    }
+    return out;
+  }
+
+  function quietMovesFrom(board, from, piece) {
+    var dirs = pieceDirs(piece);
+    var out = [];
+    var r0 = rowOf(from);
+    var c0 = colOf(from);
+    for (var d = 0; d < dirs.length; d++) {
+      var r = r0 + dirs[d][0];
+      var c = c0 + dirs[d][1];
+      if (!onBoard(r, c)) continue;
+      var to = rc(r, c);
+      if (board[to] === EMPTY) out.push({ from: from, to: to, path: [to], overs: [] });
+    }
+    return out;
+  }
+
+  // DFS: englantilaiset säännöt — korotus keskeyttää ketjun
+  function captureSequences(board, from, piece) {
+    var results = [];
+    function dfs(b, cur, pie, path, overs) {
+      var jumps = singleJumps(b, cur, pie);
+      if (jumps.length === 0) {
+        if (overs.length > 0) {
+          results.push({ from: from, to: cur, path: path.slice(), overs: overs.slice() });
+        }
+        return;
+      }
+      var progressed = false;
+      for (var i = 0; i < jumps.length; i++) {
+        var j = jumps[i];
+        // Älä hyppää samaa nappulaa uudestaan samassa ketjussa
+        if (overs.indexOf(j.over) >= 0) continue;
+        progressed = true;
+        var nb = b.slice();
+        nb[cur] = EMPTY;
+        nb[j.over] = EMPTY;
+        var landed = pie;
+        var crowned = false;
+        if (shouldPromote(sideOf(pie), j.to, pie)) {
+          landed = pack(sideOf(pie), KING);
+          crowned = true;
+        }
+        nb[j.to] = landed;
+        path.push(j.to);
+        overs.push(j.over);
+        if (crowned) {
+          results.push({ from: from, to: j.to, path: path.slice(), overs: overs.slice() });
+        } else {
+          dfs(nb, j.to, landed, path, overs);
+        }
+        path.pop();
+        overs.pop();
+      }
+      if (!progressed && overs.length > 0) {
+        results.push({ from: from, to: cur, path: path.slice(), overs: overs.slice() });
+      }
+    }
+    dfs(board, from, piece, [], []);
+    return results;
+  }
+
+  function genMoves(st) {
+    var b = st.board;
+    var turn = st.turn;
+    var captures = [];
+    var quiet = [];
+    var sq, i, j, caps, q;
+    for (sq = 0; sq < b.length; sq++) {
+      if (sideOf(b[sq]) !== turn) continue;
+      caps = captureSequences(b, sq, b[sq]);
+      for (i = 0; i < caps.length; i++) captures.push(caps[i]);
+    }
+    // Pakollinen syönti
+    if (captures.length > 0) return captures;
+    for (sq = 0; sq < b.length; sq++) {
+      if (sideOf(b[sq]) !== turn) continue;
+      q = quietMovesFrom(b, sq, b[sq]);
+      for (j = 0; j < q.length; j++) quiet.push(q[j]);
+    }
+    return quiet;
+  }
+
+  function applyMove(st, mv) {
+    var next = cloneState(st);
+    var b = next.board;
+    var piece = b[mv.from];
+    b[mv.from] = EMPTY;
+    for (var i = 0; i < mv.overs.length; i++) b[mv.overs[i]] = EMPTY;
+    var landed = piece;
+    if (shouldPromote(sideOf(piece), mv.to, piece)) {
+      landed = pack(sideOf(piece), KING);
+    }
+    b[mv.to] = landed;
+    next.turn = opp(st.turn);
+    return next;
+  }
+
+  function isLoss(st) {
+    return genMoves(st).length === 0;
+  }
+
+  function movesFrom(st, from) {
+    return genMoves(st).filter(function (m) { return m.from === from; });
+  }
+
+  function movableSquares(st) {
+    var moves = genMoves(st);
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < moves.length; i++) {
+      var f = moves[i].from;
+      if (!seen[f]) {
+        seen[f] = true;
+        out.push(f);
+      }
+    }
+    return out;
+  }
+
+  function evaluate(st, me) {
+    var b = st.board;
+    var you = opp(me);
+    var score = 0;
+    var myP = 0, opP = 0;
+    for (var sq = 0; sq < b.length; sq++) {
+      var p = b[sq];
+      if (p === EMPTY) continue;
+      var s = sideOf(p);
+      var r = rowOf(sq);
+      var c = colOf(sq);
+      var val = isKing(p) ? 45 : 10;
+      // eteneminen / kuningasrivin läheisyys
+      if (!isKing(p)) {
+        if (s === HUMAN) val += (7 - r);
+        else val += r;
+      } else {
+        // kuninkaat keskellä vahvempia
+        val += 3 - Math.min(Math.abs(r - 3.5), Math.abs(c - 3.5));
+      }
+      // reunan heikkous miehille
+      if (!isKing(p) && (c === 0 || c === 7)) val -= 0.5;
+      if (s === me) {
+        score += val;
+        myP++;
+      } else {
+        score -= val;
+        opP++;
+      }
+    }
+    if (myP === 0) return -100000;
+    if (opP === 0) return 100000;
+    // liikkuvuus (ei mutatoi st:tä)
+    var myMoves = genMoves({ board: b, turn: me }).length;
+    var opMoves = genMoves({ board: b, turn: you }).length;
+    score += 0.35 * (myMoves - opMoves);
+    return score;
+  }
+
+  function moveSortKey(mv) {
+    return mv.overs.length * 10 + (mv.path ? mv.path.length : 0);
+  }
+
+  function search(st, depth, alpha, beta, me, deadline, now) {
+    if (now() > deadline) throw new Error("time");
+    if (isLoss(st)) return st.turn === me ? -100000 - depth : 100000 + depth;
+    if (depth === 0) return evaluate(st, me);
+
+    var moves = genMoves(st);
+    moves.sort(function (a, c) { return moveSortKey(c) - moveSortKey(a); });
+    var maximizing = st.turn === me;
+    var best = maximizing ? -Infinity : Infinity;
+
+    for (var i = 0; i < moves.length; i++) {
+      var v = search(applyMove(st, moves[i]), depth - 1, alpha, beta, me, deadline, now);
+      if (maximizing) {
+        if (v > best) best = v;
+        if (v > alpha) alpha = v;
+      } else {
+        if (v < best) best = v;
+        if (v < beta) beta = v;
+      }
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+
+  function sameMove(a, b) {
+    if (!a || !b || a.from !== b.from || a.to !== b.to) return false;
+    if (a.overs.length !== b.overs.length) return false;
+    for (var i = 0; i < a.overs.length; i++) {
+      if (a.overs[i] !== b.overs[i]) return false;
+    }
+    return true;
+  }
+
+  // opts: { timeMs, now, maxDepth } — now injektoitava testeihin
+  function bestMove(st, timeMsOrOpts) {
+    var opts = typeof timeMsOrOpts === "object" && timeMsOrOpts
+      ? timeMsOrOpts
+      : { timeMs: timeMsOrOpts };
+    var timeMs = opts.timeMs == null ? 800 : opts.timeMs;
+    var now = opts.now || Date.now;
+    var maxDepth = opts.maxDepth == null ? 10 : opts.maxDepth;
+    var me = st.turn;
+    var deadline = now() + timeMs;
+    var moves = genMoves(st);
+    if (moves.length === 0) return null;
+    if (moves.length === 1) return moves[0];
+
+    moves.sort(function (a, c) { return moveSortKey(c) - moveSortKey(a); });
+    var best = moves[0];
+    try {
+      for (var depth = 2; depth <= maxDepth; depth++) {
+        var localBest = null;
+        var localVal = -Infinity;
+        var alpha = -Infinity;
+        var ordered = [best];
+        for (var i = 0; i < moves.length; i++) {
+          if (!sameMove(moves[i], best)) ordered.push(moves[i]);
+        }
+        for (var j = 0; j < ordered.length; j++) {
+          var mv = ordered[j];
+          var v = search(applyMove(st, mv), depth - 1, alpha, Infinity, me, deadline, now);
+          if (v > localVal) {
+            localVal = v;
+            localBest = mv;
+          }
+          if (v > alpha) alpha = v;
+        }
+        if (localBest) best = localBest;
+        if (localVal > 90000) break;
+      }
+    } catch (e) {
+      /* aika loppui */
+    }
+    return best;
+  }
+
+  function moveKey(mv) {
+    return formatMove(mv);
+  }
+
+  return {
+    HUMAN: HUMAN,
+    AI: AI,
+    SIZE: SIZE,
+    EMPTY: EMPTY,
+    MAN: MAN,
+    KING: KING,
+    pack: pack,
+    sideOf: sideOf,
+    typeOf: typeOf,
+    isKing: isKing,
+    opp: opp,
+    rc: rc,
+    rowOf: rowOf,
+    colOf: colOf,
+    isDark: isDark,
+    emptyBoard: emptyBoard,
+    initState: initState,
+    cloneState: cloneState,
+    makeState: makeState,
+    parseBoard: parseBoard,
+    parseSq: parseSq,
+    sqLabel: sqLabel,
+    formatMove: formatMove,
+    findMove: findMove,
+    moveKeys: moveKeys,
+    countSide: countSide,
+    genMoves: genMoves,
+    applyMove: applyMove,
+    isLoss: isLoss,
+    movesFrom: movesFrom,
+    movableSquares: movableSquares,
+    evaluate: evaluate,
+    bestMove: bestMove,
+    moveKey: moveKey
+  };
+});
+
+</script>
+<script>
+// Tammi — UI-tilakone ilman DOM:ia (Node + selain).
+// DOM-sidos: game.js. Smoke/agentti: TammiUI / createSession.
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.TammiSession = factory();
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  function createSession(opts) {
+    opts = opts || {};
+    var E = opts.engine;
+    if (!E) throw new Error("createSession: engine required");
+
+    var schedule = opts.schedule || function (fn, ms) {
+      return setTimeout(fn, ms);
+    };
+    var clearSched = opts.clearSchedule || function (id) {
+      clearTimeout(id);
+    };
+    var aiDelayMs = opts.aiDelayMs != null ? opts.aiDelayMs : 280;
+    var flashMs = opts.flashMs != null ? opts.flashMs : 450;
+    var defaultAiOpts = opts.aiOpts || { timeMs: 1000 };
+
+    var st = null;
+    var selected = -1;
+    var winner = 0;
+    var lastMove = null;
+    var history = [];
+    var hint = null;
+    var thinking = false;
+    var hinting = false;
+    var captureFlash = [];
+    var toast = null;
+    var nextAltStarter = E.HUMAN;
+    var aiTimer = null;
+    var flashTimer = null;
+    var onChange = opts.onChange || function () {};
+
+    function emit() { onChange(getView()); }
+
+    function clearTimers() {
+      if (aiTimer != null) { clearSched(aiTimer); aiTimer = null; }
+      if (flashTimer != null) { clearSched(flashTimer); flashTimer = null; }
+    }
+
+    function resolveStarter(mode) {
+      if (mode === "human") return E.HUMAN;
+      if (mode === "computer") return E.AI;
+      var s = nextAltStarter;
+      nextAltStarter = E.opp(nextAltStarter);
+      return s;
+    }
+
+    function statsText(side) {
+      var c = E.countSide(st.board, side);
+      var man = c.pieces - c.kings;
+      var parts = [];
+      if (man) parts.push(man + " nappulaa");
+      if (c.kings) parts.push(c.kings + (c.kings === 1 ? " daami" : " daamia"));
+      if (!parts.length) return "ei nappuloita";
+      return parts.join(", ");
+    }
+
+    function statusMessage() {
+      if (winner) {
+        return winner === E.HUMAN
+          ? "Voitit — tietokoneella ei ole laillista siirtoa."
+          : "Tietokone voitti.";
+      }
+      if (thinking) return "Tietokone miettii siirtoaan…";
+      if (hinting) return "Lasketaan vihjettä…";
+      var must = E.genMoves(st).some(function (m) { return m.overs.length > 0; });
+      if (st.turn === E.HUMAN) {
+        if (selected >= 0) {
+          return must
+            ? "Syö hyppäämällä vastustajan yli — valitse kohderuutu."
+            : "Valitse kohderuutu korostetuista ruuduista.";
+        }
+        return must
+          ? "Sinun vuorosi: syönti on pakollinen — valitse nappula."
+          : "Sinun vuorosi: valitse nappula ja siirrä vinottain eteenpäin.";
+      }
+      return "Tietokoneen vuoro.";
+    }
+
+    function phaseLabel() {
+      if (winner) return winner === E.HUMAN ? "Voitto" : "Häviö";
+      if (thinking) return "Tietokoneen vuoro";
+      return st.turn === E.HUMAN ? "Sinun vuorosi" : "Tietokoneen vuoro";
+    }
+
+    function getView() {
+      var moves = (!st || winner || thinking) ? [] : E.genMoves(st);
+      var movable = [];
+      var targets = [];
+      var seen = {};
+      for (var i = 0; i < moves.length; i++) {
+        var f = moves[i].from;
+        if (!seen[f]) {
+          seen[f] = true;
+          movable.push(E.sqLabel(f));
+        }
+        if (selected >= 0 && moves[i].from === selected) {
+          targets.push(E.sqLabel(moves[i].to));
+        }
+      }
+      movable.sort();
+      targets.sort();
+      return {
+        turn: st ? st.turn : 0,
+        winner: winner,
+        phase: st ? phaseLabel() : "",
+        message: st ? statusMessage() : "",
+        selected: selected >= 0 ? E.sqLabel(selected) : null,
+        movable: movable,
+        targets: targets,
+        humanStats: st ? statsText(E.HUMAN) : "",
+        aiStats: st ? statsText(E.AI) : "",
+        thinking: thinking,
+        hinting: hinting,
+        canUndo: history.length > 0 && !thinking,
+        canHint: !!st && !winner && !thinking && st.turn === E.HUMAN,
+        lastMove: lastMove ? E.formatMove(lastMove) : null,
+        hint: hint ? E.formatMove(hint) : null,
+        toast: toast,
+        captureFlash: captureFlash.map(E.sqLabel),
+        moveKeys: st && !winner ? E.moveKeys(st) : [],
+        board: st ? st.board.slice() : null
+      };
+    }
+
+    function setToast(text) {
+      toast = text;
+    }
+
+    function endIfNeeded() {
+      if (E.isLoss(st)) {
+        winner = E.opp(st.turn);
+        selected = -1;
+        hint = null;
+        setToast(winner === E.HUMAN ? "Voitit!" : "Tietokone voitti");
+        return true;
+      }
+      return false;
+    }
+
+    function pushHistory() {
+      history.push({
+        board: st.board.slice(),
+        turn: st.turn,
+        lastMove: lastMove
+          ? { from: lastMove.from, to: lastMove.to, path: lastMove.path.slice(), overs: lastMove.overs.slice() }
+          : null
+      });
+    }
+
+    function applyMove(mv, fromHuman) {
+      if (fromHuman) pushHistory();
+      var wasKing = E.isKing(st.board[mv.from]);
+      captureFlash = mv.overs.slice();
+      st = E.applyMove(st, mv);
+      lastMove = {
+        from: mv.from,
+        to: mv.to,
+        path: mv.path.slice(),
+        overs: mv.overs.slice()
+      };
+      selected = -1;
+      hint = null;
+      if (!wasKing && E.isKing(st.board[mv.to])) setToast("Daami!");
+      else if (mv.overs.length) {
+        setToast(mv.overs.length === 1 ? "Syönti!" : "Ketjusyönti ×" + mv.overs.length);
+      }
+      if (flashMs > 0) {
+        flashTimer = schedule(function () {
+          captureFlash = [];
+          flashTimer = null;
+          emit();
+        }, flashMs);
+      } else {
+        captureFlash = [];
+      }
+      endIfNeeded();
+      emit();
+      if (!winner && st.turn === E.AI) scheduleAI();
+      return { ok: true, move: E.formatMove(mv) };
+    }
+
+    function resolveSq(sqOrLabel) {
+      if (typeof sqOrLabel === "number") return sqOrLabel;
+      return E.parseSq(String(sqOrLabel));
+    }
+
+    function click(sqOrLabel) {
+      if (!st || winner || thinking || st.turn !== E.HUMAN) {
+        return { ok: false, error: "not_human_turn" };
+      }
+      var sq = resolveSq(sqOrLabel);
+      var moves = E.genMoves(st);
+
+      if (selected >= 0) {
+        var choices = moves.filter(function (m) {
+          return m.from === selected && m.to === sq;
+        });
+        if (choices.length) {
+          choices.sort(function (a, b) { return b.overs.length - a.overs.length; });
+          return applyMove(choices[0], true);
+        }
+        if (E.sideOf(st.board[sq]) === E.HUMAN && moves.some(function (m) { return m.from === sq; })) {
+          selected = sq;
+          emit();
+          return { ok: true, selected: E.sqLabel(sq) };
+        }
+        selected = -1;
+        emit();
+        return { ok: true, selected: null };
+      }
+
+      if (E.sideOf(st.board[sq]) === E.HUMAN && moves.some(function (m) { return m.from === sq; })) {
+        selected = sq;
+        emit();
+        return { ok: true, selected: E.sqLabel(sq) };
+      }
+      return { ok: false, error: "illegal" };
+    }
+
+    function play(notation) {
+      if (!st || winner || thinking || st.turn !== E.HUMAN) {
+        return { ok: false, error: "not_human_turn" };
+      }
+      var mv = E.findMove(st, notation);
+      if (!mv) return { ok: false, error: "illegal_move", notation: notation };
+      return applyMove(mv, true);
+    }
+
+    function aiOptions() {
+      var o = {};
+      var src = defaultAiOpts;
+      for (var k in src) if (Object.prototype.hasOwnProperty.call(src, k)) o[k] = src[k];
+      return o;
+    }
+
+    function runAI() {
+      if (!st || winner || st.turn !== E.AI) return { ok: false, error: "not_ai_turn" };
+      thinking = true;
+      emit();
+      var mv = E.bestMove(st, aiOptions());
+      thinking = false;
+      if (!mv) {
+        endIfNeeded();
+        emit();
+        return { ok: false, error: "no_move" };
+      }
+      return applyMove(mv, false);
+    }
+
+    function scheduleAI() {
+      if (winner || !st || st.turn !== E.AI) return;
+      if (aiDelayMs <= 0) {
+        runAI();
+        return;
+      }
+      thinking = true;
+      emit();
+      aiTimer = schedule(function () {
+        aiTimer = null;
+        thinking = false;
+        var mv = E.bestMove(st, aiOptions());
+        if (!mv) {
+          endIfNeeded();
+          emit();
+          return;
+        }
+        applyMove(mv, false);
+      }, aiDelayMs);
+    }
+
+    function newGame(gameOpts) {
+      gameOpts = gameOpts || {};
+      clearTimers();
+      thinking = false;
+      hinting = false;
+      selected = -1;
+      winner = 0;
+      lastMove = null;
+      history = [];
+      hint = null;
+      captureFlash = [];
+      toast = null;
+      if (gameOpts.aiOpts) defaultAiOpts = gameOpts.aiOpts;
+      if (gameOpts.state) {
+        st = E.cloneState(gameOpts.state);
+      } else if (gameOpts.board != null) {
+        st = E.makeState({ board: gameOpts.board, turn: gameOpts.turn || E.HUMAN });
+      } else {
+        var starter = gameOpts.starter != null
+          ? gameOpts.starter
+          : resolveStarter(gameOpts.starterMode || "human");
+        st = E.initState(starter);
+      }
+      emit();
+      if (st.turn === E.AI && !winner) scheduleAI();
+      return getView();
+    }
+
+    function undo() {
+      if (!history.length || thinking) return { ok: false, error: "cannot_undo" };
+      clearTimers();
+      thinking = false;
+      var prev = history.pop();
+      st = { board: prev.board, turn: prev.turn };
+      lastMove = prev.lastMove;
+      winner = 0;
+      selected = -1;
+      hint = null;
+      captureFlash = [];
+      toast = null;
+      emit();
+      return { ok: true };
+    }
+
+    function giveHint() {
+      if (!st || winner || thinking || st.turn !== E.HUMAN) {
+        return { ok: false, error: "cannot_hint" };
+      }
+      hinting = true;
+      emit();
+      var opts = aiOptions();
+      if (opts.timeMs == null || opts.timeMs > 900) {
+        opts = { timeMs: Math.min(900, opts.timeMs || 900), maxDepth: opts.maxDepth, now: opts.now };
+      }
+      hint = E.bestMove(st, opts);
+      hinting = false;
+      if (hint) {
+        selected = hint.from;
+        setToast("Vihje: " + E.sqLabel(hint.from) + " → " + E.sqLabel(hint.to));
+      }
+      emit();
+      return { ok: !!hint, hint: hint ? E.formatMove(hint) : null };
+    }
+
+    function setAiOpts(next) {
+      defaultAiOpts = next || defaultAiOpts;
+    }
+
+    return {
+      newGame: newGame,
+      click: click,
+      play: play,
+      undo: undo,
+      hint: giveHint,
+      stepAI: runAI,
+      getView: getView,
+      setAiOpts: setAiOpts,
+      getState: function () { return st ? E.cloneState(st) : null; }
+    };
+  }
+
+  return { createSession: createSession };
+});
+
+</script>
+<script>
+// Tammi — DOM-sidos. Tilakone: TammiSession. Smoke: window.TammiUI.
+(function () {
+  "use strict";
+  var E = globalThis.TammiEngine;
+  var Session = globalThis.TammiSession;
+  var SIZE = E.SIZE;
+
+  var els = {
+    board: document.getElementById("board"),
+    phase: document.getElementById("phase"),
+    message: document.getElementById("message"),
+    lightStats: document.getElementById("lightStats"),
+    darkStats: document.getElementById("darkStats"),
+    playerLight: document.getElementById("playerLight"),
+    playerDark: document.getElementById("playerDark"),
+    starter: document.getElementById("starter"),
+    difficulty: document.getElementById("difficulty"),
+    btnHint: document.getElementById("btnHint"),
+    btnUndo: document.getElementById("btnUndo"),
+    btnNew: document.getElementById("btnNew"),
+    toast: document.getElementById("toast")
+  };
+
+  var cells = [];
+  var toastTimer = null;
+
+  function aiOptsFromUi() {
+    return { timeMs: parseInt(els.difficulty.value, 10) || 1000 };
+  }
+
+  var session = Session.createSession({
+    engine: E,
+    aiOpts: aiOptsFromUi(),
+    onChange: render
+  });
+
+  function showToast(text) {
+    if (!text) return;
+    els.toast.textContent = text;
+    els.toast.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      els.toast.classList.remove("show");
+    }, 1600);
+  }
+
+  function buildBoard() {
+    els.board.innerHTML = "";
+    cells = [];
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var sq = E.rc(r, c);
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cell " + (E.isDark(r, c) ? "dark" : "light");
+        btn.dataset.sq = String(sq);
+        btn.setAttribute("aria-label", E.sqLabel(sq));
+        if (!E.isDark(r, c)) {
+          btn.disabled = true;
+          btn.tabIndex = -1;
+        } else {
+          btn.addEventListener("click", onCellClick);
+        }
+        els.board.appendChild(btn);
+        cells[sq] = btn;
+      }
+    }
+  }
+
+  function pieceEl(piece) {
+    var el = document.createElement("span");
+    el.className = "piece " + (E.sideOf(piece) === E.HUMAN ? "human" : "ai");
+    if (E.isKing(piece)) {
+      el.classList.add("king");
+      el.setAttribute("aria-label", "daami");
+    }
+    return el;
+  }
+
+  function render() {
+    var v = session.getView();
+    if (!v.board) return;
+
+    var movable = {};
+    var targets = {};
+    var i;
+    for (i = 0; i < v.movable.length; i++) movable[E.parseSq(v.movable[i])] = true;
+    for (i = 0; i < v.targets.length; i++) targets[E.parseSq(v.targets[i])] = true;
+
+    var selected = v.selected ? E.parseSq(v.selected) : -1;
+    var lastFrom = -1, lastTo = -1;
+    if (v.lastMove) {
+      var lm = parseLast(v.lastMove);
+      if (lm) { lastFrom = lm.from; lastTo = lm.to; }
+    }
+    var hintFrom = -1, hintTo = -1;
+    if (v.hint) {
+      var hp = parseLast(v.hint);
+      if (hp) { hintFrom = hp.from; hintTo = hp.to; }
+    }
+    var flash = {};
+    for (i = 0; i < v.captureFlash.length; i++) flash[E.parseSq(v.captureFlash[i])] = true;
+
+    for (var sq = 0; sq < cells.length; sq++) {
+      var btn = cells[sq];
+      if (!btn) continue;
+      btn.innerHTML = "";
+      btn.classList.remove("movable", "selected", "target", "last-from", "last-to", "hint-from", "hint-to", "flash");
+
+      var piece = v.board[sq];
+      if (piece) btn.appendChild(pieceEl(piece));
+
+      if (sq === lastFrom) btn.classList.add("last-from");
+      if (sq === lastTo) btn.classList.add("last-to");
+      if (sq === hintFrom) btn.classList.add("hint-from");
+      if (sq === hintTo) btn.classList.add("hint-to");
+      if (flash[sq]) btn.classList.add("flash");
+
+      if (!v.winner && !v.thinking && v.turn === E.HUMAN) {
+        if (selected === sq) btn.classList.add("selected");
+        if (movable[sq]) btn.classList.add("movable");
+        if (targets[sq]) btn.classList.add("target");
+      }
+    }
+
+    els.phase.textContent = v.phase;
+    els.message.textContent = v.message;
+    els.lightStats.textContent = v.humanStats;
+    els.darkStats.textContent = v.aiStats;
+    els.playerLight.classList.toggle("active", !v.winner && v.turn === E.HUMAN);
+    els.playerDark.classList.toggle("active", !v.winner && (v.turn === E.AI || v.thinking));
+    els.btnUndo.disabled = !v.canUndo;
+    els.btnHint.disabled = !v.canHint;
+    if (v.toast) showToast(v.toast);
+  }
+
+  function parseLast(notation) {
+    // lastMove säilytetään formatMove-muodossa; findMove tarvitsee vuoron.
+    // Puretaan from/to algebrasta: "a3-b4" | "c5xe7" | "c5xe7xg3"
+    var m = /^([a-h][1-8])(?:-|x)([a-h][1-8])(?:x[a-h][1-8])*$/i.exec(notation);
+    if (!m) return null;
+    var from = E.parseSq(m[1]);
+    var parts = notation.toLowerCase().split(/[-x]/);
+    var to = E.parseSq(parts[parts.length - 1]);
+    return { from: from, to: to };
+  }
+
+  function onCellClick(ev) {
+    session.click(parseInt(ev.currentTarget.dataset.sq, 10));
+  }
+
+  function newGameFromUi() {
+    session.setAiOpts(aiOptsFromUi());
+    session.newGame({ starterMode: els.starter.value });
+  }
+
+  els.btnNew.addEventListener("click", newGameFromUi);
+  els.btnUndo.addEventListener("click", function () { session.undo(); });
+  els.btnHint.addEventListener("click", function () { session.hint(); });
+  els.difficulty.addEventListener("change", function () {
+    session.setAiOpts(aiOptsFromUi());
+  });
+
+  // Agentti-/smoke-API (kuten HoldemUI)
+  globalThis.TammiUI = {
+    newGame: function (opts) {
+      opts = opts || {};
+      session.setAiOpts(opts.aiOpts || aiOptsFromUi());
+      return session.newGame(opts);
+    },
+    click: function (sq) { return session.click(sq); },
+    play: function (notation) { return session.play(notation); },
+    undo: function () { return session.undo(); },
+    hint: function () { return session.hint(); },
+    stepAI: function () { return session.stepAI(); },
+    getView: function () { return session.getView(); },
+    getState: function () { return session.getState(); }
+  };
+
+  buildBoard();
+  newGameFromUi();
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Mosaiikki — täytä muoto värikkäillä paloilla. Selaimessa pelattava sommittelupeli.">
+<title>Mosaiikki — selainpelit.fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Mosaiikki — ateljee: syvä liuskekivi, lasitetut palat, pehmeä valo */
+:root {
+  color-scheme: dark;
+  --bg0: #0a1214;
+  --bg1: #122022;
+  --ink: #eef3f1;
+  --muted: #8aa0a4;
+  --line: rgba(180, 210, 200, 0.16);
+  --panel: rgba(18, 36, 40, 0.72);
+  --glow: rgba(94, 196, 176, 0.18);
+  --accent: #5ec4b0;
+  --accent-2: #f0a868;
+  --danger: #e86a5c;
+  --good: #7dcc8a;
+  --board-base: #1a2c30;
+  --board-edge: #2e4a50;
+  --slot: #24383c;
+  --slot-empty: #2a4248;
+  --focus: #9ee7d6;
+
+  --c-coral: #e07a5f;
+  --c-teal: #3d9b8f;
+  --c-amber: #e9b44c;
+  --c-rose: #c97b9a;
+  --c-sky: #5b8fb8;
+  --c-lime: #8faf5c;
+  --c-plum: #8e6ea8;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Sora", system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse 80% 55% at 18% -5%, var(--glow), transparent 55%),
+    radial-gradient(ellipse 60% 45% at 92% 88%, rgba(240, 168, 104, 0.1), transparent 50%),
+    linear-gradient(165deg, var(--bg1), var(--bg0) 55%, #081014);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 0;
+}
+
+button, select {
+  font: inherit;
+  color: inherit;
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 32px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 360px);
+  gap: clamp(18px, 3vw, 40px);
+  align-items: center;
+  min-height: 100vh;
+}
+
+.stage {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.brand {
+  text-align: center;
+  animation: rise 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.brand h1 {
+  margin: 0;
+  font-family: "Fraunces", "Times New Roman", serif;
+  font-weight: 500;
+  font-variation-settings: "SOFT" 40, "WONK" 0.4;
+  font-size: clamp(2.5rem, 6.5vw, 3.8rem);
+  letter-spacing: 0.08em;
+  line-height: 1;
+  background: linear-gradient(120deg, #f4faf8 20%, #9ee7d6 55%, #f0a868 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+}
+
+.board-frame {
+  position: relative;
+  width: min(92vw, 68vh, 540px);
+  padding: clamp(14px, 2.5vw, 22px);
+  border-radius: 22px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent 40%),
+    linear-gradient(160deg, #243a40, var(--board-base) 45%, #121f22);
+  box-shadow:
+    0 28px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(158, 231, 214, 0.18),
+    inset 0 -30px 60px rgba(0, 0, 0, 0.25);
+  animation: rise 640ms 50ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.board-frame::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(158, 231, 214, 0.08);
+  pointer-events: none;
+}
+
+.board {
+  display: grid;
+  gap: 5px;
+  margin: 0 auto;
+  width: fit-content;
+}
+
+.cell {
+  width: var(--cell, 44px);
+  height: var(--cell, 44px);
+  border-radius: 10px;
+  background: transparent;
+  position: relative;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.cell.slot {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.04), transparent),
+    var(--slot-empty);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.cell.void {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.cell.legal {
+  background: rgba(94, 196, 176, 0.22);
+  box-shadow:
+    inset 0 0 0 2px rgba(94, 196, 176, 0.65),
+    0 0 16px rgba(94, 196, 176, 0.2);
+  cursor: pointer;
+}
+
+.cell.preview {
+  transform: scale(1.04);
+}
+
+.cell.filled {
+  cursor: pointer;
+}
+
+.tile {
+  position: absolute;
+  inset: 2px;
+  border-radius: 8px;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.2);
+  animation: settle 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tile.coral { background: linear-gradient(145deg, #f0957c, var(--c-coral) 55%, #c45e45); }
+.tile.teal { background: linear-gradient(145deg, #55b5a8, var(--c-teal) 55%, #2d7a70); }
+.tile.amber { background: linear-gradient(145deg, #f5c76a, var(--c-amber) 55%, #c9922e); }
+.tile.rose { background: linear-gradient(145deg, #d99bb4, var(--c-rose) 55%, #a85f7e); }
+.tile.sky { background: linear-gradient(145deg, #79a9cf, var(--c-sky) 55%, #3f6f96); }
+.tile.lime { background: linear-gradient(145deg, #a8c575, var(--c-lime) 55%, #6d8a3d); }
+.tile.plum { background: linear-gradient(145deg, #a88bbe, var(--c-plum) 55%, #6d4f87); }
+
+.tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  width: min(92vw, 540px);
+  min-height: 88px;
+  animation: rise 700ms 90ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.piece-card {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  border-radius: 14px;
+  padding: 10px;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.piece-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(158, 231, 214, 0.45);
+}
+
+.piece-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(94, 196, 176, 0.35), 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.piece-card.placed {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.piece-grid {
+  display: grid;
+  gap: 3px;
+}
+
+.piece-cell {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.piece-cell.coral { background: var(--c-coral); }
+.piece-cell.teal { background: var(--c-teal); }
+.piece-cell.amber { background: var(--c-amber); }
+.piece-cell.rose { background: var(--c-rose); }
+.piece-cell.sky { background: var(--c-sky); }
+.piece-cell.lime { background: var(--c-lime); }
+.piece-cell.plum { background: var(--c-plum); }
+.piece-cell.empty { background: transparent; box-shadow: none; }
+
+.side {
+  display: grid;
+  gap: 14px;
+  animation: rise 680ms 80ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px 18px;
+  backdrop-filter: blur(10px);
+}
+
+.phase {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.message {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 220ms ease;
+}
+
+.progress-label {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-width: 3.5rem;
+  text-align: right;
+}
+
+.timer {
+  margin-top: 12px;
+}
+
+.timer-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.timer-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.timer-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--accent), #7dcc8a);
+  transition: width 100ms linear;
+}
+
+.timer.warn .timer-fill {
+  background: linear-gradient(90deg, var(--accent-2), var(--danger));
+}
+
+.timer.zen .timer-fill {
+  width: 100% !important;
+  background: linear-gradient(90deg, rgba(94, 196, 176, 0.35), rgba(240, 168, 104, 0.35));
+}
+
+.rules h2 {
+  margin: 0 0 8px;
+  font-family: "Fraunces", serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.rules p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.controls {
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.field select {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: rgba(8, 16, 18, 0.55);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--ink);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.actions button,
+.primary-row button {
+  border: 1px solid var(--line);
+  background: rgba(8, 16, 18, 0.45);
+  border-radius: 11px;
+  padding: 11px 12px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.actions button:hover,
+.primary-row button:hover {
+  border-color: rgba(158, 231, 214, 0.4);
+  transform: translateY(-1px);
+}
+
+.actions button:disabled,
+.primary-row button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.primary-row {
+  display: grid;
+}
+
+.primary-row .primary {
+  background: linear-gradient(135deg, #3d9b8f, #2a7a70);
+  border-color: rgba(158, 231, 214, 0.35);
+  font-weight: 600;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(6, 12, 14, 0.62);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.overlay-card {
+  width: min(420px, 100%);
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(94, 196, 176, 0.18), transparent 55%),
+    linear-gradient(160deg, #1a3036, #101c20);
+  border: 1px solid rgba(158, 231, 214, 0.22);
+  border-radius: 20px;
+  padding: 28px 26px;
+  text-align: center;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  transform: translateY(12px) scale(0.98);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.overlay.open .overlay-card {
+  transform: none;
+}
+
+.overlay-card h2 {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: 2rem;
+}
+
+.overlay-card p {
+  margin: 10px 0 22px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.overlay-card .primary {
+  border: 1px solid rgba(158, 231, 214, 0.35);
+  background: linear-gradient(135deg, #3d9b8f, #2a7a70);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(20px);
+  z-index: 30;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(18, 36, 40, 0.92);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 0.9rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.good { border-color: rgba(125, 204, 138, 0.45); }
+.toast.warn { border-color: rgba(240, 168, 104, 0.45); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes settle {
+  from { transform: scale(0.86); opacity: 0.4; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (max-width: 860px) {
+  .shell {
+    grid-template-columns: 1fr;
+    align-items: start;
+    min-height: auto;
+  }
+
+  .side {
+    order: 2;
+  }
+}
+
+</style>
+</head>
+<body>
+<main id="shell" class="shell" data-testid="game-shell" data-phase="playing">
+  <section class="stage" aria-label="Mosaiikki-pelilauta">
+    <div class="brand">
+      <h1 data-testid="brand">MOSAIIKKI</h1>
+      <p>Kierrä · peilaa · täytä muoto</p>
+    </div>
+
+    <div id="boardFrame" class="board-frame">
+      <div id="board" class="board" role="grid" data-testid="board" aria-label="Täytettävä muoto"></div>
+    </div>
+
+    <div id="tray" class="tray" data-testid="piece-tray" role="list" aria-label="Palat"></div>
+  </section>
+
+  <aside class="side" aria-live="polite">
+    <div class="panel status-box">
+      <p id="phase" class="phase" data-testid="status-phase">Valitse pala</p>
+      <p id="message" class="message" data-testid="status-message">Täytä tumma muoto kaikilla paloilla.</p>
+      <div class="progress" data-testid="progress">
+        <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+        <span id="progressLabel" class="progress-label" data-testid="progress-label">0 / 0</span>
+      </div>
+      <div id="timer" class="timer zen" data-testid="timer">
+        <div class="timer-label">
+          <span>Aika</span>
+          <span id="timerText" data-testid="timer-text">Ei aikarajaa</span>
+        </div>
+        <div class="timer-track"><div id="timerFill" class="timer-fill" data-testid="timer-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="panel rules">
+      <h2>Pelin kulku</h2>
+      <p>Valitse pala, kierrä (R) tai peilaa (F) ja aseta se muotoon niin että jokainen ruutu täyttyy. Helppo-tasolla ei ole aikarajaa.</p>
+    </div>
+
+    <div class="panel controls">
+      <label class="field" for="difficulty">
+        Vaikeus
+        <select id="difficulty" data-testid="difficulty">
+          <option value="helppo">Helppo — 3 palaa, ei kelloa</option>
+          <option value="normaali" selected>Normaali — 4 palaa</option>
+          <option value="vaikea">Vaikea — 5 palaa, tiukka aika</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button id="btnRotate" type="button" data-testid="btn-rotate">Kierrä</button>
+        <button id="btnFlip" type="button" data-testid="btn-flip">Peilaa</button>
+        <button id="btnHint" type="button" data-testid="btn-hint">Vihje</button>
+        <button id="btnUndo" type="button" data-testid="btn-undo">Peru</button>
+      </div>
+      <div class="primary-row">
+        <button id="btnNew" class="primary" type="button" data-testid="btn-new">Uusi peli</button>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div id="overlay" class="overlay" data-testid="overlay" data-open="0" aria-hidden="true">
+  <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
+    <h2 id="ovTitle" data-testid="overlay-title">Valmis!</h2>
+    <p id="ovBody" data-testid="overlay-body">Mosaiikki täyttyi.</p>
+    <button id="btnNext" class="primary" type="button" data-testid="btn-next">Seuraava</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" data-testid="toast" role="status"></div>
+
+<script>
+// Mosaiikki — puhdas pelimoottori (ei DOM:ia).
+// Sama tiedosto Nodessa (testit) ja selaimessa (build.js upottaa index.html:ään).
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.MosaiikkiEngine = factory();
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  var DIFFICULTIES = {
+    helppo: { pieceCount: 3, timeMs: 0, pool: "small" },
+    normaali: { pieceCount: 4, timeMs: 180000, pool: "mixed" },
+    vaikea: { pieceCount: 5, timeMs: 120000, pool: "large" },
+  };
+
+  // Vapaat polyominot (koko 3–5). Solut suhteellisia [r, c].
+  var CATALOG = [
+    { key: "I3", size: 3, cells: [[0, 0], [1, 0], [2, 0]] },
+    { key: "V3", size: 3, cells: [[0, 0], [1, 0], [1, 1]] },
+    { key: "I4", size: 4, cells: [[0, 0], [1, 0], [2, 0], [3, 0]] },
+    { key: "O4", size: 4, cells: [[0, 0], [0, 1], [1, 0], [1, 1]] },
+    { key: "T4", size: 4, cells: [[0, 0], [0, 1], [0, 2], [1, 1]] },
+    { key: "L4", size: 4, cells: [[0, 0], [1, 0], [2, 0], [2, 1]] },
+    { key: "S4", size: 4, cells: [[0, 1], [0, 2], [1, 0], [1, 1]] },
+    { key: "P5", size: 5, cells: [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0]] },
+    { key: "U5", size: 5, cells: [[0, 0], [0, 2], [1, 0], [1, 1], [1, 2]] },
+    { key: "V5", size: 5, cells: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]] },
+    { key: "W5", size: 5, cells: [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]] },
+    { key: "X5", size: 5, cells: [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]] },
+    { key: "Y5", size: 5, cells: [[0, 1], [1, 1], [2, 0], [2, 1], [3, 1]] },
+    { key: "N5", size: 5, cells: [[0, 1], [1, 1], [2, 0], [2, 1], [3, 0]] },
+    { key: "L5", size: 5, cells: [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1]] },
+    { key: "T5", size: 5, cells: [[0, 0], [0, 1], [0, 2], [1, 1], [2, 1]] },
+    { key: "F5", size: 5, cells: [[0, 1], [0, 2], [1, 0], [1, 1], [2, 1]] },
+    { key: "Z5", size: 5, cells: [[0, 0], [0, 1], [1, 1], [2, 1], [2, 2]] },
+  ];
+
+  var COLORS = ["coral", "teal", "amber", "rose", "sky", "lime", "plum"];
+
+  function makeRNG(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function shuffle(arr, rng) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(rng() * (i + 1));
+      var tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function cloneCells(cells) {
+    return cells.map(function (c) { return [c[0], c[1]]; });
+  }
+
+  function normalize(cells) {
+    var minR = Infinity, minC = Infinity;
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i][0] < minR) minR = cells[i][0];
+      if (cells[i][1] < minC) minC = cells[i][1];
+    }
+    return cells.map(function (c) { return [c[0] - minR, c[1] - minC]; })
+      .sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+  }
+
+  function rotateCW(cells) {
+    return normalize(cells.map(function (c) { return [c[1], -c[0]]; }));
+  }
+
+  function flipH(cells) {
+    return normalize(cells.map(function (c) { return [c[0], -c[1]]; }));
+  }
+
+  function cellsKey(cells) {
+    return normalize(cells).map(function (c) { return c[0] + "," + c[1]; }).join("|");
+  }
+
+  function allOrientations(cells) {
+    var seen = Object.create(null);
+    var out = [];
+    var cur = normalize(cloneCells(cells));
+    for (var flip = 0; flip < 2; flip++) {
+      for (var rot = 0; rot < 4; rot++) {
+        var key = cellsKey(cur);
+        if (!seen[key]) {
+          seen[key] = true;
+          out.push(cloneCells(cur));
+        }
+        cur = rotateCW(cur);
+      }
+      cur = flipH(cur);
+    }
+    return out;
+  }
+
+  function bounding(cells) {
+    var maxR = 0, maxC = 0;
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i][0] > maxR) maxR = cells[i][0];
+      if (cells[i][1] > maxC) maxC = cells[i][1];
+    }
+    return { rows: maxR + 1, cols: maxC + 1 };
+  }
+
+  function catalogByPool(pool) {
+    if (pool === "small") {
+      return CATALOG.filter(function (p) { return p.size <= 4; });
+    }
+    if (pool === "large") {
+      return CATALOG.filter(function (p) { return p.size >= 4; });
+    }
+    return CATALOG.slice();
+  }
+
+  function cellSet(cells) {
+    var s = Object.create(null);
+    for (var i = 0; i < cells.length; i++) s[cells[i][0] + "," + cells[i][1]] = true;
+    return s;
+  }
+
+  function touches(occupied, cells, atR, atC) {
+    if (!occupied.length) return true;
+    var dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    var occ = cellSet(occupied);
+    for (var i = 0; i < cells.length; i++) {
+      var r = atR + cells[i][0];
+      var c = atC + cells[i][1];
+      for (var d = 0; d < 4; d++) {
+        var nr = r + dirs[d][0];
+        var nc = c + dirs[d][1];
+        if (occ[nr + "," + nc]) return true;
+      }
+    }
+    return false;
+  }
+
+  function overlaps(occupied, cells, atR, atC) {
+    var occ = cellSet(occupied);
+    for (var i = 0; i < cells.length; i++) {
+      if (occ[(atR + cells[i][0]) + "," + (atC + cells[i][1])]) return true;
+    }
+    return false;
+  }
+
+  function candidatePlacements(occupied, orients, rng) {
+    var candidates = [];
+    var minR = 0, maxR = 0, minC = 0, maxC = 0;
+    if (occupied.length) {
+      minR = maxR = occupied[0][0];
+      minC = maxC = occupied[0][1];
+      for (var i = 1; i < occupied.length; i++) {
+        var o = occupied[i];
+        if (o[0] < minR) minR = o[0];
+        if (o[0] > maxR) maxR = o[0];
+        if (o[1] < minC) minC = o[1];
+        if (o[1] > maxC) maxC = o[1];
+      }
+    }
+    for (var oi = 0; oi < orients.length; oi++) {
+      var cells = orients[oi];
+      var b = bounding(cells);
+      var r0 = minR - b.rows - 1;
+      var r1 = maxR + 2;
+      var c0 = minC - b.cols - 1;
+      var c1 = maxC + 2;
+      for (var r = r0; r <= r1; r++) {
+        for (var c = c0; c <= c1; c++) {
+          if (overlaps(occupied, cells, r, c)) continue;
+          if (!touches(occupied, cells, r, c)) continue;
+          candidates.push({ cells: cells, r: r, c: c });
+        }
+      }
+    }
+    shuffle(candidates, rng);
+    return candidates;
+  }
+
+  function normalizeBoard(occupied, placements) {
+    var minR = Infinity, minC = Infinity;
+    for (var i = 0; i < occupied.length; i++) {
+      if (occupied[i][0] < minR) minR = occupied[i][0];
+      if (occupied[i][1] < minC) minC = occupied[i][1];
+    }
+    var normOcc = occupied.map(function (p) { return [p[0] - minR, p[1] - minC]; });
+    var maxR = 0, maxC = 0;
+    for (var j = 0; j < normOcc.length; j++) {
+      if (normOcc[j][0] > maxR) maxR = normOcc[j][0];
+      if (normOcc[j][1] > maxC) maxC = normOcc[j][1];
+    }
+    var board = [];
+    for (var r = 0; r <= maxR; r++) {
+      board[r] = [];
+      for (var c = 0; c <= maxC; c++) board[r][c] = false;
+    }
+    for (var k = 0; k < normOcc.length; k++) {
+      board[normOcc[k][0]][normOcc[k][1]] = true;
+    }
+    var solution = placements.map(function (p) {
+      return {
+        instanceId: p.instanceId,
+        cells: cloneCells(p.cells),
+        r: p.r - minR,
+        c: p.c - minC,
+      };
+    });
+    return { board: board, rows: maxR + 1, cols: maxC + 1, solution: solution };
+  }
+
+  function pickPieces(cfg, rng) {
+    var pool = catalogByPool(cfg.pool);
+    shuffle(pool, rng);
+    var picked = [];
+    var used = Object.create(null);
+    for (var i = 0; i < pool.length && picked.length < cfg.pieceCount; i++) {
+      if (used[pool[i].key]) continue;
+      used[pool[i].key] = true;
+      picked.push(pool[i]);
+    }
+    // Jos poolista ei riitä, täydennä koko katalogista.
+    if (picked.length < cfg.pieceCount) {
+      var rest = CATALOG.filter(function (p) { return !used[p.key]; });
+      shuffle(rest, rng);
+      while (picked.length < cfg.pieceCount && rest.length) {
+        picked.push(rest.pop());
+      }
+    }
+    return picked;
+  }
+
+  function generatePuzzle(seed, difficulty) {
+    var diff = DIFFICULTIES[difficulty] || DIFFICULTIES.normaali;
+    var rng = makeRNG(seed >>> 0);
+    var attempts = 0;
+    while (attempts < 40) {
+      attempts++;
+      var picked = pickPieces(diff, rng);
+      var occupied = [];
+      var placements = [];
+      var ok = true;
+      for (var i = 0; i < picked.length; i++) {
+        var orients = allOrientations(picked[i].cells);
+        var cands = candidatePlacements(occupied, orients, rng);
+        if (!cands.length) { ok = false; break; }
+        var place = cands[0];
+        var instanceId = "p" + i;
+        placements.push({
+          instanceId: instanceId,
+          key: picked[i].key,
+          cells: cloneCells(place.cells),
+          r: place.r,
+          c: place.c,
+          color: COLORS[i % COLORS.length],
+        });
+        for (var ci = 0; ci < place.cells.length; ci++) {
+          occupied.push([place.r + place.cells[ci][0], place.c + place.cells[ci][1]]);
+        }
+      }
+      if (!ok) continue;
+
+      var norm = normalizeBoard(occupied, placements);
+      // Satunnaiset lähtöorientaatiot pelaajalle (ei välttämättä ratkaisun oriento).
+      var pieces = placements.map(function (p, idx) {
+        var orients = allOrientations(CATALOG.find(function (c) { return c.key === p.key; }).cells);
+        var start = orients[Math.floor(rng() * orients.length)];
+        return {
+          instanceId: p.instanceId,
+          key: p.key,
+          cells: cloneCells(start),
+          color: p.color,
+          placed: null,
+        };
+      });
+      shuffle(pieces, rng);
+      return {
+        seed: seed >>> 0,
+        difficulty: difficulty in DIFFICULTIES ? difficulty : "normaali",
+        board: norm.board,
+        rows: norm.rows,
+        cols: norm.cols,
+        pieces: pieces,
+        solution: norm.solution,
+        timeMs: diff.timeMs,
+      };
+    }
+    throw new Error("Mosaiikki: puzzle generation failed for seed " + seed);
+  }
+
+  function emptyFill(rows, cols) {
+    var fill = [];
+    for (var r = 0; r < rows; r++) {
+      fill[r] = [];
+      for (var c = 0; c < cols; c++) fill[r][c] = null;
+    }
+    return fill;
+  }
+
+  function rebuildFill(state) {
+    var fill = emptyFill(state.rows, state.cols);
+    for (var i = 0; i < state.pieces.length; i++) {
+      var p = state.pieces[i];
+      if (!p.placed) continue;
+      for (var j = 0; j < p.cells.length; j++) {
+        var r = p.placed.r + p.cells[j][0];
+        var c = p.placed.c + p.cells[j][1];
+        fill[r][c] = p.instanceId;
+      }
+    }
+    return fill;
+  }
+
+  function initState(puzzle) {
+    var pieces = puzzle.pieces.map(function (p) {
+      return {
+        instanceId: p.instanceId,
+        key: p.key,
+        cells: cloneCells(p.cells),
+        color: p.color,
+        placed: null,
+      };
+    });
+    var state = {
+      seed: puzzle.seed,
+      difficulty: puzzle.difficulty,
+      board: puzzle.board.map(function (row) { return row.slice(); }),
+      rows: puzzle.rows,
+      cols: puzzle.cols,
+      pieces: pieces,
+      solution: puzzle.solution.map(function (s) {
+        return { instanceId: s.instanceId, cells: cloneCells(s.cells), r: s.r, c: s.c };
+      }),
+      timeMs: puzzle.timeMs,
+      selectedId: null,
+      phase: "playing",
+      history: [],
+      fill: emptyFill(puzzle.rows, puzzle.cols),
+    };
+    return state;
+  }
+
+  function findPiece(state, instanceId) {
+    for (var i = 0; i < state.pieces.length; i++) {
+      if (state.pieces[i].instanceId === instanceId) return state.pieces[i];
+    }
+    return null;
+  }
+
+  function snapshot(state) {
+    return {
+      pieces: state.pieces.map(function (p) {
+        return {
+          instanceId: p.instanceId,
+          cells: cloneCells(p.cells),
+          placed: p.placed ? { r: p.placed.r, c: p.placed.c } : null,
+        };
+      }),
+      selectedId: state.selectedId,
+    };
+  }
+
+  function pushHistory(state) {
+    state.history.push(snapshot(state));
+    if (state.history.length > 40) state.history.shift();
+  }
+
+  function canPlace(state, instanceId, atR, atC) {
+    if (state.phase !== "playing") return false;
+    var piece = findPiece(state, instanceId);
+    if (!piece) return false;
+    for (var i = 0; i < piece.cells.length; i++) {
+      var r = atR + piece.cells[i][0];
+      var c = atC + piece.cells[i][1];
+      if (r < 0 || c < 0 || r >= state.rows || c >= state.cols) return false;
+      if (!state.board[r][c]) return false;
+      var occ = state.fill[r][c];
+      if (occ != null && occ !== instanceId) return false;
+    }
+    return true;
+  }
+
+  function legalAnchors(state, instanceId) {
+    var out = [];
+    if (state.phase !== "playing") return out;
+    var piece = findPiece(state, instanceId);
+    if (!piece) return out;
+    for (var r = 0; r < state.rows; r++) {
+      for (var c = 0; c < state.cols; c++) {
+        if (canPlace(state, instanceId, r, c)) out.push({ r: r, c: c });
+      }
+    }
+    return out;
+  }
+
+  function clearPieceFromFill(state, instanceId) {
+    for (var r = 0; r < state.rows; r++) {
+      for (var c = 0; c < state.cols; c++) {
+        if (state.fill[r][c] === instanceId) state.fill[r][c] = null;
+      }
+    }
+  }
+
+  function placePiece(state, instanceId, atR, atC) {
+    if (!canPlace(state, instanceId, atR, atC)) return { ok: false, reason: "illegal" };
+    var piece = findPiece(state, instanceId);
+    pushHistory(state);
+    clearPieceFromFill(state, instanceId);
+    piece.placed = { r: atR, c: atC };
+    for (var i = 0; i < piece.cells.length; i++) {
+      var r = atR + piece.cells[i][0];
+      var c = atC + piece.cells[i][1];
+      state.fill[r][c] = instanceId;
+    }
+    state.selectedId = instanceId;
+    if (isSolved(state)) state.phase = "won";
+    return { ok: true, solved: state.phase === "won" };
+  }
+
+  function removePiece(state, instanceId) {
+    if (state.phase !== "playing") return { ok: false };
+    var piece = findPiece(state, instanceId);
+    if (!piece || !piece.placed) return { ok: false };
+    pushHistory(state);
+    clearPieceFromFill(state, instanceId);
+    piece.placed = null;
+    state.selectedId = instanceId;
+    return { ok: true };
+  }
+
+  function selectPiece(state, instanceId) {
+    if (state.phase !== "playing") return { ok: false };
+    if (!findPiece(state, instanceId)) return { ok: false };
+    state.selectedId = instanceId;
+    return { ok: true };
+  }
+
+  function transformSelected(state, kind) {
+    if (state.phase !== "playing") return { ok: false };
+    var id = state.selectedId;
+    if (!id) return { ok: false };
+    var piece = findPiece(state, id);
+    if (!piece || piece.placed) return { ok: false, reason: "placed" };
+    pushHistory(state);
+    piece.cells = kind === "flip" ? flipH(piece.cells) : rotateCW(piece.cells);
+    return { ok: true, cells: cloneCells(piece.cells) };
+  }
+
+  function rotateSelected(state) { return transformSelected(state, "rotate"); }
+  function flipSelected(state) { return transformSelected(state, "flip"); }
+
+  function isSolved(state) {
+    for (var r = 0; r < state.rows; r++) {
+      for (var c = 0; c < state.cols; c++) {
+        if (state.board[r][c] && state.fill[r][c] == null) return false;
+      }
+    }
+    for (var i = 0; i < state.pieces.length; i++) {
+      if (!state.pieces[i].placed) return false;
+    }
+    return true;
+  }
+
+  function filledCount(state) {
+    var need = 0, have = 0;
+    for (var r = 0; r < state.rows; r++) {
+      for (var c = 0; c < state.cols; c++) {
+        if (state.board[r][c]) {
+          need++;
+          if (state.fill[r][c] != null) have++;
+        }
+      }
+    }
+    return { have: have, need: need };
+  }
+
+  function undo(state) {
+    if (state.phase === "lost") return { ok: false };
+    if (!state.history.length) return { ok: false };
+    var snap = state.history.pop();
+    for (var i = 0; i < snap.pieces.length; i++) {
+      var s = snap.pieces[i];
+      var p = findPiece(state, s.instanceId);
+      p.cells = cloneCells(s.cells);
+      p.placed = s.placed ? { r: s.placed.r, c: s.placed.c } : null;
+    }
+    state.selectedId = snap.selectedId;
+    state.fill = rebuildFill(state);
+    if (state.phase === "won") state.phase = "playing";
+    return { ok: true };
+  }
+
+  function applyHint(state) {
+    if (state.phase !== "playing") return { ok: false };
+    // Etsi ratkaisun pala joka ei ole oikein paikallaan.
+    for (var i = 0; i < state.solution.length; i++) {
+      var sol = state.solution[i];
+      var piece = findPiece(state, sol.instanceId);
+      var correct = piece.placed
+        && piece.placed.r === sol.r
+        && piece.placed.c === sol.c
+        && cellsKey(piece.cells) === cellsKey(sol.cells);
+      if (correct) continue;
+      pushHistory(state);
+      clearPieceFromFill(state, sol.instanceId);
+      piece.cells = cloneCells(sol.cells);
+      piece.placed = { r: sol.r, c: sol.c };
+      for (var j = 0; j < piece.cells.length; j++) {
+        var r = sol.r + piece.cells[j][0];
+        var c = sol.c + piece.cells[j][1];
+        // Poista mahdollinen päällekkäinen toinen pala.
+        var other = state.fill[r][c];
+        if (other && other !== sol.instanceId) {
+          var op = findPiece(state, other);
+          clearPieceFromFill(state, other);
+          op.placed = null;
+        }
+        state.fill[r][c] = sol.instanceId;
+      }
+      state.selectedId = sol.instanceId;
+      if (isSolved(state)) state.phase = "won";
+      return { ok: true, instanceId: sol.instanceId, solved: state.phase === "won" };
+    }
+    return { ok: false, reason: "complete" };
+  }
+
+  function markLost(state) {
+    if (state.phase === "playing") state.phase = "lost";
+    return state;
+  }
+
+  function publicState(state) {
+    return {
+      seed: state.seed,
+      difficulty: state.difficulty,
+      rows: state.rows,
+      cols: state.cols,
+      board: state.board,
+      fill: state.fill,
+      phase: state.phase,
+      selectedId: state.selectedId,
+      timeMs: state.timeMs,
+      pieces: state.pieces.map(function (p) {
+        return {
+          instanceId: p.instanceId,
+          key: p.key,
+          cells: cloneCells(p.cells),
+          color: p.color,
+          placed: p.placed ? { r: p.placed.r, c: p.placed.c } : null,
+        };
+      }),
+      progress: filledCount(state),
+    };
+  }
+
+  return {
+    DIFFICULTIES: DIFFICULTIES,
+    CATALOG: CATALOG,
+    makeRNG: makeRNG,
+    normalize: normalize,
+    rotateCW: rotateCW,
+    flipH: flipH,
+    allOrientations: allOrientations,
+    generatePuzzle: generatePuzzle,
+    initState: initState,
+    selectPiece: selectPiece,
+    canPlace: canPlace,
+    legalAnchors: legalAnchors,
+    placePiece: placePiece,
+    removePiece: removePiece,
+    rotateSelected: rotateSelected,
+    flipSelected: flipSelected,
+    isSolved: isSolved,
+    filledCount: filledCount,
+    undo: undo,
+    applyHint: applyHint,
+    markLost: markLost,
+    publicState: publicState,
+    findPiece: findPiece,
+  };
+});
+
+</script>
+<script>
+// Mosaiikki — DOM-UI. Ydin: globalThis.MosaiikkiEngine.
+// Playwright: data-testid + window.__MOSAIKKI__ test-API.
+(function () {
+  "use strict";
+
+  var E = globalThis.MosaiikkiEngine;
+  var el = function (id) { return document.getElementById(id); };
+
+  var S = null;
+  var timerId = null;
+  var endsAt = 0;
+  var previewAnchor = null;
+
+  function qs() {
+    try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(); }
+  }
+
+  function parseOpts() {
+    var p = qs();
+    var diff = p.get("difficulty") || el("difficulty").value || "normaali";
+    if (!E.DIFFICULTIES[diff]) diff = "normaali";
+    var seedParam = p.get("seed");
+    var seed = seedParam != null && seedParam !== ""
+      ? (Number(seedParam) >>> 0)
+      : ((Math.random() * 0xffffffff) >>> 0);
+    var timerParam = p.get("timer");
+    var timeOverride = null;
+    if (timerParam === "0" || timerParam === "off") timeOverride = 0;
+    else if (timerParam && !isNaN(Number(timerParam))) timeOverride = Number(timerParam) * 1000;
+    return { difficulty: diff, seed: seed, timeOverride: timeOverride };
+  }
+
+  function toast(msg, kind) {
+    var t = el("toast");
+    t.textContent = msg;
+    t.className = "toast show" + (kind ? " " + kind : "");
+    clearTimeout(toast._id);
+    toast._id = setTimeout(function () { t.className = "toast"; }, 1600);
+  }
+
+  function stopTimer() {
+    if (timerId) { clearInterval(timerId); timerId = null; }
+  }
+
+  function startTimer() {
+    stopTimer();
+    var box = el("timer");
+    if (!S.timeMs) {
+      box.className = "timer zen";
+      el("timerText").textContent = "Ei aikarajaa";
+      el("timerFill").style.width = "100%";
+      return;
+    }
+    box.className = "timer";
+    endsAt = Date.now() + S.timeLeft;
+    timerId = setInterval(function () {
+      S.timeLeft = Math.max(0, endsAt - Date.now());
+      var frac = S.timeLeft / S.timeMs;
+      el("timerFill").style.width = (frac * 100) + "%";
+      el("timerText").textContent = formatMs(S.timeLeft);
+      box.classList.toggle("warn", frac < 0.25);
+      if (S.timeLeft <= 0) {
+        stopTimer();
+        E.markLost(S);
+        render();
+        openOverlay("Aika loppui", "Mosaiikki jäi kesken — kokeile uudelleen tai helpompaa tasoa.", "Uusi peli");
+      }
+    }, 100);
+  }
+
+  function formatMs(ms) {
+    var s = Math.ceil(ms / 1000);
+    var m = Math.floor(s / 60);
+    var r = s % 60;
+    return m + ":" + (r < 10 ? "0" : "") + r;
+  }
+
+  function cellSize(rows, cols) {
+    var frame = el("boardFrame");
+    var max = Math.min(frame.clientWidth - 36, 480);
+    var gap = 5;
+    var byW = Math.floor((max - (cols - 1) * gap) / cols);
+    var byH = Math.floor((Math.min(window.innerHeight * 0.55, 480) - (rows - 1) * gap) / rows);
+    return Math.max(28, Math.min(52, byW, byH));
+  }
+
+  function pieceBounds(cells) {
+    var b = { rows: 0, cols: 0 };
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i][0] + 1 > b.rows) b.rows = cells[i][0] + 1;
+      if (cells[i][1] + 1 > b.cols) b.cols = cells[i][1] + 1;
+    }
+    return b;
+  }
+
+  function renderPieceCard(piece) {
+    var b = pieceBounds(piece.cells);
+    var set = Object.create(null);
+    for (var i = 0; i < piece.cells.length; i++) {
+      set[piece.cells[i][0] + "," + piece.cells[i][1]] = true;
+    }
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "piece-card"
+      + (S.selectedId === piece.instanceId ? " selected" : "")
+      + (piece.placed ? " placed" : "");
+    btn.dataset.testid = "piece-" + piece.instanceId;
+    btn.setAttribute("data-piece-id", piece.instanceId);
+    btn.setAttribute("data-placed", piece.placed ? "1" : "0");
+    btn.setAttribute("aria-pressed", S.selectedId === piece.instanceId ? "true" : "false");
+    btn.setAttribute("aria-label", "Pala " + piece.key + (piece.placed ? " (laudalla)" : ""));
+    var grid = document.createElement("div");
+    grid.className = "piece-grid";
+    grid.style.gridTemplateColumns = "repeat(" + b.cols + ", 16px)";
+    for (var r = 0; r < b.rows; r++) {
+      for (var c = 0; c < b.cols; c++) {
+        var cell = document.createElement("div");
+        cell.className = "piece-cell " + (set[r + "," + c] ? piece.color : "empty");
+        grid.appendChild(cell);
+      }
+    }
+    btn.appendChild(grid);
+    btn.addEventListener("click", function () {
+      if (piece.placed) {
+        E.removePiece(S, piece.instanceId);
+        toast("Pala palautettu", "warn");
+      } else {
+        E.selectPiece(S, piece.instanceId);
+      }
+      previewAnchor = null;
+      render();
+    });
+    return btn;
+  }
+
+  function legalSet() {
+    var map = Object.create(null);
+    if (!S || !S.selectedId) return map;
+    var piece = E.findPiece(S, S.selectedId);
+    if (!piece || piece.placed) return map;
+    var anchors = E.legalAnchors(S, S.selectedId);
+    for (var i = 0; i < anchors.length; i++) {
+      var a = anchors[i];
+      for (var j = 0; j < piece.cells.length; j++) {
+        var r = a.r + piece.cells[j][0];
+        var c = a.c + piece.cells[j][1];
+        map[r + "," + c] = true;
+      }
+    }
+    // Merkitse myös ankkurit erilleen previewtä varten.
+    map.__anchors = anchors;
+    return map;
+  }
+
+  // Klikattu/hoverattu ruutu → ankkuri, jossa pala peittää sen (tai suora ankkuri).
+  function anchorForCell(instanceId, r, c) {
+    if (E.canPlace(S, instanceId, r, c)) return { r: r, c: c };
+    var piece = E.findPiece(S, instanceId);
+    if (!piece || piece.placed) return null;
+    var anchors = E.legalAnchors(S, instanceId);
+    for (var i = 0; i < anchors.length; i++) {
+      var a = anchors[i];
+      for (var j = 0; j < piece.cells.length; j++) {
+        if (a.r + piece.cells[j][0] === r && a.c + piece.cells[j][1] === c) {
+          return a;
+        }
+      }
+    }
+    return null;
+  }
+
+  function renderBoard() {
+    var board = el("board");
+    var size = cellSize(S.rows, S.cols);
+    document.documentElement.style.setProperty("--cell", size + "px");
+    board.style.gridTemplateColumns = "repeat(" + S.cols + ", var(--cell))";
+    board.innerHTML = "";
+    board.setAttribute("data-rows", String(S.rows));
+    board.setAttribute("data-cols", String(S.cols));
+
+    var legal = legalSet();
+    var previewCells = Object.create(null);
+    if (previewAnchor && S.selectedId) {
+      var piece = E.findPiece(S, S.selectedId);
+      var anc = piece && !piece.placed
+        ? anchorForCell(S.selectedId, previewAnchor.r, previewAnchor.c)
+        : null;
+      if (anc) {
+        for (var pi = 0; pi < piece.cells.length; pi++) {
+          previewCells[(anc.r + piece.cells[pi][0]) + "," + (anc.c + piece.cells[pi][1])] = true;
+        }
+      }
+    }
+
+    for (var r = 0; r < S.rows; r++) {
+      for (var c = 0; c < S.cols; c++) {
+        var cell = document.createElement("div");
+        var key = r + "," + c;
+        var isSlot = !!S.board[r][c];
+        var fillId = S.fill[r][c];
+        cell.className = "cell " + (isSlot ? "slot" : "void");
+        cell.dataset.testid = "cell-" + r + "-" + c;
+        cell.dataset.r = String(r);
+        cell.dataset.c = String(c);
+        cell.dataset.slot = isSlot ? "1" : "0";
+        cell.dataset.filled = fillId ? "1" : "0";
+        if (fillId) cell.dataset.pieceId = fillId;
+
+        if (isSlot && !fillId && legal[key]) cell.classList.add("legal");
+        if (previewCells[key]) cell.classList.add("preview");
+
+        if (fillId) {
+          cell.classList.add("filled");
+          var tile = document.createElement("div");
+          var p = E.findPiece(S, fillId);
+          tile.className = "tile " + (p ? p.color : "teal");
+          tile.dataset.testid = "tile-" + r + "-" + c;
+          cell.appendChild(tile);
+        }
+
+        (function (rr, cc, fid) {
+          cell.addEventListener("mouseenter", function () {
+            if (!S.selectedId) return;
+            var sel = E.findPiece(S, S.selectedId);
+            if (!sel || sel.placed) return;
+            previewAnchor = { r: rr, c: cc };
+            renderBoard();
+            renderTray();
+          });
+          cell.addEventListener("click", function () {
+            if (fid) {
+              E.removePiece(S, fid);
+              toast("Pala palautettu", "warn");
+              previewAnchor = null;
+              render();
+              return;
+            }
+            if (!S.selectedId) {
+              toast("Valitse ensin pala", "warn");
+              return;
+            }
+            var anc = anchorForCell(S.selectedId, rr, cc);
+            if (!anc) {
+              toast("Ei mahdu tähän", "warn");
+              return;
+            }
+            var res = E.placePiece(S, S.selectedId, anc.r, anc.c);
+            if (!res.ok) {
+              toast("Ei mahdu tähän", "warn");
+              return;
+            }
+            previewAnchor = null;
+            if (res.solved) {
+              stopTimer();
+              render();
+              openOverlay("Valmis!", "Mosaiikki täyttyi — hieno sommitelma.", "Seuraava");
+              toast("Kaikki palat paikallaan", "good");
+            } else {
+              toast("Pala asetettu", "good");
+              render();
+            }
+          });
+        })(r, c, fillId);
+
+        board.appendChild(cell);
+      }
+    }
+  }
+
+  function renderTray() {
+    var tray = el("tray");
+    tray.innerHTML = "";
+    for (var i = 0; i < S.pieces.length; i++) {
+      tray.appendChild(renderPieceCard(S.pieces[i]));
+    }
+  }
+
+  function renderStatus() {
+    var prog = E.filledCount(S);
+    el("progressFill").style.width = (prog.need ? (prog.have / prog.need) * 100 : 0) + "%";
+    el("progressLabel").textContent = prog.have + " / " + prog.need;
+    el("shell").dataset.phase = S.phase;
+    el("shell").dataset.seed = String(S.seed);
+    el("shell").dataset.difficulty = S.difficulty;
+
+    if (S.phase === "won") {
+      el("phase").textContent = "Valmis";
+      el("message").textContent = "Kaikki palat täyttävät muodon. Aloita seuraava sommitelma.";
+    } else if (S.phase === "lost") {
+      el("phase").textContent = "Aika loppui";
+      el("message").textContent = "Kokeile uudelleen tai valitse helpompi taso.";
+    } else if (S.selectedId) {
+      var p = E.findPiece(S, S.selectedId);
+      el("phase").textContent = "Aseta pala";
+      el("message").textContent = p && p.placed
+        ? "Klikkaa palaa laudalla palauttaaksesi sen."
+        : "Kierrä tai peilaa, sitten klikkaa laillista ruutua.";
+    } else {
+      el("phase").textContent = "Valitse pala";
+      el("message").textContent = "Täytä tumma muoto kaikilla paloilla. Tavoite näkyy edistymispalkissa.";
+    }
+
+    var canTransform = !!(S.selectedId && E.findPiece(S, S.selectedId) && !E.findPiece(S, S.selectedId).placed && S.phase === "playing");
+    el("btnRotate").disabled = !canTransform;
+    el("btnFlip").disabled = !canTransform;
+    el("btnUndo").disabled = !S.history.length || S.phase === "lost";
+    el("btnHint").disabled = S.phase !== "playing";
+  }
+
+  function render() {
+    if (!S) return;
+    renderBoard();
+    renderTray();
+    renderStatus();
+    syncTestApi();
+  }
+
+  function openOverlay(title, body, btnLabel) {
+    el("ovTitle").textContent = title;
+    el("ovBody").textContent = body;
+    el("btnNext").textContent = btnLabel || "Uusi peli";
+    el("overlay").classList.add("open");
+    el("overlay").dataset.open = "1";
+    el("overlay").setAttribute("aria-hidden", "false");
+  }
+
+  function closeOverlay() {
+    el("overlay").classList.remove("open");
+    el("overlay").dataset.open = "0";
+    el("overlay").setAttribute("aria-hidden", "true");
+  }
+
+  function newPuzzle(opts) {
+    opts = opts || parseOpts();
+    el("difficulty").value = opts.difficulty;
+    stopTimer();
+    closeOverlay();
+    var puzzle = E.generatePuzzle(opts.seed, opts.difficulty);
+    if (opts.timeOverride != null) puzzle.timeMs = opts.timeOverride;
+    S = E.initState(puzzle);
+    S.timeLeft = S.timeMs || 0;
+    previewAnchor = null;
+    // Päivitä URL ilman reloadia (helpottaa Playwright-siemeniä).
+    try {
+      var url = new URL(location.href);
+      url.searchParams.set("seed", String(S.seed));
+      url.searchParams.set("difficulty", S.difficulty);
+      if (opts.timeOverride === 0) url.searchParams.set("timer", "0");
+      history.replaceState(null, "", url);
+    } catch (e) {}
+    render();
+    startTimer();
+    el("timerText").textContent = S.timeMs ? formatMs(S.timeMs) : "Ei aikarajaa";
+  }
+
+  function syncTestApi() {
+    globalThis.__MOSAIKKI__ = {
+      getState: function () { return S ? E.publicState(S) : null; },
+      getSeed: function () { return S ? S.seed : null; },
+      getPhase: function () { return S ? S.phase : null; },
+      isSolved: function () { return S ? E.isSolved(S) : false; },
+      select: function (id) {
+        var r = E.selectPiece(S, id);
+        render();
+        return r;
+      },
+      rotate: function () {
+        var r = E.rotateSelected(S);
+        render();
+        return r;
+      },
+      flip: function () {
+        var r = E.flipSelected(S);
+        render();
+        return r;
+      },
+      place: function (id, r, c) {
+        if (id) E.selectPiece(S, id);
+        var res = E.placePiece(S, id || S.selectedId, r, c);
+        if (res.ok && res.solved) {
+          stopTimer();
+          openOverlay("Valmis!", "Mosaiikki täyttyi — hieno sommitelma.", "Seuraava");
+        }
+        render();
+        return res;
+      },
+      remove: function (id) {
+        var r = E.removePiece(S, id);
+        render();
+        return r;
+      },
+      hint: function () {
+        var r = E.applyHint(S);
+        if (r.ok && r.solved) {
+          stopTimer();
+          openOverlay("Valmis!", "Mosaiikki täyttyi — hieno sommitelma.", "Seuraava");
+        }
+        render();
+        return r;
+      },
+      undo: function () {
+        var r = E.undo(S);
+        render();
+        return r;
+      },
+      newPuzzle: function (o) {
+        newPuzzle(Object.assign(parseOpts(), o || {}));
+      },
+      solve: function () {
+        // Aseta kaikki ratkaisun mukaan (Playwright-smoke / demo).
+        while (S.phase === "playing") {
+          var h = E.applyHint(S);
+          if (!h.ok) break;
+        }
+        if (S.phase === "won") {
+          stopTimer();
+          openOverlay("Valmis!", "Mosaiikki täyttyi — hieno sommitelma.", "Seuraava");
+        }
+        render();
+        return { ok: S.phase === "won" };
+      },
+      legalAnchors: function (id) {
+        return E.legalAnchors(S, id || S.selectedId);
+      },
+    };
+  }
+
+  // ---- Events -------------------------------------------------------------
+  el("btnRotate").addEventListener("click", function () {
+    var r = E.rotateSelected(S);
+    if (!r.ok) toast(r.reason === "placed" ? "Nosta pala ensin" : "Valitse pala", "warn");
+    else render();
+  });
+  el("btnFlip").addEventListener("click", function () {
+    var r = E.flipSelected(S);
+    if (!r.ok) toast(r.reason === "placed" ? "Nosta pala ensin" : "Valitse pala", "warn");
+    else render();
+  });
+  el("btnHint").addEventListener("click", function () {
+    var r = E.applyHint(S);
+    if (!r.ok) return;
+    toast("Vihje asetettu", "good");
+    if (r.solved) {
+      stopTimer();
+      openOverlay("Valmis!", "Mosaiikki täyttyi — hieno sommitelma.", "Seuraava");
+    }
+    render();
+  });
+  el("btnUndo").addEventListener("click", function () {
+    if (E.undo(S).ok) render();
+  });
+  el("btnNew").addEventListener("click", function () {
+    var opts = parseOpts();
+    opts.seed = (Math.random() * 0xffffffff) >>> 0;
+    opts.difficulty = el("difficulty").value;
+    newPuzzle(opts);
+  });
+  el("difficulty").addEventListener("change", function () {
+    var opts = parseOpts();
+    opts.difficulty = el("difficulty").value;
+    opts.seed = (Math.random() * 0xffffffff) >>> 0;
+    newPuzzle(opts);
+  });
+  el("btnNext").addEventListener("click", function () {
+    var opts = parseOpts();
+    opts.seed = (S.seed + 1) >>> 0;
+    opts.difficulty = el("difficulty").value;
+    newPuzzle(opts);
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (!S || S.phase !== "playing") return;
+    if (e.key === "r" || e.key === "R") {
+      E.rotateSelected(S); render();
+    } else if (e.key === "f" || e.key === "F") {
+      E.flipSelected(S); render();
+    } else if (e.key === "z" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      E.undo(S); render();
+    }
+  });
+
+  window.addEventListener("resize", function () {
+    if (S) renderBoard();
+  });
+
+  // Käynnistä
+  el("difficulty").value = parseOpts().difficulty;
+  newPuzzle(parseOpts());
+})();
+
+</script>
+</body>
+</html>

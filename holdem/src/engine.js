@@ -280,7 +280,7 @@
       toAct: -1,
       potTotal: 0,
       handNumber: 0,
-      difficulty: opts.difficulty || "normaali",
+      difficulty: opts.difficulty || "vaikea",
       winners: null,
       lastHand: null,
       phase: "playing", // playing | handOver | gameOver
@@ -865,7 +865,7 @@
       toAct: opts.toAct != null ? opts.toAct : 0,
       potTotal: opts.pot != null ? opts.pot : bets.reduce(function (s, b) { return s + (b || 0); }, 0),
       handNumber: 1,
-      difficulty: opts.difficulty || "normaali",
+      difficulty: opts.difficulty || "vaikea",
       winners: null,
       lastHand: null,
       phase: "playing",

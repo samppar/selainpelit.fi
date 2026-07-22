@@ -19,7 +19,7 @@ python3 -m http.server 8742
 
 - **Tavoite:** kerää chipit; viimeinen pystyssä oleva voittaa.
 - 2 taskukorttia + flop / turn / river.
-- Toiminnot: luovuta, passaa, maksa, panosta, korota.
+- Toiminnot: luovuta, passaa, maksa, korota.
 - Vaikeus: helppo (Basic) / normaali (Normal) / vaikea (Hard).
 
 ## Tekninen rakenne

@@ -1,4 +1,4 @@
-// hardBot.js — "vaikea". Julkisia Pluribus-tyylivihjeitä (ei limppiä, donk),
+// hardBot.js — oletusvastustaja ("vaikea"). Julkisia Pluribus-tyylivihjeitä (ei limppiä, donk),
 // ei MCCFR/blueprint-hakua (lähdekoodia ei julkaistu; selainpeliin liian raskas).
 // Lähde: https://en.wikipedia.org/wiki/Pluribus_(poker_bot)
 "use strict";

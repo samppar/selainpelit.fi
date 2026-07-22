@@ -1,0 +1,10 @@
+{
+  "name": "mosaiikki",
+  "version": "1.0.0",
+  "description": "Mosaiikki — polyomino shape-filling puzzle (selainpeli).",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run_tests.js"
+  },
+  "license": "MIT"
+}

@@ -217,8 +217,8 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
   filter: none;
 }
 .chip-stack.mini {
-  --chip-size: 18px;
-  --chip-lift: 3px;
+  --chip-size: 16px;
+  --chip-lift: 2.4px;
   --chip-thick: 2px;
 }
 .chip {
@@ -382,11 +382,11 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
 .board {
   position: absolute;
   left: 50%;
-  top: 42%;
+  top: 52%;
   transform: translate(-50%, -50%);
   display: flex;
   gap: 6px;
-  z-index: 2;
+  z-index: 5; /* lautakortit istuinten / chip-kasojen yläpuolelle */
 }
 .board .card.slot {
   background: rgba(0, 0, 0, 0.18);
@@ -528,9 +528,9 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
 
 /* Seat positions around oval */
 .seat[data-pos="0"] { left: 50%; bottom: -8px; transform: translateX(-50%); }
-.seat[data-pos="1"] { left: -4px; top: 38%; transform: translateY(-50%); }
-.seat[data-pos="2"] { left: 50%; top: -6px; transform: translateX(-50%); }
-.seat[data-pos="3"] { right: -4px; top: 38%; transform: translateY(-50%); left: auto; }
+.seat[data-pos="1"] { left: -4px; top: 36%; transform: translateY(-50%); }
+.seat[data-pos="2"] { left: 50%; top: -42px; transform: translateX(-50%); }
+.seat[data-pos="3"] { right: -4px; top: 36%; transform: translateY(-50%); left: auto; }
 
 @media (max-width: 560px) {
   .felt { aspect-ratio: 1.25 / 1; }

@@ -29,15 +29,23 @@ jobs:
             needs_install: false
           - game: holdem
             needs_install: false
+          - game: mylly
+            needs_install: false
+          - game: tammi
+            needs_install: false
+          - game: mosaiikki
+            needs_install: false
+          - game: palikat
+            needs_install: false
     defaults:
       run:
         working-directory: ${{ matrix.game }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Install dependencies
         if: matrix.needs_install
@@ -53,11 +61,11 @@ jobs:
       run:
         working-directory: hertta
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
           cache-dependency-path: hertta/package-lock.json
 
