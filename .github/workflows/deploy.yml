@@ -119,10 +119,10 @@ jobs:
           PORT="${DEPLOY_PORT:-22}"
           ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts
 
-      # Tuotanto = Cloudflare-origin (viikkokisat.fi), EI testi2.
+      # Tuotanto = Cloudflare-origin (viikkokisat.fi).
       # Secrets:
       #   DEPLOY_HOST=viikkokisat.fi
-      #   DEPLOY_USER=root
+      #   DEPLOY_USER=selainpelit
       #   DEPLOY_PATH=/var/www/selainpelit.fi/prod/public
       #   DEPLOY_SSH_KEY=<~/.ssh/selainpelit_ed25519>
       #   DEPLOY_PORT=22 (valinnainen)
