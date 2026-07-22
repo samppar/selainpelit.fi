@@ -217,14 +217,19 @@ aloitus saa olla parasta huonompi ja silti kelvata signaalin mukaan. Ajuri:
 
 | signalBand | sims=24 (kohinainen PIMC) | **sims=60 (= oikea peli)** |
 |---|---|---|
-| 0.15 (turvallinen tie-break) | 50,0 % (n=80) | **53,8 %** (43–37, n=80) |
+| 0.15 (turvallinen tie-break) | 50,0 % (n=80) | **52,8 %** (211–189, n=400) |
 | 0.6 (ohittaa PIMC:n) | **60,5 %** (121–79, n=200) | **40,0 %** (32–48, n=80) |
 
+Kaistan 0.15 sims=60-rivi on iso, ratkaiseva otos (200 peilattua paria = 400
+peliä). Pienempi ensiajo antoi 53,8 % (43–37, n=80); yhdistettynä 254–226/480 =
+52,9 %.
+
 **Johtopäätös.** Oikeassa pelivahvuudessa (sims=60, jota selain käyttää ihmistä
-vastaan) eksploitisesta signaloinnista EI ole hyötyä: turvallinen tie-break on
-kohinan sisällä (53,8 %, ~0,7 SE — ei merkitsevä) ja PIMC:n *ohittaminen*
-signaalilla on selvästi HAITALLISTA (40 %). Etu näkyy vain kun PIMC on
-tahallaan heikennetty (sims=24 → leveä kaista +10 pp).
+vastaan) eksploitisesta signaloinnista EI ole mitattavaa hyötyä: turvallinen
+tie-break on **52,8 % (n=400, ~1,1 SE yli 50 → ei tilastollisesti merkitsevä)**
+— marginaalisesti positiivinen mutta kohinan rajoilla. PIMC:n *ohittaminen*
+signaalilla on sen sijaan selvästi HAITALLISTA (40 %). Aito etu näkyy vain kun
+PIMC on tahallaan heikennetty (sims=24 → leveä kaista +10 pp).
 
 **Miksi.** 60 simulaation PIMC ehdollistaa jo JOKAISEEN julkiseen korttiin,
 joten se tosiasiassa *päättelee jo sen mitä signaali kertoisi*. Ihmispari
