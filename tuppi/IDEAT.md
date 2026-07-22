@@ -241,6 +241,53 @@ aloituksista ihmiselle *luettavampia* (jatkaa kaverin maata) rikkomatta peliä.
 **Mittausmenetelmä (vahvistettu käyttäjän kanssa):** peilatut jaot (samat
 kortit, joukkueet päinvastoin) + sims=60 kuten oikeassa pelissä.
 
+## 6. Uskomuspäivitys kesken pelin (§4:n "lupaava polku") — KOE, neutraali
+
+§4 nimesi lupaavimmaksi halvaksi askeleeksi PIMC+:n Bayes-tiltin laajentamisen
+aloitusnäytöstä koko peliin. Toteutettu ja mitattu.
+
+**Toteutus.** `players/beliefPlayer.js` ("Aavistus") perii PIMC+:n ja lisää
+determinointiin GIB:n "restricted choice" -tyylisiä VARMOJA "ei voi pitää"
+-päätelmiä, rajattuna tikin **viimeiseen** (4.) pelaajaan, jonka kortti
+ratkaisee tikin yksin:
+- Rami: jos 4. tunnusti muttei voittanut JA huippua piti vastustaja → hänellä
+  ei ole korkeampaa korttia siinä maassa (olisi ottanut ilmaisen tikin).
+- Nolo: jos 4. joutui voittamaan vastustajan johtaessa → ei huippua matalampaa
+  duckauskorttia siinä maassa.
+Nämä terävöittävät determinointia yli pelkkien voidien: korkeat/matalat
+piilokortit ohjataan oikealle paikalle.
+
+**Bugi joka kannattaa muistaa.** Ensimmäinen versio unohti parisuhteet: tikin
+4. pelaaja (leader+3) on **paria** 2. pelaajan (leader+1) kanssa. Jos kaveri
+johtaa tikkiä, ramaaja säästää tietoisesti korkean kortin ylittämättä kaveria —
+"ei voittanut" EI silloin kerro kädestä mitään. Buginen versio poisti korkean
+kortin väärin yleisessä tilanteessa → **41,7 %** (50–70, sims=60, n=120),
+selvästi huonompi. Korjaus: päätelmä vain kun huippua pitää vastustaja.
+
+**Tulos (korjattu, sims=60 = oikea peli, peilatut jaot):**
+
+| versio | voitto-% vs Mestari |
+|---|---|
+| buginen (ei parirajausta) | 41,7 % (50–70, n=120) — huonompi |
+| **korjattu (vastustaja-rajaus)** | **50,0 %** (60–60, n=120) — neutraali |
+
+**Johtopäätös.** Oikein toteutettuna varma lisäpäätelmä on TÄSMÄLLEEN neutraali.
+Selitys on sama kuin §4–§5:ssä: 60 simulaation PIMC ehdollistaa jo jokaiseen
+julkiseen korttiin ja on lähellä kattoa siinä, mitä julkisesta tiedosta voi
+päätellä — varma "ei voi pitää" -tieto on liian harvinaista ja usein jo
+implisiittisesti mukana, jotta se siirtäisi keskimääräistä päätöstä. **Sama
+kaava toistui kaikissa kolmessa kokeessa (Pluribus-diversiteetti §4, bridge-
+signalointi §5, uskomuspäivitys §6): lisäkerrokset auttavat vain heikennettyä
+hakijaa, eivät sims=60-Mestaria.**
+
+**Käytännön suositus tästä sessiosta.** Mestarin (PIMC, sims=60) taso on jo
+korkea; suoraviivaiset "lisää tietoa hakuun" -parannukset eivät tuota mitattavaa
+etua. Jos halutaan aidosti vahvempi botti, seuraavat askeleet olisivat
+raskaampia ja eri suuntaan: (a) parempi ROLLOUT-politiikka (nykyinen greedy on
+karkea — tässä vahva jatko voisi auttaa toisin kuin diversiteetti), tai
+(b) enemmän simulaatioita / hakusyvyyttä, tai (c) oikea CFR-lähestyminen. Kaikki
+selvästi työläämpiä kuin tämän session kevyet kokeet.
+
 ## 3. Muuta
 
 - Selainpelissä paikan valinta poistettu; pelaaja istuu paikalla 0 ja pelaa
