@@ -239,12 +239,29 @@ verrannollinen siihen, kuinka hyvin hakija jo päättelee julkisesta tiedosta.**
 Sama pätee §4:n Pluribus-diversiteettiin — molemmat auttavat heikkoa hakijaa,
 eivät vahvaa.
 
-**Suositus.** ÄLÄ vaihda selaimen Mestaria Siltaan: parannus ei ole merkitsevä
-mittarin bittiin asti. `signalBand`-oletus pidetty turvallisena (0.15), jottei
-se voi heikentää. Sivuhyöty jos joskus halutaan: kaista 0.15 tekee botin
-aloituksista ihmiselle *luettavampia* (jatkaa kaverin maata) rikkomatta peliä.
+**Erittely pelimuodon mukaan (`compare-by-type.mjs`, jakotason marginaali).**
+Ottelutason 52,8 % laimenee, koska Silta muuttaa VAIN ramin aloituksia —
+nolossa se on rakenteellisesti identtinen Mestarin kanssa. Jakotasolla
+(sims=60, peilatut riippumattomat jaot) efekti näkyy selvemmin ja keskittyy
+täysin ramiin:
+
+| pelimuoto | ka-marginaali (Silta − Mestari) | huom |
+|---|---|---|
+| **rami** | **+0,61 p/jako** (SE 0,37, ~1,65 SE, n=664) | koko efekti täällä |
+| nolo | **0,00 p** (n=536) | Silta ≡ Mestari (signaali ei aktivoidu) |
+
+Eli **ero ON isompi ramissa** (nolossa nolla). Rami-efekti on suunnaltaan
+positiivinen ja ottelumittaria selvempi, mutta yhä ~1,65 SE (ei aivan
+merkitsevä). *(Iso 3000 jaon rami-vahvistus ajossa.)*
+
+**Suositus.** Ottelutason parannus ei ole merkitsevä, mutta Silta EI voi
+heikentää (nolossa nolla, ramissa vain tie-break PIMC:n tasapelien kesken).
+Kaista 0.15 tekee botin aloituksista myös ihmiselle *luettavampia* (jatkaa
+kaverin maata). Siksi Silta 0.15 on **turvallinen valinnainen vaihto**, joskaan
+ei mitattu selväksi vahvistukseksi — selaimen Mestari voi jäädä oletukseksi.
 **Mittausmenetelmä (vahvistettu käyttäjän kanssa):** peilatut jaot (samat
-kortit, joukkueet päinvastoin) + sims=60 kuten oikeassa pelissä.
+kortit, joukkueet päinvastoin) + sims=60 kuten oikeassa pelissä; jakotason
+erittely pelimuodoittain.
 
 ## 6. Uskomuspäivitys kesken pelin (§4:n "lupaava polku") — KOE, neutraali
 
@@ -275,6 +292,11 @@ selvästi huonompi. Korjaus: päätelmä vain kun huippua pitää vastustaja.
 |---|---|
 | buginen (ei parirajausta) | 41,7 % (50–70, n=120) — huonompi |
 | **korjattu (vastustaja-rajaus)** | **50,0 %** (60–60, n=120) — neutraali |
+
+**Erittely pelimuodon mukaan** (`compare-by-type.mjs`, sims=60, jakotaso): rami
+−0,63 p (SE 0,59), nolo +0,06 p (SE 0,29) — molemmat neutraaleja, ei
+vastakkaismerkkistä piiloefektiä kummassakaan muodossa. (Nolon varianssi on
+pienempi, koska ei ryöstötuplausta.)
 
 **Johtopäätös.** Oikein toteutettuna varma lisäpäätelmä on TÄSMÄLLEEN neutraali.
 Selitys on sama kuin §4–§5:ssä: 60 simulaation PIMC ehdollistaa jo jokaiseen
