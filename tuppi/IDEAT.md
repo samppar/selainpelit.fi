@@ -247,15 +247,18 @@ täysin ramiin:
 
 | pelimuoto | ka-marginaali (Silta − Mestari) | huom |
 |---|---|---|
-| **rami** | **+0,61 p/jako** (SE 0,37, ~1,65 SE, n=664) | koko efekti täällä |
-| nolo | **0,00 p** (n=536) | Silta ≡ Mestari (signaali ei aktivoidu) |
+| **rami** | **+0,49 p/jako** (SE 0,24, ~2,0 SE, n=1630) | koko efekti täällä |
+| nolo | **0,00 p** (n=1370) | Silta ≡ Mestari (signaali ei aktivoidu) |
 
-Eli **ero ON isompi ramissa** (nolossa nolla). Rami-efekti on suunnaltaan
-positiivinen ja ottelumittaria selvempi, mutta yhä ~1,65 SE (ei aivan
-merkitsevä). *(Iso 3000 jaon rami-vahvistus ajossa.)*
+Eli **ero ON isompi ramissa** (nolossa rakenteellisesti nolla). Iso 3000 jaon
+otos (sims=60): rami-efekti +0,49 p/jako on **juuri merkitsevyyskynnyksellä
+(~2,0 SE, kaksisuuntainen p ≈ 0,05)** — pieni mutta todennäköisesti aito
+positiivinen. Ottelutason 52,8 % aliarvioi sen, koska ~45 % jaoista on noloja,
+joissa Silta ei tee mitään eri tavalla.
 
-**Suositus.** Ottelutason parannus ei ole merkitsevä, mutta Silta EI voi
-heikentää (nolossa nolla, ramissa vain tie-break PIMC:n tasapelien kesken).
+**Suositus.** Ottelutason parannus ei yllä merkitsevyyteen, mutta jakotason
+rami-efekti on juuri kynnyksellä (+0,49 p, ~2 SE) ja Silta EI voi heikentää
+(nolossa nolla, ramissa vain tie-break PIMC:n tasapelien kesken).
 Kaista 0.15 tekee botin aloituksista myös ihmiselle *luettavampia* (jatkaa
 kaverin maata). Siksi Silta 0.15 on **turvallinen valinnainen vaihto**, joskaan
 ei mitattu selväksi vahvistukseksi — selaimen Mestari voi jäädä oletukseksi.
