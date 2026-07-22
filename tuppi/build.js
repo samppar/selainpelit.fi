@@ -31,6 +31,7 @@ const FILES = [
   "players/heuristicPlayer.js",
   "players/countingPlayer.js",
   "players/championPlayer.js",
+  "players/bridgePlayer.js",
   "players/codexPlayer.js",
   "players/strategyPlayer.js",
   "players/probabilityPlayer.js",
@@ -218,7 +219,9 @@ const BOTS = {
   random: T.load("players/randomPlayer.js").default,
   heuristic: T.load("players/heuristicPlayer.js").default,
   counting: T.load("players/countingPlayer.js").default,
-  champion: T.load("players/championPlayer.js").default,
+  // Mestari-taso käyttää Siltaa: PIMC + bridge-signaali (turvallinen rami-
+  // aloitusten tie-break, ei voi heikentää; jakotason rami-etu ~2 SE). IDEAT §5.
+  champion: T.load("players/bridgePlayer.js").default,
   codex: T.load("players/codexPlayer.js").default,
   seniori: T.load("players/strategyPlayer.js").default,
   analyytikko: T.load("players/probabilityPlayer.js").default,
@@ -850,7 +853,7 @@ async function startDeal() {
   el("setup").classList.add("hidden");
   el("outcome").className = "outcome hidden";
   try {
-    const level = "champion"; // aina kovin taso (Mestari)
+    const level = "champion"; // aina kovin taso (Mestari = Silta-botti, IDEAT §5)
     const humanSeat = 0; // paikan valinta poistettu — pelaaja istuu aina paikalla 0
     yourTeam = teamOf(humanSeat);
     mySeat = humanSeat;

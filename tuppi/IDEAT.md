@@ -260,8 +260,10 @@ joissa Silta ei tee mitään eri tavalla.
 rami-efekti on juuri kynnyksellä (+0,49 p, ~2 SE) ja Silta EI voi heikentää
 (nolossa nolla, ramissa vain tie-break PIMC:n tasapelien kesken).
 Kaista 0.15 tekee botin aloituksista myös ihmiselle *luettavampia* (jatkaa
-kaverin maata). Siksi Silta 0.15 on **turvallinen valinnainen vaihto**, joskaan
-ei mitattu selväksi vahvistukseksi — selaimen Mestari voi jäädä oletukseksi.
+kaverin maata). **TILA: vaihdettu tuotantoon** — selaimen "Mestari"-taso käyttää
+nyt Siltaa (`build.js` BOTS.champion → `bridgePlayer.js`). Turvallinen: nolossa
+identtinen, ramissa vain tie-break, jakotason rami-etu ~2 SE. Käyttäjälle
+näkyvä tasolabel pysyy "Mestari" (botin nimeä ei näytetä).
 **Mittausmenetelmä (vahvistettu käyttäjän kanssa):** peilatut jaot (samat
 kortit, joukkueet päinvastoin) + sims=60 kuten oikeassa pelissä; jakotason
 erittely pelimuodoittain.
