@@ -94,20 +94,27 @@ function inferCannotHave(view) {
     if (trick.length < 4) continue; // vain täydet, ratkaistut tikit
     const led = trick[0][1].suit;
     let high3 = -1;
+    let seatHigh = -1;
     for (let i = 0; i < 3; i++) {
-      const c = trick[i][1];
-      if (c.suit === led && c.rank > high3) high3 = c.rank;
+      const [s, c] = trick[i];
+      if (c.suit === led && c.rank > high3) { high3 = c.rank; seatHigh = s; }
     }
     const [seat4, card4] = trick[3];
     if (card4.suit !== led) continue; // sakkasi -> void hoidetaan muualla
+    // Päätelmä pätee VAIN kun huippua pitää seat4:n VASTUSTAJA. Jos kaveri
+    // (= tikin 2. pelaaja) johtaa, seat4 säästää tietoisesti korkean kortin
+    // eikä "ei voittanut" kerro mitään hänen käsestään. Sama nolossa.
+    if (seatHigh % 2 === seat4 % 2) continue;
     if (rami) {
       if (card4.rank < high3) {
-        // ei voittanut vaikka oli viimeinen -> ei korkeampaa ko. maassa
+        // ei voittanut vaikka oli viimeinen JA vastustaja johti -> ei
+        // korkeampaa korttia ko. maassa (olisi ottanut ilmaisen tikin).
         for (const c of unseen) if (c.suit === led && c.rank > high3) cannot[seat4].add(c);
       }
     } else {
       if (card4.rank > high3) {
-        // joutui voittamaan -> ei duckauskorttia (huippua matalampaa) ko. maassa
+        // vastustaja johti (hyvä nolossa) mutta seat4 joutui silti voittamaan
+        // -> ei huippua matalampaa duckauskorttia ko. maassa.
         for (const c of unseen) if (c.suit === led && c.rank < high3) cannot[seat4].add(c);
       }
     }
