@@ -25,9 +25,21 @@
   var btnRetry = document.getElementById("btnRetry");
   var btnNew = document.getElementById("btnNew");
   var btnFs = document.getElementById("btnFullscreen");
+  var btnFsCorner = document.getElementById("btnFsCorner");
   var btnSound = document.getElementById("btnSound");
+  var diffBtns = {
+    easy: document.getElementById("diffEasy"),
+    normal: document.getElementById("diffNormal"),
+    hard: document.getElementById("diffHard")
+  };
 
-  var st = E.createState(1);
+  var difficulty = "normal";
+  try {
+    var savedDiff = window.localStorage.getItem("labyrintti.difficulty");
+    if (savedDiff && E.DIFFICULTY[savedDiff]) difficulty = savedDiff;
+  } catch (e) { /* localStorage ei käytettävissä */ }
+
+  var st = E.createState(1, difficulty);
   var keys = Object.create(null);
   var running = false;
   var inputMode = "keys";
@@ -197,12 +209,6 @@
       ctx.strokeStyle = "rgba(25, 14, 8, 0.85)";
       ctx.lineWidth = 2.5;
       strokeSmooth(v.path, v.path.length - 1);
-
-      if (v.pathIndex > 0) {
-        ctx.strokeStyle = "rgba(190, 130, 45, 0.5)";
-        ctx.lineWidth = 4;
-        strokeSmooth(v.path, v.pathIndex);
-      }
     }
 
     // START / FINISH
@@ -360,6 +366,10 @@
     if (btnFs) {
       btnFs.textContent = document.fullscreenElement ? "Poistu koko ruudusta" : "Koko ruutu";
     }
+    if (btnFsCorner) {
+      btnFsCorner.textContent = document.fullscreenElement ? "✕" : "⛶";
+      btnFsCorner.title = document.fullscreenElement ? "Poistu koko ruudusta (F)" : "Koko ruutu (F)";
+    }
 
     if (!running) {
       phaseEl.textContent = "Valmis lähtöön";
@@ -375,7 +385,8 @@
         ? "Tipahdit — takaisin tarkistuspisteeseen."
         : "Tipahdit — uusi yritys alusta.";
     } else {
-      phaseEl.textContent = "Taso " + v.levelNum;
+      var dl = E.DIFFICULTY[v.difficulty] ? E.DIFFICULTY[v.difficulty].label : "";
+      phaseEl.textContent = "Taso " + v.levelNum + (dl ? " · " + dl : "");
       messageEl.textContent = inputMode === "orient"
         ? "Kallista puhelinta varovasti."
         : "Nuolet / WASD kallistaa lautaa.";
@@ -486,7 +497,7 @@
   function startGame(useOrient) {
     hideOverlay();
     ensureAudio();
-    st = E.createState(1);
+    st = E.createState(1, difficulty);
     st.attempts = 1;
     running = true;
     lastTs = 0;
@@ -496,6 +507,32 @@
     fitCanvas();
     updateHud();
     showToast(useOrient ? "Kallista puhelinta" : "Nuolinäppäimet");
+  }
+
+  function updateDiffButtons() {
+    for (var key in diffBtns) {
+      if (!diffBtns[key]) continue;
+      var active = key === difficulty;
+      diffBtns[key].classList.toggle("active", active);
+      diffBtns[key].setAttribute("aria-pressed", String(active));
+    }
+  }
+
+  function setDifficulty(key) {
+    if (!E.DIFFICULTY[key]) return;
+    difficulty = key;
+    try { window.localStorage.setItem("labyrintti.difficulty", key); } catch (e) { /* ohita */ }
+    updateDiffButtons();
+    var label = E.DIFFICULTY[key].label;
+    if (running) {
+      startGame(inputMode === "orient");
+      showToast(label);
+    } else {
+      st = E.createState(1, difficulty);
+      draw();
+      updateHud();
+      showToast("Vaikeustaso: " + label);
+    }
   }
 
   function nextLevel() {
@@ -564,6 +601,7 @@
   });
   btnNew.addEventListener("click", begin);
   if (btnFs) btnFs.addEventListener("click", toggleFullscreen);
+  if (btnFsCorner) btnFsCorner.addEventListener("click", toggleFullscreen);
   if (btnSound) {
     btnSound.addEventListener("click", function () {
       soundOn = !soundOn;
@@ -572,12 +610,17 @@
       if (soundOn) soundCheckpoint();
     });
   }
+  Object.keys(diffBtns).forEach(function (key) {
+    if (diffBtns[key]) diffBtns[key].addEventListener("click", function () { setDifficulty(key); });
+  });
   window.addEventListener("resize", function () { fitCanvas(); draw(); });
 
   window.LabyrinttiUI = {
     getState: function () { return E.getView(st); },
     start: begin,
     nextLevel: nextLevel,
+    setDifficulty: setDifficulty,
+    getDifficulty: function () { return difficulty; },
     setTilt: function (gx, gy) { inputMode = "keys"; E.setTilt(st, gx, gy); },
     pressKey: function (key, down) { keys[key] = !!down; inputMode = "keys"; },
     stepOnce: function (dt) {
@@ -591,13 +634,14 @@
     toggleFullscreen: toggleFullscreen
   };
 
+  updateDiffButtons();
   fitCanvas();
   draw();
   updateHud();
   showOverlay(
     "Labyrintti",
     "Kallista lautaa ja vie kuula START → FINISH. Seuraa mustaa viivaa, vältä reiät. " +
-      "Taso vaihtuu vaikeammaksi joka kierroksella. F = koko ruutu.",
+      "Valitse vaikeustaso oikealta. Taso vaihtuu vaikeammaksi joka kierroksella. F = koko ruutu.",
     "Aloita",
     begin
   );

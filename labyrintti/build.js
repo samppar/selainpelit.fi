@@ -32,6 +32,7 @@ ${css}
       <p>Kallista · väistä · maaliin</p>
     </div>
     <div class="stage">
+      <button id="btnFsCorner" class="fs-corner" type="button" aria-label="Koko ruutu" title="Koko ruutu (F)">⛶</button>
       <div id="boardTilt" class="board-tilt">
         <div class="board-frame">
           <canvas id="board" width="500" height="460" role="img" aria-label="Pelilauta"></canvas>
@@ -65,6 +66,14 @@ ${css}
     <div class="hint-keys" aria-hidden="true">
       <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd><kbd>F</kbd>
     </div>
+
+    <h2>Vaikeustaso</h2>
+    <div class="diff-row" role="group" aria-label="Vaikeustaso">
+      <button id="diffEasy" class="diff" type="button" aria-pressed="false">Helppo</button>
+      <button id="diffNormal" class="diff" type="button" aria-pressed="true">Keskitaso</button>
+      <button id="diffHard" class="diff" type="button" aria-pressed="false">Vaikea</button>
+    </div>
+    <p class="diff-note">Vaikeampi = suurempi sokkelo, enemmän reikiä, herkemmät reiät ja nopeampi kuula.</p>
 
     <h2>Säännöt</h2>
     <p>Seuraa mustaa viivaa. Tipahdus reikään palauttaa viimeiseen tarkistuspisteeseen (vihreä piste). Maaliin päästyä taso vaihtuu vaikeammaksi.</p>

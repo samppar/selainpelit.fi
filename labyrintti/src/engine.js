@@ -13,11 +13,11 @@
   var ORIENT_SCALE = 1 / 30;
   var BOUNCE = 0.42;
 
-  var T = 9;
+  var T = 8;
   var W = 500;
   var H = 460;
-  var BALL_R = 6.2;
-  var HOLE_R = 9.5;
+  var BALL_R = 5.0;
+  var HOLE_R = 8.0;
 
   function H_(x, y, len) { return { x: x, y: y, w: len, h: T }; }
   function V_(x, y, len) { return { x: x, y: y, w: T, h: len }; }
@@ -52,14 +52,26 @@
     { di: -1, dj: 0, a: "W", b: "E" }
   ];
 
-  function generateLevel(levelNum) {
+  // Valittavat vaikeustasot. Muuttavat sokkelon kokoa, reikien määrää,
+  // reikien tarttuvuutta (catchMul) ja painovoimaa (gravityMul).
+  var DIFFICULTY = {
+    easy:   { label: "Helppo",    colsBase: 7,  colsCap: 8,  rowsBase: 6, rowsCap: 7,  holeProb: 0.72, catchMul: 0.82, gravityMul: 0.9 },
+    normal: { label: "Keskitaso", colsBase: 9,  colsCap: 10, rowsBase: 8, rowsCap: 9,  holeProb: 0.9,  catchMul: 1.0,  gravityMul: 1.0 },
+    hard:   { label: "Vaikea",    colsBase: 11, colsCap: 12, rowsBase: 9, rowsCap: 10, holeProb: 1.0,  catchMul: 1.1,  gravityMul: 1.05 }
+  };
+
+  function diffCfg(key) { return DIFFICULTY[key] || DIFFICULTY.normal; }
+
+  function generateLevel(levelNum, difficulty) {
     levelNum = Math.max(1, levelNum | 0);
+    var diffKey = DIFFICULTY[difficulty] ? difficulty : "normal";
+    var cfg = DIFFICULTY[diffKey];
     var rng = mulberry32((0x9e3779b1 ^ (levelNum * 2654435761)) >>> 0);
 
     var iL = T, iT = T, iR = W - T, iB = H - T;
     var usableW = iR - iL, usableH = iB - iT;
-    var cols = Math.min(8, 4 + levelNum);   // taso 1 → 5×4, kattona 8×6
-    var rows = Math.min(6, 3 + levelNum);
+    var cols = Math.min(cfg.colsCap, cfg.colsBase + levelNum);
+    var rows = Math.min(cfg.rowsCap, cfg.rowsBase + levelNum);
     var cellW = usableW / cols, cellH = usableH / rows;
     var cellMin = Math.min(cellW, cellH);
 
@@ -67,54 +79,78 @@
     function cy(j) { return iT + cellH * (j + 0.5); }
     function inb(i, j) { return i >= 0 && i < cols && j >= 0 && j < rows; }
 
-    // Ruudukko: joka ruudulla 4 seinää, kaivetaan käytävät.
+    // —— Yksi mutkitteleva reitti (Hamilton-polku) joka käy JOKAISEN ruudun ——
+    // Näin lauta täyttyy: ei tyhjää tilaa, reikä lähes joka ruudussa reitin varrella.
+    function key(i, j) { return i + "," + j; }
     var cell = [];
     for (var i = 0; i < cols; i++) {
       cell[i] = [];
-      for (var j = 0; j < rows; j++) cell[i][j] = { N: true, E: true, S: true, W: true, seen: false };
-    }
-    var stack = [[0, 0]];
-    cell[0][0].seen = true;
-    while (stack.length) {
-      var c = stack[stack.length - 1];
-      var ns = [];
-      for (var d = 0; d < 4; d++) {
-        var ni = c[0] + DIRS[d].di, nj = c[1] + DIRS[d].dj;
-        if (inb(ni, nj) && !cell[ni][nj].seen) ns.push(d);
-      }
-      if (!ns.length) { stack.pop(); continue; }
-      var pd = DIRS[ns[(rng() * ns.length) | 0]];
-      var pi = c[0] + pd.di, pj = c[1] + pd.dj;
-      cell[c[0]][c[1]][pd.a] = false;
-      cell[pi][pj][pd.b] = false;
-      cell[pi][pj].seen = true;
-      stack.push([pi, pj]);
+      for (var j = 0; j < rows; j++) cell[i][j] = { N: true, E: true, S: true, W: true };
     }
 
-    // Ratkaisureitti START(0,0) → FINISH(cols-1,rows-1), BFS käytäviä pitkin.
-    var finishC = [cols - 1, rows - 1];
-    function key(i, j) { return i + "," + j; }
-    var prev = {}, seen2 = {};
-    var q = [[0, 0]];
-    seen2[key(0, 0)] = true;
-    while (q.length) {
-      var cc = q.shift();
-      if (cc[0] === finishC[0] && cc[1] === finishC[1]) break;
-      for (d = 0; d < 4; d++) {
-        if (!cell[cc[0]][cc[1]][DIRS[d].a]) {
-          var qi = cc[0] + DIRS[d].di, qj = cc[1] + DIRS[d].dj;
-          if (inb(qi, qj) && !seen2[key(qi, qj)]) {
-            seen2[key(qi, qj)] = true;
-            prev[key(qi, qj)] = cc;
-            q.push([qi, qj]);
-          }
+    // Alkujärjestys: käärme (boustrophedon) alkaen (0,0) — taattu Hamilton-polku.
+    var order = [];
+    for (j = 0; j < rows; j++) {
+      if (j % 2 === 0) for (i = 0; i < cols; i++) order.push([i, j]);
+      else for (i = cols - 1; i >= 0; i--) order.push([i, j]);
+    }
+    var N = order.length;
+    var pos = {};
+    for (var k = 0; k < N; k++) pos[key(order[k][0], order[k][1])] = k;
+
+    // Backbite: satunnaista polkua häntäpäästä. Pää (START = (0,0)) pysyy paikallaan.
+    var iters = N * 30;
+    for (var t = 0; t < iters; t++) {
+      var tail = order[N - 1];
+      var cand = [];
+      for (var d = 0; d < 4; d++) {
+        var ni = tail[0] + DIRS[d].di, nj = tail[1] + DIRS[d].dj;
+        if (!inb(ni, nj)) continue;
+        var pj = pos[key(ni, nj)];
+        if (pj < N - 2) cand.push(pj);
+      }
+      if (!cand.length) continue;
+      var j0 = cand[(rng() * cand.length) | 0];
+      var lo = j0 + 1, hi = N - 1;
+      while (lo < hi) {
+        var tmp = order[lo]; order[lo] = order[hi]; order[hi] = tmp;
+        pos[key(order[lo][0], order[lo][1])] = lo;
+        pos[key(order[hi][0], order[hi][1])] = hi;
+        lo++; hi--;
+      }
+      if (lo === hi) pos[key(order[lo][0], order[lo][1])] = lo;
+    }
+
+    var sol = order;
+    var finishC = sol[N - 1];
+
+    function carve(a, b) {
+      var dx = b[0] - a[0], dy = b[1] - a[1];
+      for (var dd = 0; dd < 4; dd++) {
+        if (DIRS[dd].di === dx && DIRS[dd].dj === dy) {
+          cell[a[0]][a[1]][DIRS[dd].a] = false;
+          cell[b[0]][b[1]][DIRS[dd].b] = false;
         }
       }
     }
-    var sol = [], cur = finishC;
-    while (cur) { sol.unshift(cur); cur = prev[key(cur[0], cur[1])]; }
+    for (k = 1; k < N; k++) carve(sol[k - 1], sol[k]);
 
-    // Seinät: kehys + ruutujen kaivamattomat sisäreunat.
+    // Oikoreitit: aukko kahden reitillä kaukana olevan naapurin väliin (riski, mutta oikaisu).
+    var nShort = Math.min(4, 1 + Math.floor(levelNum / 2));
+    var made = 0, tries = 0;
+    var minGap = Math.max(4, Math.floor(N * 0.18));
+    while (made < nShort && tries < 300) {
+      tries++;
+      var si = (rng() * cols) | 0, sj = (rng() * rows) | 0;
+      var sd = DIRS[(rng() * 4) | 0];
+      var ti = si + sd.di, tj = sj + sd.dj;
+      if (!inb(ti, tj) || !cell[si][sj][sd.a]) continue;
+      if (Math.abs(pos[key(si, sj)] - pos[key(ti, tj)]) < minGap) continue;
+      carve([si, sj], [ti, tj]);
+      made++;
+    }
+
+    // Seinät: kehys + kaivamattomat sisäreunat (lyhyet puutapit).
     var walls = [H_(0, 0, W), H_(0, H - T, W), V_(0, 0, H), V_(W - T, 0, H)];
     for (i = 0; i < cols; i++) {
       for (j = 0; j < rows; j++) {
@@ -123,63 +159,70 @@
       }
     }
 
-    // Ohjausreitti + esteet suorilla käytäväpätkillä.
-    var path = [[cx(sol[0][0]), cy(sol[0][1])]];
+    // Ohjausreitti + reiät. Reikä osaan ruuduista (holeProb) → tiheä mutta kuljettava.
+    // START/FINISH-alueet jätetään vapaiksi. Reitti pujottelee reikien ohi.
+    var path = [];
     var rawHoles = [];
-    for (var k = 1; k < sol.length; k++) {
-      var cc2 = sol[k];
-      var cxk = cx(cc2[0]), cyk = cy(cc2[1]);
-      var placed = false;
-      if (k < sol.length - 1) {
-        var pc = sol[k - 1], ncc = sol[k + 1];
-        var dx1 = cc2[0] - pc[0], dy1 = cc2[1] - pc[1];
-        var straight = (dx1 === ncc[0] - cc2[0] && dy1 === ncc[1] - cc2[1]);
-        var horiz = dx1 !== 0;
-        var clean = horiz
-          ? (cell[cc2[0]][cc2[1]].N && cell[cc2[0]][cc2[1]].S)
-          : (cell[cc2[0]][cc2[1]].E && cell[cc2[0]][cc2[1]].W);
-        if (straight && clean && rng() < 0.32 + 0.05 * levelNum) {
-          var halfW = (horiz ? cellH : cellW) / 2 - T / 2;
-          var off = Math.min(halfW - HOLE_R - 2, halfW * 0.42);
-          if (off < 0) off = 0;
-          var side = rng() < 0.5 ? 1 : -1;
-          if (horiz) {
-            rawHoles.push([cxk, cyk + side * off]);
-            path.push([cxk, cyk - side * halfW * 0.45]);
-          } else {
-            rawHoles.push([cxk + side * off, cyk]);
-            path.push([cxk - side * halfW * 0.45, cyk]);
-          }
-          placed = true;
+    var flip = 1;
+    var safeEnds = 1;
+    for (k = 0; k < N; k++) {
+      var ccx = cx(sol[k][0]), ccy = cy(sol[k][1]);
+      if (k < safeEnds || k >= N - safeEnds) { path.push([ccx, ccy]); continue; }
+      var din = [sol[k][0] - sol[k - 1][0], sol[k][1] - sol[k - 1][1]];
+      var dout = [sol[k + 1][0] - sol[k][0], sol[k + 1][1] - sol[k][1]];
+      if (din[0] === dout[0] && din[1] === dout[1]) {
+        // Suora käytävä: reikä toiselle sivulle, viiva pujottaa vastapuolelta.
+        var horiz = din[0] !== 0;
+        var halfW = (horiz ? cellH : cellW) / 2 - T / 2;
+        var off = Math.min(halfW - HOLE_R - 2, halfW * 0.5);
+        if (off < 1 || rng() >= cfg.holeProb) { path.push([ccx, ccy]); continue; }
+        flip = -flip;
+        if (horiz) {
+          rawHoles.push([ccx, ccy + flip * off]);
+          path.push([ccx, ccy - flip * halfW * 0.42]);
+        } else {
+          rawHoles.push([ccx + flip * off, ccy]);
+          path.push([ccx - flip * halfW * 0.42, ccy]);
         }
-      }
-      if (!placed) path.push([cxk, cyk]);
-    }
-
-    // Ansareiät umpikujissa (poispäin käytävän suusta).
-    for (i = 0; i < cols; i++) {
-      for (j = 0; j < rows; j++) {
-        if ((i === 0 && j === 0) || (i === finishC[0] && j === finishC[1])) continue;
-        var deg = 0, openD = null;
-        for (d = 0; d < 4; d++) if (!cell[i][j][DIRS[d].a]) { deg++; openD = DIRS[d]; }
-        if (deg === 1) {
-          rawHoles.push([cx(i) - openD.di * cellMin * 0.16, cy(j) - openD.dj * cellMin * 0.16]);
+      } else {
+        // Käännös: reikä ulkonurkkaan (harvemmin — mutkat ovat jo vaikeita).
+        var fx = din[0] - dout[0], fy = din[1] - dout[1];
+        var ox = Math.min(cellW * 0.27, cellW / 2 - T / 2 - HOLE_R - 1);
+        var oy = Math.min(cellH * 0.27, cellH / 2 - T / 2 - HOLE_R - 1);
+        var hxo = ccx + (fx > 0 ? ox : fx < 0 ? -ox : 0);
+        var hyo = ccy + (fy > 0 ? oy : fy < 0 ? -oy : 0);
+        if (rng() < cfg.holeProb &&
+            Math.sqrt((hxo - ccx) * (hxo - ccx) + (hyo - ccy) * (hyo - ccy)) >= HOLE_R + 2) {
+          rawHoles.push([hxo, hyo]);
         }
+        // Viiva kaartaa sisäkulmaan (poispäin ulkonurkan reiästä).
+        path.push([ccx - (fx > 0 ? 1 : fx < 0 ? -1 : 0) * cellW * 0.12,
+                   ccy - (fy > 0 ? 1 : fy < 0 ? -1 : 0) * cellH * 0.12]);
       }
     }
 
-    // Numerointi reitin järjestyksessä.
-    var solPts = sol.map(function (s) { return [cx(s[0]), cy(s[1])]; });
-    for (var r = 0; r < rawHoles.length; r++) {
-      var best = 1e9, bi = 0;
-      for (var s2 = 0; s2 < solPts.length; s2++) {
-        var dd = (rawHoles[r][0] - solPts[s2][0]) * (rawHoles[r][0] - solPts[s2][0]) +
-                 (rawHoles[r][1] - solPts[s2][1]) * (rawHoles[r][1] - solPts[s2][1]);
-        if (dd < best) { best = dd; bi = s2; }
+    // Takuu: poista reiät jotka ovat liian lähellä ohjausviivaa (muuten reitti tukkeutuisi).
+    // Näin huolellinen pelaaja pääsee aina läpi viivaa seuraamalla.
+    var minClear = HOLE_R + BALL_R + 3;
+    function distToPath(hx, hy) {
+      var best = 1e9;
+      for (var p = 1; p < path.length; p++) {
+        var ax = path[p - 1][0], ay = path[p - 1][1];
+        var bx = path[p][0], by = path[p][1];
+        var vx = bx - ax, vy = by - ay;
+        var wx = hx - ax, wy = hy - ay;
+        var len2 = vx * vx + vy * vy || 1;
+        var tt = (wx * vx + wy * vy) / len2;
+        tt = tt < 0 ? 0 : tt > 1 ? 1 : tt;
+        var dx = hx - (ax + tt * vx), dy = hy - (ay + tt * vy);
+        var dd = dx * dx + dy * dy;
+        if (dd < best) best = dd;
       }
-      rawHoles[r].push(bi);
+      return Math.sqrt(best);
     }
-    rawHoles.sort(function (a, b) { return a[2] - b[2]; });
+    rawHoles = rawHoles.filter(function (h) { return distToPath(h[0], h[1]) >= minClear; });
+
+    var solPts = path.slice();
     var holes = rawHoles.map(function (h, idx) { return hole(idx + 1, h[0], h[1]); });
 
     // Tarkistuspisteet reitin varrella.
@@ -197,6 +240,7 @@
       holeR: HOLE_R,
       wallT: T,
       levelNum: levelNum,
+      difficulty: diffKey,
       start: { x: path[0][0], y: path[0][1] },
       finish: { x: solPts[solPts.length - 1][0], y: solPts[solPts.length - 1][1], r: 15 },
       path: path,
@@ -216,6 +260,7 @@
       holeR: src.holeR,
       wallT: src.wallT,
       levelNum: src.levelNum || 1,
+      difficulty: src.difficulty || "normal",
       start: { x: src.start.x, y: src.start.y },
       finish: { x: src.finish.x, y: src.finish.y, r: src.finish.r },
       path: (src.path || []).map(function (p) { return [p[0], p[1]]; }),
@@ -231,13 +276,17 @@
     };
   }
 
-  function createState(levelArg) {
+  function createState(levelArg, difficulty) {
     var L;
-    if (typeof levelArg === "number") L = generateLevel(levelArg);
+    if (typeof levelArg === "number") L = generateLevel(levelArg, difficulty);
     else L = cloneLevel(levelArg || LEVEL);
+    var cfg = diffCfg(L.difficulty);
     return {
       level: L,
       levelNum: L.levelNum,
+      difficulty: L.difficulty,
+      catchMul: cfg.catchMul,
+      gravityMul: cfg.gravityMul,
       x: L.start.x,
       y: L.start.y,
       vx: 0,
@@ -274,9 +323,9 @@
     resetBall(st);
   }
 
-  // Siirry seuraavaan tasoon (loputon eteneminen).
+  // Siirry seuraavaan tasoon (loputon eteneminen, sama vaikeustaso).
   function advanceLevel(st) {
-    var L = generateLevel((st.levelNum || 1) + 1);
+    var L = generateLevel((st.levelNum || 1) + 1, st.difficulty);
     st.level = L;
     st.levelNum = L.levelNum;
     st.checkpoint = { x: L.start.x, y: L.start.y, pathIndex: 0 };
@@ -418,7 +467,7 @@
     // vauhdilla voi kiitää ohi. slowF ∈ [0.42, 1].
     var speed = Math.sqrt(st.vx * st.vx + st.vy * st.vy);
     var slowF = clamp(1 - speed / (MAX_SPEED * 0.72), 0.42, 1);
-    var thresh = ((hr - r) + r * 0.35) * slowF;
+    var thresh = ((hr - r) + r * 0.35) * slowF * (st.catchMul || 1);
     if (thresh < r * 0.35) thresh = r * 0.35;
     for (var i = 0; i < holes.length; i++) {
       var h = holes[i];
@@ -461,8 +510,9 @@
     st.lastHit = 0;
     st.justCheckpoint = false;
     st.timeMs += dt * 1000;
-    st.vx += st.gx * GRAVITY * dt;
-    st.vy += st.gy * GRAVITY * dt;
+    var g = GRAVITY * (st.gravityMul || 1);
+    st.vx += st.gx * g * dt;
+    st.vy += st.gy * g * dt;
 
     var sp = Math.sqrt(st.vx * st.vx + st.vy * st.vy);
     if (sp > MAX_SPEED) {
@@ -492,6 +542,7 @@
       ballR: st.level.ballR,
       holeR: st.level.holeR,
       levelNum: st.levelNum,
+      difficulty: st.difficulty,
       x: st.x,
       y: st.y,
       vx: st.vx,
@@ -533,6 +584,7 @@
   return {
     LEVEL: LEVEL,
     GRAVITY: GRAVITY,
+    DIFFICULTY: DIFFICULTY,
     generateLevel: generateLevel,
     createState: createState,
     resetBall: resetBall,

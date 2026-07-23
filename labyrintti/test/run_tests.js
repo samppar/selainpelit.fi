@@ -67,12 +67,24 @@ for (let lvl = 1; lvl <= 8; lvl++) {
   ok(maxSeg < G.width * 0.9, `taso ${lvl}: ei liian pitkiä segmenttejä (${maxSeg.toFixed(0)})`);
 }
 
+// —— Vaikeustasot ——
+ok(E.DIFFICULTY && E.DIFFICULTY.easy && E.DIFFICULTY.hard, "vaikeustasot määritelty");
+const easy3 = E.generateLevel(3, "easy");
+const hard3 = E.generateLevel(3, "hard");
+ok(easy3.difficulty === "easy" && hard3.difficulty === "hard", "taso muistaa vaikeuden");
+ok(hard3.walls.length >= easy3.walls.length, "vaikea = suurempi/tiheämpi sokkelo");
+ok(E.createState(2, "hard").catchMul > E.createState(2, "easy").catchMul, "vaikea = tarttuvammat reiät");
+ok(E.createState(2, "hard").gravityMul > E.createState(2, "easy").gravityMul, "vaikea = nopeampi kuula");
+ok(E.getView(E.createState(1, "hard")).difficulty === "hard", "view: vaikeus");
+// Tuntematon vaikeus → normaali (ei kaadu)
+ok(E.generateLevel(2, "bogus").difficulty === "normal", "tuntematon vaikeus → normaali");
+
 // —— Determinismi: sama taso samalla numerolla ——
 const a = E.generateLevel(4), b = E.generateLevel(4);
 ok(JSON.stringify(a.holes) === JSON.stringify(b.holes), "generaattori on toistettava");
 
 // —— Vaikeus kasvaa ——
-ok(E.generateLevel(6).holes.length >= E.generateLevel(1).holes.length, "korkeampi taso ei ole helpompi");
+ok(E.generateLevel(6).path.length >= E.generateLevel(1).path.length, "korkeampi taso ei ole helpompi");
 
 // —— Fysiikka ——
 let st = E.createState();
