@@ -5,6 +5,8 @@
   "type": "module",
   "description": "Katko — viimeinen tikki. Selainpeli + päätön eval-/turnausharness.",
   "scripts": {
+    "test": "node test/run_tests.js",
+    "build": "node build.js",
     "tournament": "node tournament.mjs",
     "eval": "node eval.js"
   }

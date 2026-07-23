@@ -12,6 +12,9 @@ engine.js           Puhdas pelimoottori: säännöt, pakka, siemennettävä RNG,
                     ei ajastimia — sama koodi ajaa selaimen ja Node-harnessin.
 index.html          Käyttöliittymä + animaatio. Tuo säännöt engine.js:stä ja
                     tekoälyt agents/-moduuleina.
+build.js            Niputtaja: inlinettää moduulit yhdeksi itsenäiseksi
+                    dist/index.html:ksi tuotantoon (npm run build).
+test/run_tests.js   Sääntö- ja tekoälyregressiot (npm test, ajetaan CI:ssä).
 tournament.mjs      Päätön turnaus: neljä agenttia, tuhansia siemennettyjä jakoja,
                     voitto-% ja pisteet per agentti.
 eval.js             Yksittäisen agentin itsetesti (laillisuus / vahvuus / nopeus),
@@ -78,6 +81,16 @@ python3 -m http.server 8000
 ```
 
 (Mikä tahansa staattinen palvelin käy, esim. `npx serve`.)
+
+Tuotantoon peli niputetaan yhdeksi tiedostoksi: `npm run build` →
+`dist/index.html`, joka toimii sellaisenaan ilman moduulilatauksia.
+Deploy-workflow ajaa buildin ja kopioi niputetun tiedoston.
+
+## Testit
+
+```bash
+npm test        # säännöt, void-päättely, twoPlan/planChoice, agenttien laillisuus
+```
 
 ## Tekoälyn testaus (päätön, ei selainta)
 

@@ -31,12 +31,19 @@ export const loCard = cs => cs.reduce((a, b) => (b.v < a.v ? b : a));
 export const hiCard = cs => cs.reduce((a, b) => (b.v > a.v ? b : a));
 
 // Kortinlaskenta: mitä maista tiedetään havainnon perusteella.
+// HUOM kalibrointi: Katkossa jaetaan vain 20/52 korttia, joten "13 − omat −
+// pelatut" laskee mukaan myös jakamattoman pakan. Muilla pelaajilla voi olla
+// maan kortteja korkeintaan yhteensä käsikorttiensa verran — katkaistaan
+// outstanding siihen, ettei maa näytä "elävämmältä" kuin se voi olla.
 export function suitInfo(view) {
   const info = {};
+  const othersTotal = view.handCounts
+    ? view.handCounts.reduce((a, b) => a + b, 0) - view.hand.length
+    : 15;
   for (const s of SUITS) {
     const my = view.hand.filter(c => c.suit === s).map(c => c.v);
     const playedCount = view.played.filter(c => c.suit === s).length;
-    const outstanding = 13 - my.length - playedCount;   // maan kortteja yhä MUILLA
+    const outstanding = Math.min(13 - my.length - playedCount, othersTotal); // maan kortteja yhä MUILLA (yläraja)
     const seen = new Set(view.played.filter(c => c.suit === s).map(c => c.v));
     for (const v of my) seen.add(v);
     let unseenMax = -1;                                   // korkein kortti jota en näe
@@ -103,13 +110,36 @@ export function twoPlan(view, info, mode = "seek") {
   if (!view.kakko || mode === "none") return null;
   const twos = view.hand.filter(c => c.v === 2);
   if (!twos.length) return null;
+
+  // Pistetilanne skaalaa riskinoton (ks. IDEAT.md): target − 1 pisteessä
+  // tavallinenkin viimeinen tikki voittaa ottelun, joten kakkosta ei kannata
+  // jahdata (vain ilmainen varma lopetus kelpaa). Target − 2 pisteessä
+  // kakkoslopetus voittaa ottelun yhdellä tikillä — iso riski kannattaa.
+  if (view.target != null && view.scores) {
+    const need = view.target - view.scores[view.me];
+    if (need <= 1) mode = "sure";
+    else if (need === 2) mode = "hunt";
+  }
+
+  // Maa on todistetusti kuollut myös kun JOKAINEN muu kortillinen pelaaja on
+  // näytetysti pihalla siitä (sakannut kun maata pyydettiin). Pelkkä
+  // 13 kortin laskenta ei 20 kortin jaossa juuri koskaan täyty.
+  const deadByVoids = (s) => {
+    if (!view.voids || !view.handCounts) return false;
+    for (let p = 0; p < 4; p++) {
+      if (p === view.me) continue;
+      if (view.handCounts[p] > 0 && !view.voids[p][s]) return false;
+    }
+    return true;
+  };
+
   const leadsLeft = 6 - view.trickNumber;
   let best = null;
   for (const two of twos) {
     const s = two.suit, si = info[s], out = si.outstanding;
     const bossNonTwo = si.my.filter(v => v > 2 && v > si.unseenMax);
     let committed = false, aspire = false;
-    if (out === 0) {
+    if (out === 0 || deadByVoids(s)) {
       committed = true;                                   // maa kuollut -> kakkonen voittaa avattuna
     } else if (bossNonTwo.length >= 1) {
       if (mode === "seek" && out <= 3 * bossNonTwo.length && out <= 3 * leadsLeft) aspire = true;
@@ -130,12 +160,15 @@ export function planChoice(view, info, plan) {
   const leadLowKeepTwo = () => { const p = h.filter(c => c !== two); return loCard(p.length ? p : h); };
 
   if (view.trick.length === 0) {                       // johdan
+    if (view.trickNumber === 5 && plan.committed && two) return two; // maa kuollut + viimeinen tikki -> lyö kakkonen
+    // Kakkonen voittaa VAIN avattuna, joten tikki 4 on pakko voittaa, jotta
+    // pääsen johtamaan viimeistä. Voita se halvimmalla pomolla (ei kakkosella).
+    if (view.trickNumber === 4 && plan.committed) {
+      const bosses = h.filter(c => c.v !== 2 && isBoss(info, c));
+      if (bosses.length) return loCard(bosses);
+    }
     const drivers = h.filter(c => c.suit === s && c.v > 2 && isBoss(info, c));
     if (drivers.length) return hiCard(drivers);        // aja maata tyhjäksi korkeimmalla pomolla
-    if (plan.committed && two && h.filter(c => c.suit === s).length === 1) {
-      if (view.trickNumber === 5) return two;          // maa kuollut + viimeinen tikki -> lyö kakkonen
-      return leadLowKeepTwo();
-    }
     return leadLowKeepTwo();
   }
 
