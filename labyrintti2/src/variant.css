@@ -1,0 +1,32 @@
+/* Labyrintti 2: aloitustason valinta alkuperäisen kuulalaudan päälle. */
+.difficulty-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+.difficulty-picker button {
+  border: 1px solid rgba(255, 237, 196, 0.26);
+  border-radius: 10px;
+  padding: 0.72rem 0.45rem;
+  color: #fff4db;
+  background: linear-gradient(160deg, rgba(196, 160, 90, 0.32), rgba(61, 41, 24, 0.62));
+  font-weight: 700;
+}
+.difficulty-picker button:hover {
+  border-color: #dfbd75;
+  transform: translateY(-2px);
+}
+.difficulty-picker small {
+  display: block;
+  margin-top: 0.22rem;
+  color: rgba(255, 244, 219, 0.66);
+  font-size: 0.67rem;
+  font-weight: 400;
+}
+.overlay:not(.chosen) #overlayBtn { display: none; }
+.overlay.chosen .difficulty-picker { display: none; }
+@media (max-width: 460px) {
+  .difficulty-picker { grid-template-columns: 1fr; }
+  .difficulty-picker button { padding: 0.48rem; }
+}
