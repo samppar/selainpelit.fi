@@ -1,0 +1,1876 @@
+<!DOCTYPE html><html lang="fi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Labyrintti 2 — kallista lautaa, vieritä kuula maaliin ja vältä reiät.">
+<meta name="theme-color" content="#2a1c12"><title>Labyrintti 2 — selainpelit.fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>/* Labyrintti — koivulauta, verstashenki */
+:root {
+  --ink: #1a1410;
+  --muted: #6e5748;
+  --birch: #e8d5b0;
+  --walnut: #3d2918;
+  --brass: #c4a05a;
+  --brass-deep: #8a6a2e;
+  --panel: rgba(255, 248, 236, 0.94);
+  --cream: #f7efe0;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+
+body {
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Source Serif 4", Georgia, serif;
+  background:
+    radial-gradient(ellipse 90% 60% at 15% -10%, rgba(232, 213, 176, 0.2), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, rgba(61, 41, 24, 0.5), transparent 55%),
+    linear-gradient(165deg, #4a3422 0%, #2a1c12 42%, #140e0a 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 310px);
+  gap: 1.4rem;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 2rem;
+  align-items: start;
+}
+
+.board-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.brand {
+  text-align: center;
+  animation: rise 0.65s ease both;
+}
+
+.brand h1 {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(1.9rem, 4.5vw, 2.6rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f4e6c8;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.brand p {
+  margin: 0.2rem 0 0;
+  color: rgba(244, 230, 200, 0.72);
+  font-size: 0.92rem;
+}
+
+.stage {
+  position: relative;
+  width: min(100%, 460px);
+  perspective: 1000px;
+  animation: rise 0.8s 0.06s ease both;
+}
+
+.board-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.07s linear;
+  will-change: transform;
+}
+
+.fs-corner {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  line-height: 1;
+  border: 1px solid rgba(232, 213, 176, 0.35);
+  border-radius: 9px;
+  color: #f3e6cf;
+  background: rgba(28, 18, 10, 0.55);
+  backdrop-filter: blur(3px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+
+.fs-corner:hover {
+  background: rgba(40, 26, 14, 0.8);
+  transform: translateY(-1px);
+}
+
+body.is-fullscreen .fs-corner { top: 14px; right: 14px; }
+
+.board-frame {
+  position: relative;
+  border-radius: 12px;
+  padding: 14px;
+  background:
+    linear-gradient(145deg, #5a3d28, #2c1b10 55%, #1a100a);
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(232, 213, 176, 0.28);
+}
+
+#board {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  touch-action: none;
+  background: var(--birch);
+}
+
+.hud {
+  display: flex;
+  gap: 0.55rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: min(100%, 460px);
+  animation: rise 0.85s 0.1s ease both;
+}
+
+.stat {
+  flex: 1 1 70px;
+  min-width: 70px;
+  padding: 0.5rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(255, 246, 232, 0.1);
+  border: 1px solid rgba(232, 213, 176, 0.22);
+  color: #f4e6c8;
+  text-align: center;
+}
+
+.stat strong {
+  display: block;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.15rem;
+  color: #fff6e4;
+}
+
+.stat span {
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.side {
+  background: var(--panel);
+  border: 1px solid rgba(61, 41, 24, 0.14);
+  border-radius: 14px;
+  padding: 1.05rem 1.1rem 1.2rem;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
+  animation: rise 0.75s 0.12s ease both;
+}
+
+.side h2 {
+  margin: 0.85rem 0 0.4rem;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.1rem;
+  color: var(--walnut);
+}
+
+.side p {
+  margin: 0 0 0.65rem;
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 0.93rem;
+}
+
+.phase {
+  margin: 0 0 0.3rem !important;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.35rem !important;
+  color: var(--walnut) !important;
+  font-weight: 650;
+}
+
+.tilt-meter {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0.4rem 0 0.8rem;
+  border-radius: 50%;
+  border: 1px solid rgba(61, 41, 24, 0.2);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(196, 160, 90, 0.18), transparent 60%),
+    #f3e8d4;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.tilt-meter::before,
+.tilt-meter::after {
+  content: "";
+  position: absolute;
+  background: rgba(61, 41, 24, 0.15);
+}
+.tilt-meter::before {
+  left: 50%; top: 8px; bottom: 8px; width: 1px; transform: translateX(-50%);
+}
+.tilt-meter::after {
+  top: 50%; left: 8px; right: 8px; height: 1px; transform: translateY(-50%);
+}
+
+#tiltDot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  border-radius: 50%;
+  background: linear-gradient(160deg, var(--brass), var(--brass-deep));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%);
+  transition: transform 0.08s linear;
+}
+
+.hint-keys {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin: 0.35rem 0 0.7rem;
+}
+
+.hint-keys kbd {
+  display: inline-block;
+  min-width: 1.65rem;
+  padding: 0.18rem 0.35rem;
+  text-align: center;
+  border-radius: 5px;
+  border: 1px solid rgba(61, 41, 24, 0.18);
+  background: #f3e6d0;
+  font-size: 0.78rem;
+  box-shadow: 0 1px 0 rgba(61, 41, 24, 0.12);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+
+.controls button {
+  appearance: none;
+  border: 1px solid rgba(42, 24, 16, 0.22);
+  border-radius: 8px;
+  padding: 0.62rem 0.85rem;
+  background: linear-gradient(180deg, #f7ebda, #e8d4b0);
+  font-weight: 600;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.controls button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(42, 24, 16, 0.12);
+}
+
+.controls button.primary {
+  background: linear-gradient(180deg, var(--brass), var(--brass-deep));
+  color: #1a1410;
+  border-color: rgba(42, 24, 16, 0.3);
+}
+
+.diff-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.diff-row .diff {
+  flex: 1;
+  appearance: none;
+  border: 1px solid rgba(42, 24, 16, 0.22);
+  border-radius: 8px;
+  padding: 0.5rem 0.35rem;
+  background: linear-gradient(180deg, #f7ebda, #e8d4b0);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.diff-row .diff:hover { transform: translateY(-1px); }
+
+.diff-row .diff.active {
+  background: linear-gradient(180deg, var(--brass), var(--brass-deep));
+  color: #1a1410;
+  border-color: rgba(42, 24, 16, 0.42);
+  box-shadow: inset 0 1px 3px rgba(42, 24, 16, 0.25);
+}
+
+.diff-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  opacity: 0.72;
+}
+
+.overlay {
+  position: absolute;
+  inset: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: rgba(20, 12, 8, 0.72);
+  color: #f4e6c8;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 2;
+}
+
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.overlay-card {
+  text-align: center;
+  padding: 1.2rem 1.35rem;
+  max-width: 270px;
+}
+
+.overlay-card h2 {
+  margin: 0 0 0.4rem;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.55rem;
+}
+
+.overlay-card p {
+  margin: 0 0 1rem;
+  opacity: 0.88;
+  line-height: 1.4;
+}
+
+.overlay-card button {
+  appearance: none;
+  border: none;
+  border-radius: 8px;
+  padding: 0.68rem 1.15rem;
+  background: linear-gradient(180deg, var(--brass), var(--brass-deep));
+  color: #1a1410;
+  font-weight: 700;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.2rem;
+  transform: translateX(-50%) translateY(120%);
+  padding: 0.6rem 1.05rem;
+  border-radius: 999px;
+  background: rgba(20, 12, 8, 0.92);
+  color: #f4e6c8;
+  font-size: 0.93rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: transform 0.28s ease;
+  z-index: 30;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 840px) {
+  .shell { grid-template-columns: 1fr; padding: 1rem; }
+  .side { order: 2; }
+}
+
+body.is-fullscreen { overflow: hidden; }
+body.is-fullscreen .shell {
+  max-width: none;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  padding: 0.45rem;
+  grid-template-columns: 1fr;
+  align-items: center;
+  justify-items: center;
+}
+body.is-fullscreen .brand,
+body.is-fullscreen .side,
+body.is-fullscreen .hud { display: none; }
+body.is-fullscreen .board-col {
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+}
+body.is-fullscreen .stage {
+  width: auto;
+  max-width: none;
+  perspective: 1400px;
+}
+body.is-fullscreen .board-frame { padding: 10px; }
+body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
+
+/* Labyrintti 2: aloitustason valinta alkuperäisen kuulalaudan päälle. */
+.difficulty-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+.difficulty-picker button {
+  border: 1px solid rgba(255, 237, 196, 0.26);
+  border-radius: 10px;
+  padding: 0.72rem 0.45rem;
+  color: #fff4db;
+  background: linear-gradient(160deg, rgba(196, 160, 90, 0.32), rgba(61, 41, 24, 0.62));
+  font-weight: 700;
+}
+.difficulty-picker button:hover {
+  border-color: #dfbd75;
+  transform: translateY(-2px);
+}
+.difficulty-picker small {
+  display: block;
+  margin-top: 0.22rem;
+  color: rgba(255, 244, 219, 0.66);
+  font-size: 0.67rem;
+  font-weight: 400;
+}
+.overlay:not(.chosen) #overlayBtn { display: none; }
+.overlay.chosen .difficulty-picker { display: none; }
+@media (max-width: 460px) {
+  .difficulty-picker { grid-template-columns: 1fr; }
+  .difficulty-picker button { padding: 0.48rem; }
+}
+</style></head><body><main class="shell">
+<section class="board-col" aria-label="Labyrintti-lauta"><div class="brand"><h1>Labyrintti 2</h1><p>Kallista · vieritä · vältä reiät</p></div>
+<div class="stage"><div id="boardTilt" class="board-tilt"><div class="board-frame">
+<canvas id="board" width="500" height="460" role="img" aria-label="Kuulalabyrintti"></canvas>
+<div id="overlay" class="overlay show" role="dialog" aria-modal="true"><div class="overlay-card"><h2 id="overlayTitle">Valitse vaikeus</h2><p id="overlayText">Vie kuula START-pisteestä maaliin ja vältä reiät.</p>
+  <div class="difficulty-picker" aria-label="Valitse vaikeustaso">
+    <button type="button" data-level="1" data-difficulty="easy">Rento<small>pieni lauta · lempeä kuula</small></button>
+    <button type="button" data-level="6" data-difficulty="normal">Haastava<small>isompi lauta · tiheämpi sokkelo</small></button>
+    <button type="button" data-level="11" data-difficulty="hard">Mestari<small>suurin lauta · armoton veto</small></button>
+  </div><button id="overlayBtn" type="button">Jatka</button></div></div>
+</div></div></div><div class="hud" aria-live="polite"><div class="stat"><strong id="statLevel">1</strong><span>Taso</span></div><div class="stat"><strong id="statProgress">0%</strong><span>Reitti</span></div><div class="stat"><strong id="statAttempts">0</strong><span>Yritykset</span></div><div class="stat"><strong id="statTime">0:00</strong><span>Aika</span></div></div></section>
+<aside class="side"><p id="phase" class="phase">Valitse vaikeus</p><p id="message" class="message">Kallista lautaa ja vältä mustat reiät.</p><h2>Kallistus</h2><div class="tilt-meter" aria-hidden="true"><span id="tiltDot"></span></div><h2>Ohjaus</h2><p>Nuolinäppäimet tai WASD. Puhelimella kallistus. <strong>F</strong> = koko ruutu.</p><div class="hint-keys" aria-hidden="true"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd><kbd>F</kbd></div><h2>Tavoite</h2><p>Vieritä metallikuula mustaa viivaa pitkin FINISH-pisteeseen. Reikään putoaminen palauttaa viimeiseen tarkistuspisteeseen.</p><div class="controls"><button id="btnStart" class="primary" type="button">Aloita</button><button id="btnRetry" type="button">Uusi yritys</button><button id="btnNew" type="button">Uusi peli</button><button id="btnFullscreen" type="button">Koko ruutu</button><button id="btnSound" type="button" aria-pressed="true">Ääni: päällä</button></div></aside>
+</main><div id="toast" class="toast" role="status"></div><script>// Labyrintti — fysiikka + proseduraalinen kuulalauta (Node + selain).
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.LabyrinttiEngine = factory();
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  var GRAVITY = 780;
+  var FRICTION = 0.988;
+  var MAX_SPEED = 280;
+  var KEY_TILT_SPEED = 2.8;
+  var KEY_TILT_MAX = 0.72;
+  var ORIENT_SCALE = 1 / 30;
+  var BOUNCE = 0.42;
+
+  var T = 8;
+  var W = 500;
+  var H = 460;
+  var BALL_R = 5.0;
+  var HOLE_R = 8.0;
+
+  function H_(x, y, len) { return { x: x, y: y, w: len, h: T }; }
+  function V_(x, y, len) { return { x: x, y: y, w: T, h: len }; }
+  function hole(n, x, y) { return { n: n, x: x, y: y }; }
+
+  function clamp(v, lo, hi) {
+    return v < lo ? lo : v > hi ? hi : v;
+  }
+
+  // Toistettava satunnaisgeneraattori (mulberry32) — sama taso samalla numerolla.
+  function mulberry32(a) {
+    return function () {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /*
+   * Proseduraalinen sokkelolabyrintti (recursive backtracker).
+   * Ruudukkoon kaiverretaan mutkitteleva käytäväverkko: yksi reitti START→FINISH,
+   * runsaasti umpikujia. Seinät ovat lyhyitä tappeja joka suuntaan (kuten aidossa laudassa).
+   * Reiät: esteet suoran käytävän sivussa (taattu ohitusaukko) + ansat umpikujissa.
+   * Vaikeus kasvaa: suurempi ruudukko, enemmän reikiä.
+   */
+  var DIRS = [
+    { di: 0, dj: -1, a: "N", b: "S" },
+    { di: 1, dj: 0, a: "E", b: "W" },
+    { di: 0, dj: 1, a: "S", b: "N" },
+    { di: -1, dj: 0, a: "W", b: "E" }
+  ];
+
+  // Valittavat vaikeustasot. Muuttavat sokkelon kokoa, reikien määrää,
+  // reikien tarttuvuutta (catchMul) ja painovoimaa (gravityMul).
+  var DIFFICULTY = {
+    easy:   { label: "Helppo",    colsBase: 7,  colsCap: 8,  rowsBase: 6, rowsCap: 7,  holeProb: 0.72, catchMul: 0.82, gravityMul: 0.9 },
+    normal: { label: "Keskitaso", colsBase: 9,  colsCap: 10, rowsBase: 8, rowsCap: 9,  holeProb: 0.9,  catchMul: 1.0,  gravityMul: 1.0 },
+    hard:   { label: "Vaikea",    colsBase: 11, colsCap: 12, rowsBase: 9, rowsCap: 10, holeProb: 1.0,  catchMul: 1.1,  gravityMul: 1.05 }
+  };
+
+  function diffCfg(key) { return DIFFICULTY[key] || DIFFICULTY.normal; }
+
+  function generateLevel(levelNum, difficulty) {
+    levelNum = Math.max(1, levelNum | 0);
+    var diffKey = DIFFICULTY[difficulty] ? difficulty : "normal";
+    var cfg = DIFFICULTY[diffKey];
+    var rng = mulberry32((0x9e3779b1 ^ (levelNum * 2654435761)) >>> 0);
+
+    var iL = T, iT = T, iR = W - T, iB = H - T;
+    var usableW = iR - iL, usableH = iB - iT;
+    var cols = Math.min(cfg.colsCap, cfg.colsBase + levelNum);
+    var rows = Math.min(cfg.rowsCap, cfg.rowsBase + levelNum);
+    var cellW = usableW / cols, cellH = usableH / rows;
+    var cellMin = Math.min(cellW, cellH);
+
+    function cx(i) { return iL + cellW * (i + 0.5); }
+    function cy(j) { return iT + cellH * (j + 0.5); }
+    function inb(i, j) { return i >= 0 && i < cols && j >= 0 && j < rows; }
+
+    // —— Yksi mutkitteleva reitti (Hamilton-polku) joka käy JOKAISEN ruudun ——
+    // Näin lauta täyttyy: ei tyhjää tilaa, reikä lähes joka ruudussa reitin varrella.
+    function key(i, j) { return i + "," + j; }
+    var cell = [];
+    for (var i = 0; i < cols; i++) {
+      cell[i] = [];
+      for (var j = 0; j < rows; j++) cell[i][j] = { N: true, E: true, S: true, W: true };
+    }
+
+    // Alkujärjestys: käärme (boustrophedon) alkaen (0,0) — taattu Hamilton-polku.
+    var order = [];
+    for (j = 0; j < rows; j++) {
+      if (j % 2 === 0) for (i = 0; i < cols; i++) order.push([i, j]);
+      else for (i = cols - 1; i >= 0; i--) order.push([i, j]);
+    }
+    var N = order.length;
+    var pos = {};
+    for (var k = 0; k < N; k++) pos[key(order[k][0], order[k][1])] = k;
+
+    // Backbite: satunnaista polkua häntäpäästä. Pää (START = (0,0)) pysyy paikallaan.
+    var iters = N * 30;
+    for (var t = 0; t < iters; t++) {
+      var tail = order[N - 1];
+      var cand = [];
+      for (var d = 0; d < 4; d++) {
+        var ni = tail[0] + DIRS[d].di, nj = tail[1] + DIRS[d].dj;
+        if (!inb(ni, nj)) continue;
+        var pj = pos[key(ni, nj)];
+        if (pj < N - 2) cand.push(pj);
+      }
+      if (!cand.length) continue;
+      var j0 = cand[(rng() * cand.length) | 0];
+      var lo = j0 + 1, hi = N - 1;
+      while (lo < hi) {
+        var tmp = order[lo]; order[lo] = order[hi]; order[hi] = tmp;
+        pos[key(order[lo][0], order[lo][1])] = lo;
+        pos[key(order[hi][0], order[hi][1])] = hi;
+        lo++; hi--;
+      }
+      if (lo === hi) pos[key(order[lo][0], order[lo][1])] = lo;
+    }
+
+    var sol = order;
+    var finishC = sol[N - 1];
+
+    function carve(a, b) {
+      var dx = b[0] - a[0], dy = b[1] - a[1];
+      for (var dd = 0; dd < 4; dd++) {
+        if (DIRS[dd].di === dx && DIRS[dd].dj === dy) {
+          cell[a[0]][a[1]][DIRS[dd].a] = false;
+          cell[b[0]][b[1]][DIRS[dd].b] = false;
+        }
+      }
+    }
+    for (k = 1; k < N; k++) carve(sol[k - 1], sol[k]);
+
+    // Oikoreitit: aukko kahden reitillä kaukana olevan naapurin väliin (riski, mutta oikaisu).
+    var nShort = Math.min(4, 1 + Math.floor(levelNum / 2));
+    var made = 0, tries = 0;
+    var minGap = Math.max(4, Math.floor(N * 0.18));
+    while (made < nShort && tries < 300) {
+      tries++;
+      var si = (rng() * cols) | 0, sj = (rng() * rows) | 0;
+      var sd = DIRS[(rng() * 4) | 0];
+      var ti = si + sd.di, tj = sj + sd.dj;
+      if (!inb(ti, tj) || !cell[si][sj][sd.a]) continue;
+      if (Math.abs(pos[key(si, sj)] - pos[key(ti, tj)]) < minGap) continue;
+      carve([si, sj], [ti, tj]);
+      made++;
+    }
+
+    // Seinät: kehys + kaivamattomat sisäreunat (lyhyet puutapit).
+    var walls = [H_(0, 0, W), H_(0, H - T, W), V_(0, 0, H), V_(W - T, 0, H)];
+    for (i = 0; i < cols; i++) {
+      for (j = 0; j < rows; j++) {
+        if (cell[i][j].E && i < cols - 1) walls.push(V_(iL + cellW * (i + 1) - T / 2, iT + cellH * j, cellH));
+        if (cell[i][j].S && j < rows - 1) walls.push(H_(iL + cellW * i, iT + cellH * (j + 1) - T / 2, cellW));
+      }
+    }
+
+    // Ohjausreitti + reiät. Reikä osaan ruuduista (holeProb) → tiheä mutta kuljettava.
+    // START/FINISH-alueet jätetään vapaiksi. Reitti pujottelee reikien ohi.
+    var path = [];
+    var rawHoles = [];
+    var flip = 1;
+    var safeEnds = 1;
+    for (k = 0; k < N; k++) {
+      var ccx = cx(sol[k][0]), ccy = cy(sol[k][1]);
+      if (k < safeEnds || k >= N - safeEnds) { path.push([ccx, ccy]); continue; }
+      var din = [sol[k][0] - sol[k - 1][0], sol[k][1] - sol[k - 1][1]];
+      var dout = [sol[k + 1][0] - sol[k][0], sol[k + 1][1] - sol[k][1]];
+      if (din[0] === dout[0] && din[1] === dout[1]) {
+        // Suora käytävä: reikä toiselle sivulle, viiva pujottaa vastapuolelta.
+        var horiz = din[0] !== 0;
+        var halfW = (horiz ? cellH : cellW) / 2 - T / 2;
+        var off = Math.min(halfW - HOLE_R - 2, halfW * 0.5);
+        if (off < 1 || rng() >= cfg.holeProb) { path.push([ccx, ccy]); continue; }
+        flip = -flip;
+        if (horiz) {
+          rawHoles.push([ccx, ccy + flip * off]);
+          path.push([ccx, ccy - flip * halfW * 0.42]);
+        } else {
+          rawHoles.push([ccx + flip * off, ccy]);
+          path.push([ccx - flip * halfW * 0.42, ccy]);
+        }
+      } else {
+        // Käännös: reikä ulkonurkkaan (harvemmin — mutkat ovat jo vaikeita).
+        var fx = din[0] - dout[0], fy = din[1] - dout[1];
+        var ox = Math.min(cellW * 0.27, cellW / 2 - T / 2 - HOLE_R - 1);
+        var oy = Math.min(cellH * 0.27, cellH / 2 - T / 2 - HOLE_R - 1);
+        var hxo = ccx + (fx > 0 ? ox : fx < 0 ? -ox : 0);
+        var hyo = ccy + (fy > 0 ? oy : fy < 0 ? -oy : 0);
+        if (rng() < cfg.holeProb &&
+            Math.sqrt((hxo - ccx) * (hxo - ccx) + (hyo - ccy) * (hyo - ccy)) >= HOLE_R + 2) {
+          rawHoles.push([hxo, hyo]);
+        }
+        // Viiva kaartaa sisäkulmaan (poispäin ulkonurkan reiästä).
+        path.push([ccx - (fx > 0 ? 1 : fx < 0 ? -1 : 0) * cellW * 0.12,
+                   ccy - (fy > 0 ? 1 : fy < 0 ? -1 : 0) * cellH * 0.12]);
+      }
+    }
+
+    // Takuu: poista reiät jotka ovat liian lähellä ohjausviivaa (muuten reitti tukkeutuisi).
+    // Näin huolellinen pelaaja pääsee aina läpi viivaa seuraamalla.
+    var minClear = HOLE_R + BALL_R + 3;
+    function distToPath(hx, hy) {
+      var best = 1e9;
+      for (var p = 1; p < path.length; p++) {
+        var ax = path[p - 1][0], ay = path[p - 1][1];
+        var bx = path[p][0], by = path[p][1];
+        var vx = bx - ax, vy = by - ay;
+        var wx = hx - ax, wy = hy - ay;
+        var len2 = vx * vx + vy * vy || 1;
+        var tt = (wx * vx + wy * vy) / len2;
+        tt = tt < 0 ? 0 : tt > 1 ? 1 : tt;
+        var dx = hx - (ax + tt * vx), dy = hy - (ay + tt * vy);
+        var dd = dx * dx + dy * dy;
+        if (dd < best) best = dd;
+      }
+      return Math.sqrt(best);
+    }
+    rawHoles = rawHoles.filter(function (h) { return distToPath(h[0], h[1]) >= minClear; });
+
+    var solPts = path.slice();
+    var holes = rawHoles.map(function (h, idx) { return hole(idx + 1, h[0], h[1]); });
+
+    // Tarkistuspisteet reitin varrella.
+    var checkpoints = [];
+    var ncp = Math.min(sol.length - 2, 2 + Math.floor(levelNum / 2));
+    for (var m = 1; m <= ncp; m++) {
+      var ki = Math.round(sol.length * m / (ncp + 1));
+      if (ki > 0 && ki < sol.length - 1) checkpoints.push({ x: path[ki][0], y: path[ki][1], pathIndex: ki });
+    }
+
+    return {
+      width: W,
+      height: H,
+      ballR: BALL_R,
+      holeR: HOLE_R,
+      wallT: T,
+      levelNum: levelNum,
+      difficulty: diffKey,
+      start: { x: path[0][0], y: path[0][1] },
+      finish: { x: solPts[solPts.length - 1][0], y: solPts[solPts.length - 1][1], r: 15 },
+      path: path,
+      walls: walls,
+      holes: holes,
+      checkpoints: checkpoints
+    };
+  }
+
+  var LEVEL = generateLevel(1);
+
+  function cloneLevel(src) {
+    return {
+      width: src.width,
+      height: src.height,
+      ballR: src.ballR,
+      holeR: src.holeR,
+      wallT: src.wallT,
+      levelNum: src.levelNum || 1,
+      difficulty: src.difficulty || "normal",
+      start: { x: src.start.x, y: src.start.y },
+      finish: { x: src.finish.x, y: src.finish.y, r: src.finish.r },
+      path: (src.path || []).map(function (p) { return [p[0], p[1]]; }),
+      walls: src.walls.map(function (w) {
+        return { x: w.x, y: w.y, w: w.w, h: w.h };
+      }),
+      holes: src.holes.map(function (h) {
+        return { x: h.x, y: h.y, n: h.n };
+      }),
+      checkpoints: (src.checkpoints || []).map(function (c) {
+        return { x: c.x, y: c.y, pathIndex: c.pathIndex };
+      })
+    };
+  }
+
+  function createState(levelArg, difficulty) {
+    var L;
+    if (typeof levelArg === "number") L = generateLevel(levelArg, difficulty);
+    else L = cloneLevel(levelArg || LEVEL);
+    var cfg = diffCfg(L.difficulty);
+    return {
+      level: L,
+      levelNum: L.levelNum,
+      difficulty: L.difficulty,
+      catchMul: cfg.catchMul,
+      gravityMul: cfg.gravityMul,
+      x: L.start.x,
+      y: L.start.y,
+      vx: 0,
+      vy: 0,
+      gx: 0,
+      gy: 0,
+      status: "playing",
+      fallenHole: 0,
+      bestHole: 0,
+      pathIndex: 0,
+      checkpoint: { x: L.start.x, y: L.start.y, pathIndex: 0 },
+      checkpointIndex: 0,
+      attempts: 0,
+      timeMs: 0,
+      message: "",
+      lastHit: 0,
+      justCheckpoint: false
+    };
+  }
+
+  function resetBall(st) {
+    st.x = st.checkpoint.x;
+    st.y = st.checkpoint.y;
+    st.vx = 0;
+    st.vy = 0;
+    st.status = "playing";
+    st.fallenHole = 0;
+    st.message = "";
+    st.pathIndex = st.checkpoint.pathIndex;
+  }
+
+  function newAttempt(st) {
+    st.attempts += 1;
+    resetBall(st);
+  }
+
+  // Siirry seuraavaan tasoon (loputon eteneminen, sama vaikeustaso).
+  function advanceLevel(st) {
+    var L = generateLevel((st.levelNum || 1) + 1, st.difficulty);
+    st.level = L;
+    st.levelNum = L.levelNum;
+    st.checkpoint = { x: L.start.x, y: L.start.y, pathIndex: 0 };
+    st.checkpointIndex = 0;
+    st.bestHole = 0;
+    st.attempts = 1;
+    st.pathIndex = 0;
+    resetBall(st);
+  }
+
+  function setTilt(st, gx, gy) {
+    st.gx = clamp(gx, -1, 1);
+    st.gy = clamp(gy, -1, 1);
+  }
+
+  function updateKeyTilt(st, keys, dt) {
+    var tx = 0;
+    var ty = 0;
+    if (keys.ArrowLeft || keys.a || keys.A) tx -= 1;
+    if (keys.ArrowRight || keys.d || keys.D) tx += 1;
+    if (keys.ArrowUp || keys.w || keys.W) ty -= 1;
+    if (keys.ArrowDown || keys.s || keys.S) ty += 1;
+    if (tx !== 0 && ty !== 0) {
+      var inv = 1 / Math.sqrt(2);
+      tx *= inv;
+      ty *= inv;
+    }
+    var targetX = tx * KEY_TILT_MAX;
+    var targetY = ty * KEY_TILT_MAX;
+    var k = Math.min(1, KEY_TILT_SPEED * dt);
+    st.gx += (targetX - st.gx) * k;
+    st.gy += (targetY - st.gy) * k;
+    if (tx === 0 && ty === 0) {
+      st.gx *= Math.max(0, 1 - 4 * dt);
+      st.gy *= Math.max(0, 1 - 4 * dt);
+      if (Math.abs(st.gx) < 0.008) st.gx = 0;
+      if (Math.abs(st.gy) < 0.008) st.gy = 0;
+    }
+  }
+
+  function tiltFromOrientation(beta, gamma) {
+    return {
+      gx: clamp((gamma || 0) * ORIENT_SCALE, -1, 1),
+      gy: clamp((beta || 0) * ORIENT_SCALE, -1, 1)
+    };
+  }
+
+  function resolveWall(st, wall) {
+    var r = st.level.ballR;
+    var nearestX = clamp(st.x, wall.x, wall.x + wall.w);
+    var nearestY = clamp(st.y, wall.y, wall.y + wall.h);
+    var dx = st.x - nearestX;
+    var dy = st.y - nearestY;
+
+    if (dx === 0 && dy === 0) {
+      var opts = [
+        { axis: "x", pos: wall.x - r, pen: st.x - wall.x, sign: -1 },
+        { axis: "x", pos: wall.x + wall.w + r, pen: wall.x + wall.w - st.x, sign: 1 },
+        { axis: "y", pos: wall.y - r, pen: st.y - wall.y, sign: -1 },
+        { axis: "y", pos: wall.y + wall.h + r, pen: wall.y + wall.h - st.y, sign: 1 }
+      ];
+      opts.sort(function (a, b) { return a.pen - b.pen; });
+      var pick = opts[0];
+      for (var i = 0; i < opts.length; i++) {
+        var o = opts[i];
+        var ok = o.axis === "x"
+          ? o.pos >= r && o.pos <= st.level.width - r
+          : o.pos >= r && o.pos <= st.level.height - r;
+        if (ok) { pick = o; break; }
+      }
+      if (pick.axis === "x") {
+        st.x = pick.pos;
+        st.vx = -st.vx * BOUNCE;
+        if (st.vx * pick.sign < 0) st.vx = pick.sign * Math.abs(st.vx);
+      } else {
+        st.y = pick.pos;
+        st.vy = -st.vy * BOUNCE;
+        if (st.vy * pick.sign < 0) st.vy = pick.sign * Math.abs(st.vy);
+      }
+      st.lastHit = 1;
+      return;
+    }
+
+    var d2 = dx * dx + dy * dy;
+    if (d2 >= r * r) return;
+    var d = Math.sqrt(d2);
+    var nx = dx / d;
+    var ny = dy / d;
+    var pen = r - d;
+    st.x += nx * pen;
+    st.y += ny * pen;
+    var vn = st.vx * nx + st.vy * ny;
+    if (vn < 0) {
+      st.vx -= (1 + BOUNCE) * vn * nx;
+      st.vy -= (1 + BOUNCE) * vn * ny;
+      st.lastHit = 1;
+    }
+  }
+
+  function collideWalls(st) {
+    var walls = st.level.walls;
+    for (var i = 0; i < walls.length; i++) resolveWall(st, walls[i]);
+  }
+
+  function updatePathProgress(st) {
+    var path = st.level.path;
+    if (!path || path.length < 2) return;
+    var best = st.pathIndex;
+    var bestD = 1e9;
+    var from = Math.max(0, st.pathIndex - 1);
+    var to = Math.min(path.length - 1, st.pathIndex + 4);
+    for (var i = from; i <= to; i++) {
+      var dx = st.x - path[i][0];
+      var dy = st.y - path[i][1];
+      var d = dx * dx + dy * dy;
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    if (best > st.pathIndex) st.pathIndex = best;
+
+    // Ohita tarkistuspiste kun se on saavutettu.
+    var cps = st.level.checkpoints || [];
+    for (var c = 0; c < cps.length; c++) {
+      if (st.pathIndex >= cps[c].pathIndex && cps[c].pathIndex > st.checkpoint.pathIndex) {
+        st.checkpoint = { x: cps[c].x, y: cps[c].y, pathIndex: cps[c].pathIndex };
+        st.checkpointIndex = c + 1;
+        st.justCheckpoint = true;
+      }
+    }
+  }
+
+  function checkHoles(st) {
+    var holes = st.level.holes;
+    var r = st.level.ballR;
+    var hr = st.level.holeR;
+    // Nopeus vaikuttaa: hitaana reikä nappaa herkästi (kuula valuu reunalta),
+    // vauhdilla voi kiitää ohi. slowF ∈ [0.42, 1].
+    var speed = Math.sqrt(st.vx * st.vx + st.vy * st.vy);
+    var slowF = clamp(1 - speed / (MAX_SPEED * 0.72), 0.42, 1);
+    var thresh = ((hr - r) + r * 0.35) * slowF * (st.catchMul || 1);
+    if (thresh < r * 0.35) thresh = r * 0.35;
+    for (var i = 0; i < holes.length; i++) {
+      var h = holes[i];
+      var dx = st.x - h.x;
+      var dy = st.y - h.y;
+      if (dx * dx + dy * dy < thresh * thresh) {
+        st.status = "fallen";
+        st.fallenHole = h.n;
+        if (h.n > st.bestHole) st.bestHole = h.n;
+        st.vx = 0;
+        st.vy = 0;
+        st.message = "Reikä " + h.n;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function checkFinish(st) {
+    var f = st.level.finish;
+    var dx = st.x - f.x;
+    var dy = st.y - f.y;
+    if (dx * dx + dy * dy < f.r * f.r) {
+      st.status = "won";
+      st.vx = 0;
+      st.vy = 0;
+      st.pathIndex = st.level.path.length - 1;
+      st.bestHole = Math.max(st.bestHole, st.level.holes.length);
+      st.message = "Maali!";
+      return true;
+    }
+    return false;
+  }
+
+  function step(st, dt) {
+    if (st.status !== "playing") return st;
+    if (dt <= 0) return st;
+    if (dt > 0.05) dt = 0.05;
+
+    st.lastHit = 0;
+    st.justCheckpoint = false;
+    st.timeMs += dt * 1000;
+    var g = GRAVITY * (st.gravityMul || 1);
+    st.vx += st.gx * g * dt;
+    st.vy += st.gy * g * dt;
+
+    var sp = Math.sqrt(st.vx * st.vx + st.vy * st.vy);
+    if (sp > MAX_SPEED) {
+      st.vx = (st.vx / sp) * MAX_SPEED;
+      st.vy = (st.vy / sp) * MAX_SPEED;
+    }
+
+    st.vx *= Math.pow(FRICTION, dt * 60);
+    st.vy *= Math.pow(FRICTION, dt * 60);
+    st.x += st.vx * dt;
+    st.y += st.vy * dt;
+
+    collideWalls(st);
+    collideWalls(st);
+    updatePathProgress(st);
+
+    if (checkHoles(st)) return st;
+    checkFinish(st);
+    return st;
+  }
+
+  function getView(st) {
+    var pathLen = st.level.path.length || 1;
+    return {
+      width: st.level.width,
+      height: st.level.height,
+      ballR: st.level.ballR,
+      holeR: st.level.holeR,
+      levelNum: st.levelNum,
+      difficulty: st.difficulty,
+      x: st.x,
+      y: st.y,
+      vx: st.vx,
+      vy: st.vy,
+      gx: st.gx,
+      gy: st.gy,
+      status: st.status,
+      fallenHole: st.fallenHole,
+      bestHole: st.bestHole,
+      pathIndex: st.pathIndex,
+      pathProgress: st.pathIndex / (pathLen - 1),
+      checkpointIndex: st.checkpointIndex,
+      totalCheckpoints: (st.level.checkpoints || []).length,
+      justCheckpoint: st.justCheckpoint,
+      totalHoles: st.level.holes.length,
+      attempts: st.attempts,
+      timeMs: st.timeMs,
+      message: st.message,
+      lastHit: st.lastHit,
+      start: st.level.start,
+      finish: st.level.finish,
+      path: st.level.path,
+      walls: st.level.walls,
+      holes: st.level.holes,
+      checkpoints: st.level.checkpoints || []
+    };
+  }
+
+  function placeBall(st, x, y, vx, vy) {
+    st.x = x;
+    st.y = y;
+    st.vx = vx || 0;
+    st.vy = vy || 0;
+    st.status = "playing";
+    st.fallenHole = 0;
+    st.message = "";
+  }
+
+  return {
+    LEVEL: LEVEL,
+    GRAVITY: GRAVITY,
+    DIFFICULTY: DIFFICULTY,
+    generateLevel: generateLevel,
+    createState: createState,
+    resetBall: resetBall,
+    newAttempt: newAttempt,
+    advanceLevel: advanceLevel,
+    setTilt: setTilt,
+    updateKeyTilt: updateKeyTilt,
+    tiltFromOrientation: tiltFromOrientation,
+    step: step,
+    getView: getView,
+    placeBall: placeBall,
+    checkHoles: checkHoles,
+    checkFinish: checkFinish,
+    collideWalls: collideWalls,
+    clamp: clamp
+  };
+});
+</script><script>// Labyrintti — canvas-UI: nuolet, kallistus, koko ruutu, tasot, äänet.
+(function () {
+  "use strict";
+  var selectedLevel = 1;
+
+  var E = window.LabyrinttiEngine;
+  if (!E) throw new Error("LabyrinttiEngine puuttuu");
+
+  var shell = document.querySelector(".shell");
+  var canvas = document.getElementById("board");
+  var ctx = canvas.getContext("2d");
+  var tiltEl = document.getElementById("boardTilt");
+  var overlay = document.getElementById("overlay");
+  var overlayTitle = document.getElementById("overlayTitle");
+  var overlayText = document.getElementById("overlayText");
+  var overlayBtn = document.getElementById("overlayBtn");
+  var phaseEl = document.getElementById("phase");
+  var messageEl = document.getElementById("message");
+  var levelEl = document.getElementById("statLevel");
+  var attemptsEl = document.getElementById("statAttempts");
+  var timeEl = document.getElementById("statTime");
+  var progressEl = document.getElementById("statProgress");
+  var toastEl = document.getElementById("toast");
+  var tiltDot = document.getElementById("tiltDot");
+  var btnStart = document.getElementById("btnStart");
+  var btnRetry = document.getElementById("btnRetry");
+  var btnNew = document.getElementById("btnNew");
+  var btnFs = document.getElementById("btnFullscreen");
+  var btnFsCorner = document.getElementById("btnFsCorner");
+  var btnSound = document.getElementById("btnSound");
+  var diffBtns = {
+    easy: document.getElementById("diffEasy"),
+    normal: document.getElementById("diffNormal"),
+    hard: document.getElementById("diffHard")
+  };
+
+  var difficulty = "normal";
+  try {
+    var savedDiff = window.localStorage.getItem("labyrintti.difficulty");
+    if (savedDiff && E.DIFFICULTY[savedDiff]) difficulty = savedDiff;
+  } catch (e) { /* localStorage ei käytettävissä */ }
+
+  var st = E.createState(selectedLevel, difficulty);
+  var keys = Object.create(null);
+  var running = false;
+  var inputMode = "keys";
+  var lastTs = 0;
+  var toastTimer = 0;
+  var fallDelay = 0;
+  var woodPattern = null;
+  var orientBound = false;
+  var shake = 0;
+  var trail = [];
+  var overlayAction = begin;
+  var spin = 0;      // kuulan vierintävaihe (näkyvä pyöriminen)
+  var spinDir = 0;   // vierinnän suunta
+
+  // —— Ääni (WebAudio, luodaan käyttäjän eleestä) ——
+  var audioCtx = null;
+  var soundOn = true;
+  var lastTick = 0;
+  var rollNode = null, rollGain = null, rollFilter = null;
+
+  function ensureAudio() {
+    if (!soundOn) return null;
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function beep(freq, dur, type, gain, when) {
+    var ac = ensureAudio();
+    if (!ac) return;
+    var t0 = ac.currentTime + (when || 0);
+    var osc = ac.createOscillator();
+    var g = ac.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain || 0.12, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g);
+    g.connect(ac.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+
+  function soundWall() {
+    var now = performance.now();
+    if (now - lastTick < 70) return;
+    lastTick = now;
+    beep(150 + Math.random() * 40, 0.05, "square", 0.05);
+  }
+  // Suodatettu kohinapurske (esim. puinen kopsahdus).
+  function noiseBurst(freq, dur, gain, when, q) {
+    var ac = ensureAudio();
+    if (!ac) return;
+    var t0 = ac.currentTime + (when || 0);
+    var len = Math.max(1, Math.floor(ac.sampleRate * dur));
+    var buf = ac.createBuffer(1, len, ac.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var src = ac.createBufferSource();
+    src.buffer = buf;
+    var bp = ac.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = freq;
+    bp.Q.value = q || 4;
+    var g = ac.createGain();
+    g.gain.setValueAtTime(gain || 0.2, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(ac.destination);
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+  }
+
+  // Metallikuula putoaa puiseen reikään: puinen kopsahdus + metallinen helähdys + pari kimmahdusta.
+  function soundFall() {
+    noiseBurst(300, 0.10, 0.24, 0, 3);           // puinen kopsahdus (matala, leveä)
+    beep(1650, 0.07, "triangle", 0.06, 0.004);   // metallinen helähdys
+    beep(2300, 0.05, "triangle", 0.03, 0.004);
+    noiseBurst(340, 0.06, 0.13, 0.075, 4);        // 2. kimmahdus
+    beep(1500, 0.04, "triangle", 0.03, 0.08);
+    noiseBurst(360, 0.04, 0.06, 0.13, 5);         // 3. kimmahdus
+  }
+  function soundCheckpoint() {
+    beep(660, 0.1, "triangle", 0.1);
+    beep(990, 0.12, "triangle", 0.1, 0.08);
+  }
+  function soundWin() {
+    [523, 659, 784, 1047].forEach(function (f, i) {
+      beep(f, 0.18, "triangle", 0.12, i * 0.09);
+    });
+  }
+
+  // Jatkuva kuulan vierimisääni: ruskeaa kohinaa alipäästösuodattimen läpi,
+  // äänenvoimakkuus ja kirkkaus seuraavat kuulan nopeutta.
+  function ensureRoll() {
+    var ac = ensureAudio();
+    if (!ac || rollNode) return;
+    var buf = ac.createBuffer(1, Math.floor(ac.sampleRate * 1.2), ac.sampleRate);
+    var data = buf.getChannelData(0);
+    var last = 0;
+    for (var i = 0; i < data.length; i++) {
+      var w = Math.random() * 2 - 1;
+      last = (last + 0.025 * w) / 1.025;
+      data[i] = last * 3.2;
+    }
+    rollNode = ac.createBufferSource();
+    rollNode.buffer = buf;
+    rollNode.loop = true;
+    rollFilter = ac.createBiquadFilter();
+    rollFilter.type = "lowpass";
+    rollFilter.frequency.value = 400;
+    rollGain = ac.createGain();
+    rollGain.gain.value = 0;
+    rollNode.connect(rollFilter);
+    rollFilter.connect(rollGain);
+    rollGain.connect(ac.destination);
+    rollNode.start();
+  }
+
+  function updateRoll(speed) {
+    if (!soundOn || !audioCtx) {
+      if (rollGain) rollGain.gain.value = 0;
+      return;
+    }
+    ensureRoll();
+    if (!rollGain) return;
+    var norm = Math.min(1, speed / 260);
+    var g = norm * norm * 0.16;
+    rollGain.gain.setTargetAtTime(g, audioCtx.currentTime, 0.04);
+    rollFilter.frequency.setTargetAtTime(260 + speed * 4.5, audioCtx.currentTime, 0.04);
+  }
+
+  function fitCanvas() {
+    var L = st.level;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var cssW;
+    if (document.fullscreenElement) {
+      var maxW = window.innerWidth - 20;
+      var maxH = window.innerHeight - 20;
+      var aspect = L.width / L.height;
+      cssW = maxW / maxH > aspect ? maxH * aspect : maxW;
+    } else {
+      cssW = canvas.clientWidth || 440;
+    }
+    var cssH = cssW * (L.height / L.width);
+    canvas.style.width = cssW + "px";
+    canvas.style.height = cssH + "px";
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    woodPattern = null;
+  }
+
+  function makeWoodPattern() {
+    var off = document.createElement("canvas");
+    off.width = 160;
+    off.height = 160;
+    var c = off.getContext("2d");
+    var g = c.createLinearGradient(0, 0, 160, 160);
+    g.addColorStop(0, "#e8d5b0");
+    g.addColorStop(0.5, "#dfc79a");
+    g.addColorStop(1, "#d4b888");
+    c.fillStyle = g;
+    c.fillRect(0, 0, 160, 160);
+    for (var i = 0; i < 48; i++) {
+      c.strokeStyle = "rgba(120, 78, 36," + (0.035 + Math.random() * 0.06) + ")";
+      c.lineWidth = 0.8 + Math.random() * 1.8;
+      var y = Math.random() * 160;
+      c.beginPath();
+      c.moveTo(0, y);
+      c.bezierCurveTo(40, y + (Math.random() - 0.5) * 8, 110, y + (Math.random() - 0.5) * 8, 160, y);
+      c.stroke();
+    }
+    return ctx.createPattern(off, "repeat");
+  }
+
+  function drawRoundRect(x, y, w, h, r) {
+    var rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  // Piirrä polku pehmeästi (quadratic keskipisteiden kautta) indeksiin asti.
+  function strokeSmooth(pts, upto) {
+    if (upto < 1) return;
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    if (upto === 1) {
+      ctx.lineTo(pts[1][0], pts[1][1]);
+      ctx.stroke();
+      return;
+    }
+    for (var i = 1; i < upto; i++) {
+      var mx = (pts[i][0] + pts[i + 1][0]) / 2;
+      var my = (pts[i][1] + pts[i + 1][1]) / 2;
+      ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+    }
+    ctx.lineTo(pts[upto][0], pts[upto][1]);
+    ctx.stroke();
+  }
+
+  function draw() {
+    var v = E.getView(st);
+    var cssW = parseFloat(canvas.style.width) || canvas.clientWidth || 440;
+    var cssH = parseFloat(canvas.style.height) || (cssW * v.height / v.width);
+    var fitScale = cssW / v.width;
+
+    // Pienellä ruudulla zoomataan sisään ja kamera seuraa kuulaa,
+    // jottei pallo jää liian pieneksi. Isolla näytöllä näkyy koko kenttä.
+    var minBallPx = 17;
+    var scale = (cssW < 430 && !document.fullscreenElement)
+      ? Math.max(fitScale, minBallPx / (2 * v.ballR))
+      : fitScale;
+    var viewW = cssW / scale, viewH = cssH / scale;
+    var camX = 0, camY = 0;
+    if (scale > fitScale + 1e-4) {
+      camX = Math.min(Math.max(v.x - viewW / 2, 0), Math.max(0, v.width - viewW));
+      camY = Math.min(Math.max(v.y - viewH / 2, 0), Math.max(0, v.height - viewH));
+    }
+
+    ctx.save();
+    ctx.scale(scale, scale);
+
+    if (shake > 0) {
+      ctx.translate((Math.random() - 0.5) * shake * 3, (Math.random() - 0.5) * shake * 3);
+    }
+    ctx.translate(-camX, -camY);
+
+    if (!woodPattern) woodPattern = makeWoodPattern();
+    ctx.fillStyle = woodPattern || "#dfc79a";
+    ctx.fillRect(0, 0, v.width, v.height);
+
+    var vig = ctx.createRadialGradient(
+      v.width * 0.5, v.height * 0.45, v.width * 0.2,
+      v.width * 0.5, v.height * 0.5, v.width * 0.72
+    );
+    vig.addColorStop(0, "rgba(255,245,220,0.12)");
+    vig.addColorStop(1, "rgba(60,35,15,0.14)");
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, v.width, v.height);
+
+    // Reitti — pehmeä käsinpiirretyn tuntuinen viiva + kultainen edistyminen
+    if (v.path && v.path.length > 1) {
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "rgba(25, 14, 8, 0.85)";
+      ctx.lineWidth = 2.5;
+      strokeSmooth(v.path, v.path.length - 1);
+    }
+
+    // START / FINISH
+    ctx.beginPath();
+    ctx.arc(v.start.x, v.start.y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(v.finish.x, v.finish.y, v.finish.r, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(46, 120, 70, 0.18)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(46, 100, 55, 0.55)";
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    ctx.fillStyle = "#1c140c";
+    ctx.font = "700 11px 'Fraunces', Georgia, serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("START", v.start.x, v.start.y - 18);
+    ctx.fillText("FINISH", v.finish.x, v.finish.y - v.finish.r - 10);
+
+    // Tarkistuspisteet — pienet liput
+    for (var c = 0; c < v.checkpoints.length; c++) {
+      var cp = v.checkpoints[c];
+      var reached = v.checkpointIndex > c;
+      ctx.beginPath();
+      ctx.arc(cp.x, cp.y, 3.4, 0, Math.PI * 2);
+      ctx.fillStyle = reached ? "rgba(70, 150, 90, 0.9)" : "rgba(120, 90, 45, 0.5)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.5)";
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+
+    // Reiät — tummat kolot + numerot (kuten aidossa laudassa)
+    for (var i = 0; i < v.holes.length; i++) {
+      var h = v.holes[i];
+      var passed = v.bestHole >= h.n;
+      // reunavalo (kaiverruksen tuntu)
+      ctx.beginPath();
+      ctx.arc(h.x, h.y, v.holeR + 1.1, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,248,230,0.35)";
+      ctx.fill();
+      var hg = ctx.createRadialGradient(h.x - 2.5, h.y - 2.8, 1, h.x, h.y, v.holeR);
+      hg.addColorStop(0, passed ? "#4a3320" : "#33210f");
+      hg.addColorStop(0.55, "#140b05");
+      hg.addColorStop(1, "#020100");
+      ctx.beginPath();
+      ctx.arc(h.x, h.y, v.holeR, 0, Math.PI * 2);
+      ctx.fillStyle = hg;
+      ctx.fill();
+      ctx.strokeStyle = "rgba(30, 18, 8, 0.55)";
+      ctx.lineWidth = 0.9;
+      ctx.stroke();
+      // numero reiän vieressä
+      ctx.fillStyle = passed ? "rgba(150, 100, 40, 0.9)" : "rgba(40, 26, 14, 0.85)";
+      ctx.font = "700 8px 'Fraunces', Georgia, serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(h.n), h.x + v.holeR + 1.5, h.y + 0.5);
+    }
+
+    // Seinät — kohotetut puutapit varjoineen (kuten aidossa laudassa)
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (var w = 0; w < v.walls.length; w++) {
+      var wall = v.walls[w];
+      var rad = Math.min(wall.w, wall.h) * 0.45;
+      // varjo alle-oikealle
+      ctx.save();
+      ctx.shadowColor = "rgba(40, 24, 8, 0.4)";
+      ctx.shadowBlur = 3.5;
+      ctx.shadowOffsetX = 1.4;
+      ctx.shadowOffsetY = 2.2;
+      drawRoundRect(wall.x, wall.y, wall.w, wall.h, rad);
+      var wg = ctx.createLinearGradient(wall.x, wall.y, wall.x + wall.w * 0.25, wall.y + wall.h);
+      wg.addColorStop(0, "#efdcb6");
+      wg.addColorStop(0.5, "#d3ab74");
+      wg.addColorStop(1, "#b0834e");
+      ctx.fillStyle = wg;
+      ctx.fill();
+      ctx.restore();
+      // yläreunan valo
+      drawRoundRect(wall.x + 0.8, wall.y + 0.8, Math.max(0, wall.w - 1.6), Math.max(0, wall.h - 1.6), Math.max(0, rad - 0.8));
+      ctx.strokeStyle = "rgba(255, 246, 224, 0.45)";
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+      // alareunan tummennus
+      ctx.strokeStyle = "rgba(90, 54, 22, 0.35)";
+      ctx.lineWidth = 0.7;
+      ctx.stroke();
+    }
+
+    // Pallon jälki
+    for (var t = 0; t < trail.length; t++) {
+      var tr = trail[t];
+      ctx.beginPath();
+      ctx.arc(tr.x, tr.y, v.ballR * (0.2 + 0.35 * (t / trail.length)), 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(200, 210, 220," + (0.04 + 0.1 * (t / trail.length)) + ")";
+      ctx.fill();
+    }
+
+    // Pallo — kiiltävä teräskuula + näkyvä pyöriminen
+    if (v.status !== "fallen" || fallDelay > 0.3) {
+      var br = v.status === "fallen"
+        ? v.ballR * Math.max(0.12, fallDelay / 0.55)
+        : v.ballR;
+      var bx = v.x;
+      var by = v.y;
+
+      // varjo
+      ctx.beginPath();
+      ctx.arc(bx + 1.6, by + 2.2, br * 1.03, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0,0,0,0.32)";
+      ctx.fill();
+
+      // teräksen perusliuku (tumma reuna → keskiharmaa, valo lisätään erikseen)
+      var bg = ctx.createRadialGradient(bx - br * 0.3, by - br * 0.34, br * 0.1, bx + br * 0.16, by + br * 0.22, br * 1.2);
+      bg.addColorStop(0, "#eef2f6");
+      bg.addColorStop(0.32, "#c2ccd6");
+      bg.addColorStop(0.64, "#8b97a4");
+      bg.addColorStop(0.86, "#525d68");
+      bg.addColorStop(1, "#2b323a");
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fillStyle = bg;
+      ctx.fill();
+
+      // ympäristön heijastus alaosassa
+      var refl = ctx.createRadialGradient(bx + br * 0.22, by + br * 0.5, br * 0.05, bx, by, br);
+      refl.addColorStop(0, "rgba(214,226,238,0.5)");
+      refl.addColorStop(0.55, "rgba(150,165,180,0)");
+      refl.addColorStop(1, "rgba(150,165,180,0)");
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fillStyle = refl;
+      ctx.fill();
+
+      // pyörivät pinnan merkit (näyttää vierimisen)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.clip();
+      var cosD = Math.cos(spinDir), sinD = Math.sin(spinDir);
+      for (var m = 0; m < 3; m++) {
+        var a = 2 * Math.PI * (spin + m / 3);
+        var depth = Math.cos(a);
+        if (depth <= 0.06) continue;
+        var along = Math.sin(a) * br * 0.66;
+        var across = (m - 1) * br * 0.42;
+        var mx = bx + cosD * along - sinD * across;
+        var my = by + sinD * along + cosD * across;
+        ctx.beginPath();
+        ctx.arc(mx, my, br * 0.15 * (0.6 + 0.4 * depth), 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(64, 76, 90," + (0.4 * depth).toFixed(3) + ")";
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // kirkas spekulaarivalo (ylävasen)
+      var spec = ctx.createRadialGradient(bx - br * 0.32, by - br * 0.38, 0, bx - br * 0.32, by - br * 0.38, br * 0.55);
+      spec.addColorStop(0, "rgba(255,255,255,0.96)");
+      spec.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.beginPath();
+      ctx.arc(bx - br * 0.26, by - br * 0.3, br * 0.46, 0, Math.PI * 2);
+      ctx.fillStyle = spec;
+      ctx.fill();
+
+      // ohut kirkas reunakaari (fresnel)
+      ctx.beginPath();
+      ctx.arc(bx, by, br * 0.95, Math.PI * 0.12, Math.PI * 0.82);
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = br * 0.09;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    var rx = (-v.gy * 8).toFixed(2);
+    var ry = (v.gx * 8).toFixed(2);
+    tiltEl.style.transform = "rotateX(" + rx + "deg) rotateY(" + ry + "deg)";
+
+    if (tiltDot) {
+      tiltDot.style.transform =
+        "translate(calc(-50% + " + (v.gx * 18).toFixed(1) + "px), calc(-50% + " +
+        (v.gy * 18).toFixed(1) + "px))";
+    }
+  }
+
+  function formatTime(ms) {
+    var s = Math.floor(ms / 1000);
+    var m = Math.floor(s / 60);
+    s = s % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function updateHud() {
+    var v = E.getView(st);
+    if (levelEl) levelEl.textContent = String(v.levelNum);
+    attemptsEl.textContent = String(v.attempts);
+    timeEl.textContent = formatTime(v.timeMs);
+    if (progressEl) progressEl.textContent = Math.round(v.pathProgress * 100) + "%";
+    if (btnFs) {
+      btnFs.textContent = document.fullscreenElement ? "Poistu koko ruudusta" : "Koko ruutu";
+    }
+    if (btnFsCorner) {
+      btnFsCorner.textContent = document.fullscreenElement ? "✕" : "⛶";
+      btnFsCorner.title = document.fullscreenElement ? "Poistu koko ruudusta (F)" : "Koko ruutu (F)";
+    }
+
+    if (!running) {
+      phaseEl.textContent = "Valmis lähtöön";
+      messageEl.textContent = "Vie kuula mustaa viivaa pitkin maaliin. Vältä reikiä.";
+      return;
+    }
+    if (v.status === "won") {
+      phaseEl.textContent = "Taso " + v.levelNum + " selvitetty!";
+      messageEl.textContent = "Hyvä! Jatka seuraavaan tasoon.";
+    } else if (v.status === "fallen") {
+      phaseEl.textContent = v.message || "Reikä";
+      messageEl.textContent = v.checkpointIndex > 0
+        ? "Tipahdit — takaisin tarkistuspisteeseen."
+        : "Tipahdit — uusi yritys alusta.";
+    } else {
+      var dl = E.DIFFICULTY[v.difficulty] ? E.DIFFICULTY[v.difficulty].label : "";
+      phaseEl.textContent = "Taso " + v.levelNum + (dl ? " · " + dl : "");
+      messageEl.textContent = inputMode === "orient"
+        ? "Kallista puhelinta varovasti."
+        : "Nuolet / WASD kallistaa lautaa.";
+    }
+  }
+
+  function showToast(text) {
+    toastEl.textContent = text;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove("show");
+    }, 1500);
+  }
+
+  function showOverlay(title, text, btnLabel, action) {
+    overlayTitle.textContent = title;
+    overlayText.textContent = text;
+    overlayBtn.textContent = btnLabel || "Jatka";
+    overlayAction = action || begin;
+    overlay.classList.add("show");
+  }
+
+  function hideOverlay() {
+    overlay.classList.remove("show");
+  }
+
+  function onFallen() {
+    fallDelay = 0.55;
+    shake = 1;
+    soundFall();
+    showToast(st.message || "Reikä!");
+    setTimeout(function () {
+      E.newAttempt(st);
+      fallDelay = 0;
+      trail = [];
+      updateHud();
+    }, 720);
+  }
+
+  function onWon() {
+    running = false;
+    soundWin();
+    var v = E.getView(st);
+    showOverlay(
+      "Taso " + v.levelNum + " selvitetty!",
+      "Aika " + formatTime(v.timeMs) + " · yrityksiä " + v.attempts +
+        ". Reiät kovenevat — jatketaanko?",
+      "Seuraava taso →",
+      nextLevel
+    );
+    updateHud();
+  }
+
+  function tick(ts) {
+    if (!lastTs) lastTs = ts;
+    var dt = Math.min(0.033, (ts - lastTs) / 1000);
+    lastTs = ts;
+
+    if (shake > 0) shake = Math.max(0, shake - dt * 4);
+
+    if (running && st.status === "playing") {
+      if (inputMode === "keys") E.updateKeyTilt(st, keys, dt);
+      E.step(st, dt);
+      var speed = Math.sqrt(st.vx * st.vx + st.vy * st.vy);
+      spin += speed * dt / (st.level.ballR * 6.2832);
+      if (spin > 1e6) spin -= 1e6;
+      if (speed > 6) spinDir = Math.atan2(st.vy, st.vx);
+      updateRoll(speed);
+      if (st.lastHit) {
+        shake = Math.min(1, shake + 0.35);
+        soundWall();
+      }
+      if (st.justCheckpoint) {
+        soundCheckpoint();
+        showToast("Tarkistuspiste " + st.checkpointIndex);
+      }
+      trail.push({ x: st.x, y: st.y });
+      if (trail.length > 12) trail.shift();
+      if (st.status === "fallen") onFallen();
+      else if (st.status === "won") onWon();
+    } else {
+      updateRoll(0);
+      if (st.status === "fallen" && fallDelay > 0) fallDelay -= dt;
+    }
+
+    draw();
+    updateHud();
+    requestAnimationFrame(tick);
+  }
+
+  function requestOrientPermission() {
+    return new Promise(function (resolve) {
+      var DO = window.DeviceOrientationEvent;
+      if (DO && typeof DO.requestPermission === "function") {
+        DO.requestPermission()
+          .then(function (s) { resolve(s === "granted"); })
+          .catch(function () { resolve(false); });
+      } else resolve(!!DO);
+    });
+  }
+
+  function enableOrientation() {
+    inputMode = "orient";
+    if (orientBound) return;
+    orientBound = true;
+    window.addEventListener("deviceorientation", function (e) {
+      if (!running || inputMode !== "orient") return;
+      var t = E.tiltFromOrientation(e.beta, e.gamma);
+      E.setTilt(st, t.gx, t.gy);
+    });
+  }
+
+  function startGame(useOrient) {
+    hideOverlay();
+    ensureAudio();
+    st = E.createState(selectedLevel, difficulty);
+    st.attempts = 1;
+    running = true;
+    lastTs = 0;
+    trail = [];
+    if (useOrient) enableOrientation();
+    else inputMode = "keys";
+    fitCanvas();
+    updateHud();
+    showToast(useOrient ? "Kallista puhelinta" : "Nuolinäppäimet");
+  }
+
+  function updateDiffButtons() {
+    for (var key in diffBtns) {
+      if (!diffBtns[key]) continue;
+      var active = key === difficulty;
+      diffBtns[key].classList.toggle("active", active);
+      diffBtns[key].setAttribute("aria-pressed", String(active));
+    }
+  }
+
+  function setDifficulty(key) {
+    if (!E.DIFFICULTY[key]) return;
+    difficulty = key;
+    try { window.localStorage.setItem("labyrintti.difficulty", key); } catch (e) { /* ohita */ }
+    updateDiffButtons();
+    var label = E.DIFFICULTY[key].label;
+    if (running) {
+      startGame(inputMode === "orient");
+      showToast(label);
+    } else {
+      st = E.createState(selectedLevel, difficulty);
+      draw();
+      updateHud();
+      showToast("Vaikeustaso: " + label);
+    }
+  }
+
+  function nextLevel() {
+    hideOverlay();
+    E.advanceLevel(st);
+    running = true;
+    lastTs = 0;
+    trail = [];
+    fitCanvas();
+    updateHud();
+    showToast("Taso " + st.levelNum);
+  }
+
+  function begin() {
+    var wants = "ontouchstart" in window && !!window.DeviceOrientationEvent;
+    if (wants) {
+      requestOrientPermission().then(function (ok) {
+        startGame(!!ok);
+        if (!ok) showToast("Ei kallistusta — käytä nuolia");
+      });
+    } else startGame(false);
+  }
+
+  function toggleFullscreen() {
+    var el = shell || document.documentElement;
+    if (!document.fullscreenElement) {
+      var req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) {
+        Promise.resolve(req.call(el)).then(function () {
+          document.body.classList.add("is-fullscreen");
+          fitCanvas();
+          draw();
+        }).catch(function () { showToast("Koko ruutu ei onnistunut"); });
+      }
+    } else {
+      var exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+    }
+  }
+
+  window.addEventListener("fullscreenchange", function () {
+    document.body.classList.toggle("is-fullscreen", !!document.fullscreenElement);
+    fitCanvas();
+    draw();
+    updateHud();
+  });
+
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowUp" || e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === " ") {
+      e.preventDefault();
+    }
+    if ((e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey) toggleFullscreen();
+    keys[e.key] = true;
+    if (running) inputMode = "keys";
+  });
+  window.addEventListener("keyup", function (e) { keys[e.key] = false; });
+
+  btnStart.addEventListener("click", begin);
+  overlayBtn.addEventListener("click", function () { overlayAction(); });
+  btnRetry.addEventListener("click", function () {
+    if (!running && st.status !== "won") { begin(); return; }
+    E.newAttempt(st);
+    trail = [];
+    showToast("Uusi yritys");
+  });
+  btnNew.addEventListener("click", begin);
+  if (btnFs) btnFs.addEventListener("click", toggleFullscreen);
+  if (btnFsCorner) btnFsCorner.addEventListener("click", toggleFullscreen);
+  if (btnSound) {
+    btnSound.addEventListener("click", function () {
+      soundOn = !soundOn;
+      btnSound.textContent = soundOn ? "Ääni: päällä" : "Ääni: pois";
+      btnSound.setAttribute("aria-pressed", String(soundOn));
+      if (soundOn) soundCheckpoint();
+    });
+  }
+  Object.keys(diffBtns).forEach(function (key) {
+    if (diffBtns[key]) diffBtns[key].addEventListener("click", function () { setDifficulty(key); });
+  });
+  window.addEventListener("resize", function () { fitCanvas(); draw(); });
+
+  window.LabyrinttiUI = {
+    getState: function () { return E.getView(st); },
+    startAt: function (level, diff) { selectedLevel = Math.max(1, level | 0); if (diff && E.DIFFICULTY[diff]) difficulty = diff; begin(); },
+    start: begin,
+    nextLevel: nextLevel,
+    setDifficulty: setDifficulty,
+    getDifficulty: function () { return difficulty; },
+    setTilt: function (gx, gy) { inputMode = "keys"; E.setTilt(st, gx, gy); },
+    pressKey: function (key, down) { keys[key] = !!down; inputMode = "keys"; },
+    stepOnce: function (dt) {
+      if (inputMode === "keys") E.updateKeyTilt(st, keys, dt || 1 / 60);
+      E.step(st, dt || 1 / 60);
+      draw();
+      updateHud();
+      return E.getView(st);
+    },
+    isRunning: function () { return running; },
+    toggleFullscreen: toggleFullscreen
+  };
+
+  updateDiffButtons();
+  fitCanvas();
+  draw();
+  updateHud();
+  showOverlay(
+    "Labyrintti",
+    "Kallista lautaa ja vie kuula START → FINISH. Seuraa mustaa viivaa, vältä reiät. " +
+      "Valitse vaikeustaso oikealta. Taso vaihtuu vaikeammaksi joka kierroksella. F = koko ruutu.",
+    "Aloita",
+    begin
+  );
+  requestAnimationFrame(tick);
+})();
+</script>
+<script>document.querySelectorAll("[data-level]").forEach(function(button){button.addEventListener("click",function(){document.getElementById("overlay").classList.add("chosen");window.LabyrinttiUI.startAt(Number(button.dataset.level), button.dataset.difficulty);});});</script></body></html>
