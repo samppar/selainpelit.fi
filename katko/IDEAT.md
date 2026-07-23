@@ -6,7 +6,7 @@ Käyttäjän ohjeet ja havainnot jatkokehitystä varten.
 > taktiikat tehdään sen pohjalta (ottelupohjainen eval). Oletus asetettu
 > kaikkialle (selain, `tournament.mjs`, `eval.js`).
 
-## 1. Pistetilanteen huomiointi tekoälyssä (comeback-riski) — OSITTAIN TEHTY
+## 1. Pistetilanteen huomiointi tekoälyssä (comeback-riski) — TEHTY
 
 **Tehty:** `view.scores` + `view.target` lisätty viewiin (engine + selain). Martta
 on nyt pistetilannetietoinen: sen Monte Carlo -arvo huomioi ratkeaako ottelu
@@ -14,8 +14,13 @@ on nyt pistetilannetietoinen: sen Monte Carlo -arvo huomioi ratkeaako ottelu
 sai comeback-logiikan esiin automaattisesti — Martan otteluvoitto-% nousi
 per-jako ~28 %:sta ottelupelissä ~43 %:iin.
 
+**Tehty (jatko):** myös heuristiikat ovat nyt pistetilannetietoisia — `twoPlan`
+(`base.js`) skaalaa kakkoslopetuksen riskinoton: target − 1 pisteessä kakkosta
+ei jahdata (tavallinen tikki riittää voittoon, vain ilmainen varma lopetus
+kelpaa), target − 2 pisteessä jahti eskaloituu (kakkoslopetus voittaa ottelun).
+Koskee Ainoa ja Väinöä; Eino ei edelleenkään pelaa kakkoslopetusta (persoona).
+
 **Jäljellä:**
-- Heuristiikat (Aino/Eino/Väinö) EIVÄT vieläkään käytä pistetilannetta — vain Martta.
 - Martan arvo on yhden jaon lookahead + ottelupäätepalkkio, ei täysi
   moni-jakoinen ottelurollout. Riittää lähelle-targetia-tilanteisiin; kaukana
   targetista se pelaa käytännössä per-jako-optimia.
@@ -69,12 +74,28 @@ kun ei voi tunnustaa maata)? Antaako se tietoa?
 **Vaatii:** sakattujen korttien koon mallinnus. Iso off-suit-heitto on vahva
 signaali (pelaajalla ei ollut avausmaata JA hän valitsi luopua isosta kortista).
 
-## 3. Kortinlaskennan kalibrointi (52 kortin pakka, vain 20 jaossa)
+## 3. Kortinlaskennan kalibrointi (52 kortin pakka, vain 20 jaossa) — PÄÄOSIN TEHTY
 
 `suitInfo` olettaa 13 korttia per maa pelissä; oikeasti vain ~20/52 korttia
 jaetaan (5×4), joten `outstanding` on yliarvioitu ja `isBoss`/`unseenMax` voi
 erehtyä (korkeampi kortti voi olla vain jakamatta). Vaikuttaa kaikkiin
 heuristiikkoihin ja Martan rollout-politiikkaan.
+
+**Tehty:**
+- `outstanding` katkaistaan muiden pelaajien käsikorttien yhteismäärään
+  (maata ei voi olla muilla enempää kuin heillä on kortteja).
+- `twoPlan` tunnistaa kuolleen maan myös void-päättelystä: jos jokainen muu
+  kortillinen pelaaja on todistetusti sakannut maan, lopetus on varma — pelkkä
+  13 kortin laskenta ei 20 kortin jaossa käytännössä koskaan täyttynyt.
+- `planChoice` voittaa nyt tikin 4 halvimmalla pomolla kun varma
+  kakkoslopetus on suunnitteilla (kakkonen voittaa vain avattuna, joten
+  viimeisen tikin johto on pakko ottaa haltuun).
+- Mittaus (tournament.mjs, 400–500 ottelua): kakkoslopettajat nousivat ohi
+  Einon; Martta parani ~2 %-yks.
+
+**Jäljellä:** `isBoss`/`unseenMax` on yhä konservatiivinen (laskee jakamattomat
+kortit "näkemättömiksi") — oikea suunta, mutta todennäköisyyspohjainen malli
+jakamattoman pakan osuudesta voisi terävöittää pomopäättelyä.
 
 ## 4. Virallinen pisteraja
 
