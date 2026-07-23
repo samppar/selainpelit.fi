@@ -39,6 +39,8 @@ jobs:
             needs_install: false
           - game: labyrintti
             needs_install: false
+          - game: vaalikone
+            needs_install: false
     defaults:
       run:
         working-directory: ${{ matrix.game }}

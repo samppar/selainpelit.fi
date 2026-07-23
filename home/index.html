@@ -35,6 +35,7 @@
   --c-word:  #e0b24c;  /* sanapelit   */
   --c-shape: #7ba7d4;  /* palapelit    */
   --c-lab:   #b48ad0;  /* kokeilut     */
+  --c-tool:  #7bc4b4;  /* työkalut     */
 
   --shadow: 0 22px 55px -28px rgba(0,0,0,0.85), 0 3px 10px -6px rgba(0,0,0,0.6);
 }
@@ -511,6 +512,29 @@ body::before {
     </div>
   </section>
 
+  <!-- TYÖKALUT -->
+  <section class="section" aria-labelledby="s-tyokalu">
+    <div class="section-head">
+      <span class="tick" style="color:var(--c-tool)"></span>
+      <h2 id="s-tyokalu">Työkalut</h2>
+      <span class="fill"></span>
+      <span class="count">Uusi</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="/vaalikone/" style="--accent:var(--c-tool); --d:60ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h16v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M9 13V7.8L14.6 4l2.2 3.2L12.6 13"/><path d="M8.5 16.8h7"/></svg></span>
+          <span class="tag">Tee oma</span>
+        </div>
+        <h3>Vaalikone</h3>
+        <p>Tee oma vaalikone ja jaa linkkinä. Vastaaja voi ohittaa kysymyksen ja painottaa tärkeitä.</p>
+        <span class="go">Avaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+    </div>
+  </section>
+
   <!-- KOKEILUT -->
   <section class="section" aria-labelledby="s-koe">
     <div class="section-head">
@@ -536,7 +560,7 @@ body::before {
 
   <footer class="foot">
     <div class="marks">
-      <span><b>14</b> peliä</span>
+      <span><b>14</b> peliä &middot; <b>1</b> työkalu</span>
       <span>Selaimessa — <b>ei latauksia</b></span>
       <span>Ei mainoksia, ei tilejä</span>
     </div>

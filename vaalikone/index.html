@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Tee oma vaalikone ja jaa se linkkinä. Kyllä/ei-kysymykset, ohitus ja painoarvot — ilman tilejä ja palvelimia.">
+<meta name="theme-color" content="#1a120c">
+<meta property="og:title" content="Vaalikone — tee oma ja jaa linkkinä">
+<meta property="og:description" content="Kyllä/ei-kysymykset, ehdokkaat ja tulokset. Vastaaja voi ohittaa kysymyksen ja painottaa tärkeitä.">
+<meta property="og:type" content="website">
+<title>Vaalikone — tee oma ja jaa linkkinä · selainpelit.fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --ink:      #f4ead6;
+  --ink-soft: #cdbfa6;
+  --muted:    #9a8a72;
+  --bg0:      #0e0a07;
+  --bg1:      #1a120c;
+  --bg2:      #241811;
+  --panel:    rgba(38, 27, 18, 0.62);
+  --panel-hi: rgba(52, 37, 24, 0.86);
+  --line:     rgba(196, 160, 90, 0.18);
+  --line-hi:  rgba(196, 160, 90, 0.42);
+  --brass:    #c9a35a;
+  --brass-hi: #e6c684;
+  --brass-dp: #8a6a2e;
+  --yes:      #6fae8f;
+  --yes-hi:   #8fd0b0;
+  --no:       #d8664e;
+  --no-hi:    #f08a72;
+  --shadow: 0 22px 55px -28px rgba(0,0,0,0.85), 0 3px 10px -6px rgba(0,0,0,0.6);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+
+body {
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Source Serif 4", Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background:
+    radial-gradient(ellipse 80% 55% at 12% -8%, rgba(201,163,90,0.16), transparent 55%),
+    radial-gradient(ellipse 65% 55% at 105% 8%, rgba(111,174,143,0.10), transparent 50%),
+    radial-gradient(ellipse 90% 60% at 50% 118%, rgba(216,102,78,0.07), transparent 55%),
+    linear-gradient(168deg, var(--bg2) 0%, var(--bg1) 44%, var(--bg0) 100%);
+  background-attachment: fixed;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0; opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+#app {
+  position: relative; z-index: 1;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 3.6rem) clamp(1rem, 4vw, 2rem) 3.5rem;
+  display: flex; flex-direction: column; gap: 1.1rem;
+}
+
+/* ---------- Otsake ---------- */
+.mast { text-align: center; animation: rise 0.7s cubic-bezier(.2,.7,.2,1) both; }
+.kicker {
+  font-family: "Fraunces", serif;
+  text-transform: uppercase; letter-spacing: 0.42em;
+  font-size: 0.66rem; font-weight: 500;
+  color: var(--brass); margin: 0 0 0.9rem; padding-left: 0.42em;
+}
+.kicker.small { margin: 0 0 0.4rem; font-size: 0.6rem; letter-spacing: 0.3em; }
+.mast h1 {
+  font-family: "Fraunces", serif; font-optical-sizing: auto;
+  font-weight: 600; font-size: clamp(2.6rem, 9vw, 4rem);
+  line-height: 0.95; letter-spacing: -0.02em; margin: 0; color: var(--ink);
+}
+.mast h1 .dot { color: var(--brass); font-style: italic; font-weight: 500; }
+.rule {
+  width: min(300px, 60%); height: 1px; margin: 1.15rem auto 1rem;
+  background: linear-gradient(90deg, transparent, var(--brass-dp), var(--brass), var(--brass-dp), transparent);
+  position: relative;
+}
+.rule::after {
+  content: "\2726"; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--brass); font-size: 0.75rem;
+  background: var(--bg1); padding: 0 0.7rem;
+  text-shadow: 0 0 12px rgba(201,163,90,0.4);
+}
+.lede {
+  max-width: 52ch; margin: 0 auto;
+  color: var(--ink-soft); font-size: 1rem; line-height: 1.55;
+}
+.backrow { margin: -0.3rem 0 0; text-align: center; font-size: 0.9rem; color: var(--muted); }
+.textlink { color: var(--brass); text-decoration: none; }
+.textlink:hover { color: var(--brass-hi); text-decoration: underline; }
+
+/* ---------- Kortit ---------- */
+.card {
+  background: linear-gradient(160deg, var(--panel-hi), var(--panel));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: clamp(1.1rem, 3vw, 1.6rem);
+  animation: rise 0.55s cubic-bezier(.2,.7,.2,1) both;
+}
+.card h2 {
+  font-family: "Fraunces", serif; font-weight: 600;
+  font-size: 1.25rem; letter-spacing: 0.01em;
+  margin: 0 0 0.3rem; color: var(--ink);
+}
+.ctitle { font-size: clamp(1.5rem, 5vw, 2rem) !important; line-height: 1.1; }
+.cdesc { color: var(--ink-soft); line-height: 1.55; margin: 0.4rem 0 0; }
+.meta {
+  font-family: "Fraunces", serif; font-size: 0.72rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted); margin: 0.6rem 0 0.2rem;
+}
+.hint { color: var(--muted); font-size: 0.9rem; line-height: 1.5; margin: 0.35rem 0 0.6rem; }
+.errlist { margin: 0.3rem 0 0; padding-left: 1.2rem; color: var(--no-hi); font-size: 0.92rem; line-height: 1.7; }
+
+/* ---------- Lomakekentät ---------- */
+.flabel {
+  display: block; margin: 0.8rem 0 0.3rem;
+  font-family: "Fraunces", serif; font-size: 0.7rem;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+}
+.field {
+  width: 100%; display: block;
+  font: inherit; font-size: 0.98rem; color: var(--ink);
+  background: rgba(14, 10, 7, 0.55);
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  transition: border-color .25s, box-shadow .25s;
+  resize: none;
+}
+.field:focus {
+  outline: none; border-color: var(--line-hi);
+  box-shadow: 0 0 0 3px rgba(201,163,90,0.12);
+}
+.field::placeholder { color: rgba(154,138,114,0.65); }
+.field.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.82rem; }
+
+/* ---------- Painikkeet ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: "Fraunces", serif; font-weight: 500;
+  font-size: 0.92rem; letter-spacing: 0.03em;
+  color: var(--ink); text-decoration: none;
+  background: rgba(14, 10, 7, 0.4);
+  border: 1px solid var(--line); border-radius: 11px;
+  padding: 0.6rem 1.05rem; cursor: pointer;
+  transition: transform .25s cubic-bezier(.2,.7,.2,1), border-color .25s, background .25s, color .25s, box-shadow .25s;
+}
+.btn:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--line-hi); }
+.btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.big { font-size: 1.1rem; padding: 0.85rem 1.7rem; border-radius: 13px; }
+.btn.brass {
+  background: linear-gradient(160deg, rgba(201,163,90,0.28), rgba(138,106,46,0.22));
+  border-color: var(--line-hi); color: var(--brass-hi);
+}
+.btn.brass:hover:not(:disabled) { box-shadow: 0 10px 25px -12px rgba(201,163,90,0.5); }
+.btn.ghost { background: transparent; color: var(--ink-soft); }
+.btn.ghost:hover:not(:disabled) { color: var(--ink); }
+.btn.danger { color: var(--no-hi); border-color: rgba(216,102,78,0.3); }
+.btn.yes {
+  flex: 1; background: linear-gradient(160deg, rgba(111,174,143,0.24), rgba(111,174,143,0.1));
+  border-color: rgba(111,174,143,0.45); color: var(--yes-hi);
+}
+.btn.yes:hover { box-shadow: 0 12px 28px -14px rgba(111,174,143,0.6); border-color: var(--yes); }
+.btn.no {
+  flex: 1; background: linear-gradient(160deg, rgba(216,102,78,0.22), rgba(216,102,78,0.09));
+  border-color: rgba(216,102,78,0.45); color: var(--no-hi);
+}
+.btn.no:hover { box-shadow: 0 12px 28px -14px rgba(216,102,78,0.6); border-color: var(--no); }
+.ic { display: inline-flex; }
+.ic svg { width: 1.1em; height: 1.1em; display: block; }
+.textbtn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: none; border: none; padding: 0.3rem 0.2rem;
+  font: inherit; font-size: 0.9rem; color: var(--muted); cursor: pointer;
+}
+.textbtn:hover { color: var(--brass-hi); }
+.textbtn .ic svg { width: 1em; height: 1em; }
+
+/* ---------- Muokkain: kysymykset ---------- */
+.qlist { display: flex; flex-direction: column; gap: 0.55rem; margin: 0.4rem 0 0.8rem; }
+.qrow { display: flex; align-items: flex-start; gap: 0.55rem; }
+.qnum {
+  flex: none; width: 1.7rem; height: 1.7rem; margin-top: 0.35rem;
+  display: grid; place-items: center;
+  font-family: "Fraunces", serif; font-size: 0.75rem; font-weight: 600;
+  color: var(--brass); border: 1px solid var(--line); border-radius: 7px;
+  background: rgba(14,10,7,0.4);
+}
+.qrow .field { flex: 1; }
+.qbtns { display: flex; flex-direction: column; gap: 0.25rem; }
+.mini {
+  display: grid; place-items: center;
+  width: 1.75rem; height: 1.55rem;
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 7px; cursor: pointer;
+  transition: color .2s, border-color .2s;
+}
+.mini svg { width: 0.95rem; height: 0.95rem; }
+.mini:hover:not(:disabled) { color: var(--ink); border-color: var(--line-hi); }
+.mini:disabled { opacity: 0.3; cursor: default; }
+.mini.danger:hover { color: var(--no-hi); border-color: rgba(216,102,78,0.45); }
+
+/* ---------- Muokkain: ehdokkaat ---------- */
+.clist { display: flex; flex-direction: column; gap: 0.6rem; margin: 0.4rem 0 0.8rem; }
+.cand {
+  border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(14,10,7,0.3); overflow: hidden;
+}
+.cand summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  transition: background .2s;
+}
+.cand summary::-webkit-details-marker { display: none; }
+.cand summary::before {
+  content: "\203A"; color: var(--muted);
+  transition: transform .25s; font-size: 1.1rem; line-height: 1;
+}
+.cand[open] summary::before { transform: rotate(90deg); }
+.cand summary:hover { background: rgba(201,163,90,0.05); }
+.cand summary b { font-weight: 600; }
+.party { color: var(--muted); font-size: 0.85rem; margin-left: 0.15rem; }
+.cstat {
+  margin-left: auto; flex: none;
+  font-family: "Fraunces", serif; font-size: 0.68rem;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+}
+.cbody { padding: 0.2rem 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.7rem; }
+.crowinputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; }
+.canswers { display: flex; flex-direction: column; gap: 0.45rem; }
+.carow {
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.35rem 0; border-top: 1px dashed rgba(196,160,90,0.12);
+}
+.carow .qnum { margin-top: 0; }
+.caq { flex: 1; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.35; }
+.seg { display: flex; flex: none; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.segbtn {
+  font: inherit; font-size: 0.82rem;
+  background: transparent; color: var(--muted);
+  border: none; border-left: 1px solid var(--line);
+  padding: 0.35rem 0.6rem; cursor: pointer; min-width: 3.1rem;
+  transition: background .2s, color .2s;
+}
+.segbtn:first-child { border-left: none; }
+.segbtn:hover { color: var(--ink); }
+.segbtn.on { font-weight: 600; }
+.segbtn.on.k { background: rgba(111,174,143,0.22); color: var(--yes-hi); }
+.segbtn.on.e { background: rgba(216,102,78,0.2); color: var(--no-hi); }
+.segbtn.on.o { background: rgba(201,163,90,0.14); color: var(--brass-hi); }
+
+.importrow { display: flex; gap: 0.5rem; align-items: stretch; margin-top: 0.4rem; }
+.importrow .field { flex: 1; }
+.importrow .btn { flex: none; }
+
+/* ---------- Jaa ---------- */
+.sharerow { margin: 0.7rem 0 0; }
+.sharehead { display: flex; align-items: baseline; gap: 0.4rem; flex-wrap: wrap; }
+.sharehead b { font-family: "Fraunces", serif; font-weight: 600; }
+.sharehead .hint { margin: 0; flex: 1; }
+.linklen { color: var(--muted); font-size: 0.75rem; }
+.editor-foot {
+  margin-top: 1rem; padding-top: 0.8rem;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;
+}
+.editor-foot details { flex: 1; min-width: min(100%, 320px); }
+.editor-foot summary {
+  cursor: pointer; color: var(--muted); font-size: 0.9rem;
+}
+.editor-foot summary:hover { color: var(--brass-hi); }
+
+/* ---------- Vastaaminen ---------- */
+.qcard { text-align: center; }
+.qtop {
+  display: flex; justify-content: space-between; gap: 0.8rem;
+  font-family: "Fraunces", serif; font-size: 0.7rem;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 0.7rem;
+}
+.qtop .qtitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.progress {
+  height: 4px; border-radius: 999px;
+  background: rgba(14,10,7,0.6); overflow: hidden;
+  margin-bottom: clamp(1.2rem, 4vw, 2rem);
+}
+.progressfill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--brass-dp), var(--brass));
+  transition: width .4s cubic-bezier(.2,.7,.2,1);
+}
+.claim {
+  font-family: "Fraunces", serif; font-weight: 600;
+  font-size: clamp(1.4rem, 4.5vw, 1.9rem) !important;
+  line-height: 1.25; margin: 0 auto 1.2rem !important;
+  max-width: 30ch; min-height: 2.4em;
+  display: flex; align-items: center; justify-content: center;
+}
+.weights {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.45rem; flex-wrap: wrap; margin-bottom: 1.2rem;
+}
+.wlabel { font-size: 0.85rem; color: var(--muted); margin-right: 0.15rem; }
+.chip {
+  font: inherit; font-size: 0.82rem;
+  color: var(--muted); background: transparent;
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 0.32rem 0.8rem; cursor: pointer;
+  transition: color .2s, border-color .2s, background .2s;
+}
+.chip:hover { color: var(--ink); border-color: var(--line-hi); }
+.chip.on {
+  color: var(--brass-hi); border-color: var(--line-hi);
+  background: rgba(201,163,90,0.14); font-weight: 600;
+}
+.chip.wsel {
+  appearance: none; -webkit-appearance: none;
+  font-family: inherit;
+  padding-right: 1.7rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a8a72' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 0.65rem;
+}
+.chip.wsel option { background: #241811; color: #f4ead6; }
+.answerbtns { display: flex; gap: 0.7rem; max-width: 440px; margin: 0 auto 0.8rem; }
+.underbtns { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.6rem; }
+.navrow {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 0.7rem; padding-top: 0.7rem;
+  border-top: 1px solid var(--line);
+}
+.navrow .hint { margin: 0; }
+.introbtns { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-top: 1.1rem; }
+
+/* ---------- Tulokset ---------- */
+.results { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.9rem; }
+.result {
+  border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(14,10,7,0.3); overflow: hidden;
+}
+.result.top { border-color: rgba(201,163,90,0.5); box-shadow: 0 0 24px -10px rgba(201,163,90,0.35); }
+.result summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.75rem 0.95rem;
+}
+.result summary::-webkit-details-marker { display: none; }
+.result summary:hover { background: rgba(201,163,90,0.05); }
+.rank {
+  flex: none; font-family: "Fraunces", serif; font-weight: 600;
+  font-size: 0.9rem; color: var(--muted); min-width: 1.4rem;
+}
+.result.top .rank { color: var(--brass-hi); }
+.rname { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 0.35rem; flex-wrap: wrap; }
+.rname b { font-weight: 600; }
+.rbarwrap {
+  flex: 1.2; height: 6px; border-radius: 999px;
+  background: rgba(14,10,7,0.6); overflow: hidden; min-width: 60px;
+}
+.rbar {
+  display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--brass-dp), var(--brass), var(--brass-hi));
+  transition: width .8s cubic-bezier(.2,.7,.2,1);
+}
+.rpct {
+  flex: none; font-family: "Fraunces", serif; font-weight: 600;
+  font-size: 1.05rem; color: var(--ink); min-width: 3.2rem; text-align: right;
+}
+.breakdown { padding: 0.2rem 0.95rem 0.85rem; border-top: 1px dashed rgba(196,160,90,0.14); }
+.brow {
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.4rem 0; border-bottom: 1px dashed rgba(196,160,90,0.1);
+  font-size: 0.9rem;
+}
+.brow:last-child { border-bottom: none; }
+.brow .qnum { width: 1.5rem; height: 1.5rem; font-size: 0.68rem; margin: 0; }
+.bq { flex: 1; color: var(--ink-soft); line-height: 1.35; }
+.brow.voterSkip .bq, .brow.candSkip .bq { opacity: 0.55; }
+.bans { display: flex; gap: 0.3rem; flex: none; }
+.pill {
+  font-size: 0.72rem; letter-spacing: 0.03em;
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 0.18rem 0.55rem; color: var(--muted); white-space: nowrap;
+}
+.pill.k { color: var(--yes-hi); border-color: rgba(111,174,143,0.4); }
+.pill.e { color: var(--no-hi); border-color: rgba(216,102,78,0.4); }
+.pill.me { background: rgba(201,163,90,0.08); }
+
+/* ---------- Alatunniste, toast ---------- */
+.foot {
+  margin-top: 1.2rem; padding-top: 1.1rem;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap;
+  color: var(--muted); font-size: 0.85rem;
+}
+.foot .hint { margin: 0; }
+
+#toast {
+  position: fixed; left: 50%; bottom: 1.4rem; z-index: 50;
+  transform: translate(-50%, 20px);
+  background: var(--panel-hi); color: var(--ink);
+  border: 1px solid var(--line-hi); border-radius: 11px;
+  padding: 0.6rem 1.1rem; font-size: 0.92rem;
+  box-shadow: var(--shadow);
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s, transform .3s;
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+#toast.bad { border-color: rgba(216,102,78,0.55); color: var(--no-hi); }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+@media (max-width: 560px) {
+  .crowinputs { grid-template-columns: 1fr; }
+  .carow { flex-wrap: wrap; }
+  .caq { flex-basis: 100%; order: -1; margin-left: 2.25rem; }
+  .qtop .qtitle { display: none; }
+  .answerbtns { flex-direction: column; max-width: none; }
+  .rbarwrap { display: none; }
+}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+// Vaalikone — ydin: koodaus, validointi, vastaussessio ja tuloslaskenta.
+// Puhdas JS ilman DOM:ia — testattavissa Nodella (test/run_tests.js).
+// Selaimessa sama tiedosto ladataan globaaliin Vaalikone-objektiin.
+
+// Vastausmerkit (myös URL-koodauksessa)
+const YES = "k";   // kyllä
+const NO = "e";    // ei
+const SKIP = "o";  // ohitettu / ei kantaa
+
+// Painoarvot vastaajalle: pikavalinnat + vapaa paino (pudotusvalikko UI:ssa)
+const WEIGHTS = [1, 2, 3];
+const DEFAULT_WEIGHT = 1;
+const MAX_WEIGHT = 10;
+
+// Kelvoton paino -> oletus; liian suuri leikataan maksimiin.
+function sanitizeWeight(w) {
+  const x = Number(w);
+  if (!isFinite(x) || x <= 0) return DEFAULT_WEIGHT;
+  return Math.min(Math.round(x * 100) / 100, MAX_WEIGHT);
+}
+
+// Kokorajat — pitävät jakolinkin järkevän mittaisena
+const LIMITS = {
+  title: 120,
+  desc: 600,
+  questions: 60,
+  questionText: 300,
+  candidates: 60,
+  name: 80,
+  party: 80,
+};
+
+/* ---------------- UTF-8 <-> base64url ---------------- */
+
+function bytesToB64url(bytes) {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  const b64 = typeof btoa !== "undefined"
+    ? btoa(bin)
+    : Buffer.from(bytes).toString("base64");
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function b64urlToBytes(str) {
+  let b64 = String(str).replace(/-/g, "+").replace(/_/g, "/");
+  while (b64.length % 4) b64 += "=";
+  let bin;
+  if (typeof atob !== "undefined") bin = atob(b64);
+  else bin = Buffer.from(b64, "base64").toString("binary");
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+async function deflateText(str) {
+  const cs = new CompressionStream("deflate-raw");
+  const stream = new Blob([new TextEncoder().encode(str)]).stream().pipeThrough(cs);
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+async function inflateText(bytes) {
+  const ds = new DecompressionStream("deflate-raw");
+  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  return new TextDecoder().decode(await new Response(stream).arrayBuffer());
+}
+
+const hasCompression = typeof CompressionStream !== "undefined" &&
+  typeof DecompressionStream !== "undefined";
+
+async function packText(str) {
+  if (hasCompression) return { z: true, b64: bytesToB64url(await deflateText(str)) };
+  return { z: false, b64: bytesToB64url(new TextEncoder().encode(str)) };
+}
+
+async function unpackText(b64, compressed) {
+  const bytes = b64urlToBytes(b64);
+  if (compressed) return inflateText(bytes);
+  return new TextDecoder().decode(bytes);
+}
+
+/* ---------------- Normalisointi ja validointi ---------------- */
+
+function clip(s, n) {
+  return String(s == null ? "" : s).trim().slice(0, n);
+}
+
+function normalizeAnswers(answers, count) {
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const a = Array.isArray(answers) ? answers[i] : String(answers || "")[i];
+    out.push(a === YES || a === NO ? a : SKIP);
+  }
+  return out;
+}
+
+// Palauttaa muotoillun, rajatun kopion vaalikoneesta.
+function normalizeCompass(raw) {
+  const c = raw || {};
+  const questions = (Array.isArray(c.questions) ? c.questions : [])
+    .map((q) => clip(q, LIMITS.questionText))
+    .slice(0, LIMITS.questions);
+  const candidates = (Array.isArray(c.candidates) ? c.candidates : [])
+    .slice(0, LIMITS.candidates)
+    .map((cand) => ({
+      name: clip(cand && cand.name, LIMITS.name),
+      party: clip(cand && cand.party, LIMITS.party),
+      answers: normalizeAnswers(cand && cand.answers, questions.length),
+    }));
+  return {
+    title: clip(c.title, LIMITS.title),
+    desc: clip(c.desc, LIMITS.desc),
+    questions,
+    candidates,
+  };
+}
+
+// errors: lista suomenkielisiä virheilmoituksia (tyhjä = kelpaa).
+function validateCompass(raw, opts) {
+  const needCandidates = !opts || opts.needCandidates !== false;
+  const c = normalizeCompass(raw);
+  const errors = [];
+  if (!c.title) errors.push("Anna vaalikoneelle nimi.");
+  if (c.questions.length === 0) errors.push("Lisää vähintään yksi kysymys.");
+  c.questions.forEach((q, i) => {
+    if (!q) errors.push("Kysymys " + (i + 1) + " on tyhjä.");
+  });
+  if (needCandidates) {
+    if (c.candidates.length === 0) errors.push("Lisää vähintään yksi ehdokas.");
+    c.candidates.forEach((cand, i) => {
+      if (!cand.name) errors.push("Ehdokkaalta " + (i + 1) + " puuttuu nimi.");
+    });
+  }
+  return errors;
+}
+
+/* ---------------- Vaalikoneen koodaus jakolinkkiin ---------------- */
+// Etuliite: VK2 = deflate-pakattu, VK1 = pakkaamaton. Sisältö: base64url(JSON).
+
+async function encodeCompass(raw, opts) {
+  const includeCandidates = !opts || opts.includeCandidates !== false;
+  const c = normalizeCompass(raw);
+  const errors = validateCompass(c, { needCandidates: includeCandidates });
+  if (errors.length) throw new Error(errors[0]);
+  const compact = {
+    t: c.title,
+    d: c.desc,
+    q: c.questions,
+    c: includeCandidates
+      ? c.candidates.map((x) => [x.name, x.party, x.answers.join("")])
+      : [],
+  };
+  const packed = await packText(JSON.stringify(compact));
+  return (packed.z ? "VK2." : "VK1.") + packed.b64;
+}
+
+async function decodeCompass(code) {
+  const m = /^(VK[12])\.([A-Za-z0-9_-]+)$/.exec(String(code || "").trim());
+  if (!m) throw new Error("Linkki ei ole kelvollinen vaalikone.");
+  let data;
+  try {
+    data = JSON.parse(await unpackText(m[2], m[1] === "VK2"));
+  } catch (_e) {
+    throw new Error("Linkin sisältöä ei voitu lukea — se on ehkä katkennut.");
+  }
+  const compass = normalizeCompass({
+    title: data.t,
+    desc: data.d,
+    questions: data.q,
+    candidates: (Array.isArray(data.c) ? data.c : []).map((row) => ({
+      name: row && row[0],
+      party: row && row[1],
+      answers: row && row[2],
+    })),
+  });
+  if (!compass.title || compass.questions.length === 0) {
+    throw new Error("Linkistä puuttuu vaalikoneen sisältö.");
+  }
+  return compass;
+}
+
+/* ---------------- Ehdokkaan vastauskoodi ---------------- */
+// Ehdokas vastaa ehdokaslinkissä ja lähettää koodin vaalikoneen tekijälle.
+
+async function encodeReply(name, answers) {
+  const n = clip(name, LIMITS.name);
+  if (!n) throw new Error("Anna nimesi ennen koodin luontia.");
+  const a = normalizeAnswers(answers, Array.isArray(answers) ? answers.length : 0);
+  if (a.length === 0) throw new Error("Vastauksia ei ole.");
+  const packed = await packText(JSON.stringify({ n, a: a.join("") }));
+  return (packed.z ? "VE2." : "VE1.") + packed.b64;
+}
+
+async function decodeReply(code, expectedCount) {
+  const m = /^(VE[12])\.([A-Za-z0-9_-]+)$/.exec(String(code || "").trim());
+  if (!m) throw new Error("Koodi ei ole kelvollinen vastauskoodi.");
+  let data;
+  try {
+    data = JSON.parse(await unpackText(m[2], m[1] === "VE2"));
+  } catch (_e) {
+    throw new Error("Koodia ei voitu lukea — se on ehkä katkennut.");
+  }
+  const name = clip(data.n, LIMITS.name);
+  const answers = normalizeAnswers(data.a, String(data.a || "").length);
+  if (!name || answers.length === 0) throw new Error("Koodista puuttuu sisältö.");
+  if (expectedCount != null && answers.length !== expectedCount) {
+    throw new Error(
+      "Koodissa on " + answers.length + " vastausta, mutta vaalikoneessa on " +
+      expectedCount + " kysymystä."
+    );
+  }
+  return { name, answers };
+}
+
+/* ---------------- Vastaussessio (yksi kysymys kerrallaan) ---------------- */
+// voterAnswers[i] = { a: 'k'|'e'|'o', w: paino } tai null (ei vielä vastattu).
+
+function createSession(questionCount) {
+  const answers = new Array(questionCount).fill(null);
+  let pos = 0;
+  return {
+    count: questionCount,
+    answers,
+    get pos() { return pos; },
+    current() { return answers[pos] || null; },
+    done() { return pos >= questionCount; },
+    answeredCount() { return answers.filter(Boolean).length; },
+    // Vastaa nykyiseen kysymykseen ja siirry eteenpäin.
+    answer(a, w) {
+      if (pos >= questionCount) return true;
+      const ans = a === YES || a === NO ? a : SKIP;
+      const weight = ans === SKIP ? 0 : sanitizeWeight(w);
+      answers[pos] = { a: ans, w: weight };
+      pos++;
+      return pos >= questionCount;
+    },
+    back() { if (pos > 0) pos--; return pos; },
+    // Hyppää suoraan kysymykseen (tulosnäkymän "muuta vastausta").
+    jump(i) { if (i >= 0 && i < questionCount) pos = i; return pos; },
+  };
+}
+
+/* ---------------- Tuloslaskenta ---------------- */
+// Vertailussa ovat vain kysymykset, joihin sekä vastaaja että ehdokas
+// ottivat kantaa. Samaa mieltä -> koko paino, eri mieltä -> 0.
+// pct = 100 * painotetut osumat / vertailtujen painojen summa.
+
+function matchCandidate(candAnswers, voterAnswers) {
+  let weightSum = 0, agreeWeight = 0, agree = 0, disagree = 0, compared = 0;
+  const detail = [];
+  for (let i = 0; i < voterAnswers.length; i++) {
+    const v = voterAnswers[i];
+    const ca = candAnswers[i];
+    if (!v || v.a === SKIP) {
+      detail.push({ state: "voterSkip", voter: SKIP, cand: ca || SKIP, w: 0 });
+      continue;
+    }
+    if (ca !== YES && ca !== NO) {
+      detail.push({ state: "candSkip", voter: v.a, cand: SKIP, w: v.w });
+      continue;
+    }
+    compared++;
+    weightSum += v.w;
+    if (ca === v.a) {
+      agree++;
+      agreeWeight += v.w;
+      detail.push({ state: "agree", voter: v.a, cand: ca, w: v.w });
+    } else {
+      disagree++;
+      detail.push({ state: "disagree", voter: v.a, cand: ca, w: v.w });
+    }
+  }
+  const pct = compared > 0 ? Math.round((100 * agreeWeight) / weightSum) : null;
+  return { pct, agree, disagree, compared, detail };
+}
+
+function matchAll(compass, voterAnswers) {
+  const results = compass.candidates.map((cand) => {
+    const r = matchCandidate(cand.answers, voterAnswers);
+    return { name: cand.name, party: cand.party, ...r };
+  });
+  results.sort((a, b) => {
+    if (a.pct == null && b.pct == null) return a.name.localeCompare(b.name, "fi");
+    if (a.pct == null) return 1;
+    if (b.pct == null) return -1;
+    if (b.pct !== a.pct) return b.pct - a.pct;
+    if (b.agree !== a.agree) return b.agree - a.agree;
+    return a.name.localeCompare(b.name, "fi");
+  });
+  return results;
+}
+
+/* ---------------- Vienti ---------------- */
+
+const Vaalikone = {
+  YES, NO, SKIP, WEIGHTS, DEFAULT_WEIGHT, MAX_WEIGHT, sanitizeWeight, LIMITS,
+  normalizeCompass, validateCompass,
+  encodeCompass, decodeCompass,
+  encodeReply, decodeReply,
+  createSession, matchCandidate, matchAll,
+};
+
+if (typeof module !== "undefined" && module.exports) module.exports = Vaalikone;
+if (typeof window !== "undefined") window.Vaalikone = Vaalikone;
+
+</script>
+<script>
+"use strict";
+/* Vaalikone — käyttöliittymä. Ydinlogiikka: src/engine.js (window.Vaalikone).
+   Näkymät reititetään URL-fragmentista:
+     (tyhjä)   -> muokkain (tee oma vaalikone)
+     #k=KOODI  -> vastaaja (kyllä/ei + paino + ohitus, tulokset)
+     #e=KOODI  -> ehdokas (vastaa ja lähetä koodi tekijälle)          */
+(() => {
+  const V = window.Vaalikone;
+  const app = document.getElementById("app");
+  const DRAFT_KEY = "vaalikone.draft.v1";
+
+  /* ---------------- DOM-apurit (ei innerHTML:ää käyttäjän tekstille) ------ */
+
+  function el(tag, attrs, ...children) {
+    const node = document.createElement(tag);
+    if (attrs) {
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v == null) continue;
+        if (k === "class") node.className = v;
+        else if (k === "text") node.textContent = v;
+        else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+        else if (k === "html") node.innerHTML = v; // vain omille ikoneille
+        else node.setAttribute(k, v);
+      }
+    }
+    for (const c of children.flat()) {
+      if (c == null) continue;
+      node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    }
+    return node;
+  }
+
+  const ICONS = {
+    yes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg>',
+    no: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    skip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M15 8l4 4-4 4"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>',
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M7 7l1 13h8l1-13"/></svg>',
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M9 6l-6 6 6 6"/></svg>',
+  };
+  const icon = (name) => el("span", { class: "ic", html: ICONS[name], "aria-hidden": "true" });
+
+  let toastTimer = null;
+  function toast(msg, bad) {
+    let t = document.getElementById("toast");
+    if (!t) { t = el("div", { id: "toast" }); document.body.appendChild(t); }
+    t.textContent = msg;
+    t.className = "show" + (bad ? " bad" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = ""; }, 2600);
+  }
+
+  async function copyText(text, okMsg) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(okMsg || "Kopioitu leikepöydälle.");
+    } catch (_e) {
+      const ta = el("textarea", { class: "visually-hidden" });
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); toast(okMsg || "Kopioitu leikepöydälle."); }
+      catch (_e2) { toast("Kopiointi ei onnistunut — valitse ja kopioi itse.", true); }
+      ta.remove();
+    }
+  }
+
+  function autoGrow(ta) {
+    ta.style.height = "auto";
+    ta.style.height = ta.scrollHeight + 2 + "px";
+  }
+
+  const ansLabel = (a) => (a === V.YES ? "Kyllä" : a === V.NO ? "Ei" : "–");
+  const fmtW = (w) => String(w).replace(".", ",");
+  const CUSTOM_WEIGHTS = [0.5, 4, 5, 6, 7, 8, 9, 10];
+
+  /* ---------------- Muokkaimen luonnos ---------------- */
+
+  function defaultDraft() {
+    return { title: "", desc: "", questions: [""], candidates: [] };
+  }
+
+  function loadDraft() {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY));
+      if (d && Array.isArray(d.questions) && Array.isArray(d.candidates)) {
+        d.candidates.forEach((c) => {
+          if (!Array.isArray(c.answers)) c.answers = [];
+        });
+        return d;
+      }
+    } catch (_e) { /* rikkinäinen luonnos -> aloitetaan puhtaalta */ }
+    return defaultDraft();
+  }
+
+  function saveDraft(d) {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch (_e) { /* täynnä */ }
+  }
+
+  /* ---------------- Yhteiset rakennuspalat ---------------- */
+
+  function header(sub, homeLink) {
+    return el("header", { class: "mast" },
+      el("p", { class: "kicker", text: "selainpelit.fi" }),
+      el("h1", null, "Vaali", el("span", { class: "dot", text: "kone" })),
+      el("div", { class: "rule" }),
+      sub ? el("p", { class: "lede", text: sub }) : null,
+      homeLink
+        ? el("p", { class: "backrow" },
+            el("a", { class: "textlink", href: "/", text: "‹ selainpelit.fi" }),
+            " · ",
+            el("a", { class: "textlink", href: location.pathname, text: "Tee oma vaalikone" }))
+        : null,
+    );
+  }
+
+  function card(title, hint, ...children) {
+    return el("section", { class: "card" },
+      title ? el("h2", { text: title }) : null,
+      hint ? el("p", { class: "hint", text: hint }) : null,
+      ...children,
+    );
+  }
+
+  /* ==================== MUOKKAIN ==================== */
+
+  let draft = null;
+  let shareToken = 0;
+  let scheduleShare = () => {};
+
+  function renderEditor() {
+    if (!draft) draft = loadDraft();
+    const d = draft;
+    app.replaceChildren();
+
+    app.appendChild(header("Tee oma vaalikone: kirjoita kyllä/ei-väitteet, lisää ehdokkaat ja jaa linkki. Kaikki kulkee linkissä — mitään ei tallenneta palvelimelle.", false));
+    const back = el("p", { class: "backrow" }, el("a", { class: "textlink", href: "/", text: "‹ Takaisin etusivulle" }));
+    app.appendChild(back);
+
+    /* --- Perustiedot --- */
+    const titleIn = el("input", {
+      class: "field", type: "text", value: d.title, maxlength: String(V.LIMITS.title),
+      placeholder: "Esim. Kylävaalikone 2026",
+      oninput: (e) => { d.title = e.target.value; saveDraft(d); scheduleShare(); },
+    });
+    const descIn = el("textarea", {
+      class: "field", rows: "2", maxlength: String(V.LIMITS.desc),
+      placeholder: "Lyhyt kuvaus vastaajalle (valinnainen).",
+      oninput: (e) => { d.desc = e.target.value; saveDraft(d); autoGrow(e.target); scheduleShare(); },
+    });
+    descIn.value = d.desc;
+    app.appendChild(card("1 · Perustiedot", null,
+      el("label", { class: "flabel", text: "Vaalikoneen nimi" }), titleIn,
+      el("label", { class: "flabel", text: "Kuvaus" }), descIn,
+    ));
+
+    /* --- Kysymykset --- */
+    const qList = el("div", { class: "qlist" });
+    d.questions.forEach((q, i) => {
+      const ta = el("textarea", {
+        class: "field qtext", rows: "1", maxlength: String(V.LIMITS.questionText),
+        placeholder: "Kirjoita väite, johon vastataan kyllä tai ei…",
+        oninput: (e) => { d.questions[i] = e.target.value; saveDraft(d); autoGrow(e.target); scheduleShare(); },
+      });
+      ta.value = q;
+      const row = el("div", { class: "qrow" },
+        el("span", { class: "qnum", text: String(i + 1) }),
+        ta,
+        el("div", { class: "qbtns" },
+          el("button", { class: "mini", title: "Siirrä ylös", disabled: i === 0 ? "" : null, onclick: () => {
+            [d.questions[i - 1], d.questions[i]] = [d.questions[i], d.questions[i - 1]];
+            d.candidates.forEach((c) => { [c.answers[i - 1], c.answers[i]] = [c.answers[i], c.answers[i - 1]]; });
+            saveDraft(d); renderEditor();
+          } }, icon("up")),
+          el("button", { class: "mini", title: "Siirrä alas", disabled: i === d.questions.length - 1 ? "" : null, onclick: () => {
+            [d.questions[i + 1], d.questions[i]] = [d.questions[i], d.questions[i + 1]];
+            d.candidates.forEach((c) => { [c.answers[i + 1], c.answers[i]] = [c.answers[i], c.answers[i + 1]]; });
+            saveDraft(d); renderEditor();
+          } }, icon("down")),
+          el("button", { class: "mini danger", title: "Poista kysymys", onclick: () => {
+            d.questions.splice(i, 1);
+            d.candidates.forEach((c) => c.answers.splice(i, 1));
+            if (d.questions.length === 0) d.questions.push("");
+            saveDraft(d); renderEditor();
+          } }, icon("trash")),
+        ),
+      );
+      qList.appendChild(row);
+    });
+    const addQ = el("button", {
+      class: "btn ghost", onclick: () => {
+        if (d.questions.length >= V.LIMITS.questions) { toast("Enimmäismäärä on " + V.LIMITS.questions + " kysymystä.", true); return; }
+        d.questions.push(""); saveDraft(d); renderEditor();
+        const tas = app.querySelectorAll(".qtext");
+        if (tas.length) tas[tas.length - 1].focus();
+      },
+    }, "+ Lisää kysymys");
+    app.appendChild(card("2 · Kysymykset",
+      "Kirjoita väitteitä, joihin vastataan kyllä tai ei — esim. ”Kuntaveroa pitää laskea.”",
+      qList, addQ));
+
+    /* --- Ehdokkaat --- */
+    const cList = el("div", { class: "clist" });
+    d.candidates.forEach((c, ci) => cList.appendChild(candidateCard(d, c, ci)));
+
+    const importIn = el("input", { class: "field mono", type: "text", placeholder: "Liitä ehdokkaan vastauskoodi (VE…)" });
+    const importBtn = el("button", { class: "btn ghost", onclick: async () => {
+      const qCount = d.questions.filter((q) => q.trim()).length;
+      try {
+        const r = await V.decodeReply(importIn.value, d.questions.length);
+        const existing = d.candidates.find((x) => x.name.trim().toLowerCase() === r.name.toLowerCase());
+        if (existing) { existing.answers = r.answers; toast("Päivitetty: " + r.name); }
+        else {
+          d.candidates.push({ name: r.name, party: "", answers: r.answers, open: true });
+          toast("Lisätty: " + r.name);
+        }
+        saveDraft(d); renderEditor();
+      } catch (e) {
+        toast(e.message + (qCount !== d.questions.length ? " (Huom. tyhjät kysymykset lasketaan mukaan.)" : ""), true);
+      }
+    } }, "Tuo vastauskoodi");
+
+    app.appendChild(card("3 · Ehdokkaat",
+      "Merkitse ehdokkaiden kannat itse — tai lähetä heille ehdokaslinkki ja tuo saamasi vastauskoodi tästä.",
+      cList,
+      el("button", { class: "btn ghost", onclick: () => {
+        if (d.candidates.length >= V.LIMITS.candidates) { toast("Enimmäismäärä on " + V.LIMITS.candidates + " ehdokasta.", true); return; }
+        d.candidates.push({ name: "", party: "", answers: d.questions.map(() => V.SKIP), open: true });
+        saveDraft(d); renderEditor();
+      } }, "+ Lisää ehdokas"),
+      el("div", { class: "importrow" }, importIn, importBtn),
+    ));
+
+    /* --- Jaa --- */
+    const shareBox = el("div", { id: "sharebox" }, el("p", { class: "hint", text: "…" }));
+    app.appendChild(card("4 · Jaa vaalikone",
+      "Vastaajalinkki on valmis vaalikone. Ehdokaslinkissä on vain kysymykset — ehdokas vastaa ja lähettää sinulle koodin.",
+      shareBox,
+      el("div", { class: "editor-foot" },
+        el("details", null,
+          el("summary", { text: "Avaa olemassa oleva vaalikone muokattavaksi" }),
+          (() => {
+            const inp = el("input", { class: "field mono", type: "text", placeholder: "Liitä vastaajalinkki tai VK-koodi" });
+            return el("div", { class: "importrow" }, inp,
+              el("button", { class: "btn ghost", onclick: async () => {
+                try {
+                  const raw = inp.value.trim();
+                  const m = /(VK[12]\.[A-Za-z0-9_-]+)/.exec(raw);
+                  if (!m) throw new Error("Tekstistä ei löytynyt vaalikonekoodia.");
+                  const c = await V.decodeCompass(m[1]);
+                  draft = {
+                    title: c.title, desc: c.desc, questions: c.questions.slice(),
+                    candidates: c.candidates.map((x) => ({ name: x.name, party: x.party, answers: x.answers.slice() })),
+                  };
+                  saveDraft(draft); renderEditor(); toast("Vaalikone avattu muokattavaksi.");
+                } catch (e) { toast(e.message, true); }
+              } }, "Avaa"));
+          })(),
+        ),
+        el("button", { class: "btn ghost danger", onclick: () => {
+          if (!confirm("Tyhjennetäänkö koko luonnos?")) return;
+          draft = defaultDraft(); saveDraft(draft); renderEditor();
+        } }, "Tyhjennä luonnos"),
+      ),
+    ));
+
+    app.appendChild(footer());
+    app.querySelectorAll("textarea.field").forEach(autoGrow);
+
+    /* Jakolinkkien päivitys (async) */
+    scheduleShare = () => updateShare(++shareToken);
+    scheduleShare();
+    async function updateShare(token) {
+      const cleaned = {
+        title: d.title, desc: d.desc,
+        questions: d.questions.map((q) => q.trim()).filter(Boolean),
+        candidates: d.candidates
+          .filter((c) => c.name.trim())
+          .map((c) => ({ name: c.name, party: c.party, answers: d.questions.map((q, i) => (q.trim() ? (c.answers[i] || V.SKIP) : null)).filter((a) => a !== null) })),
+      };
+      const errs = V.validateCompass(cleaned);
+      const box = document.getElementById("sharebox");
+      if (!box || token !== shareToken) return;
+      if (errs.length) {
+        box.replaceChildren(
+          el("p", { class: "hint", text: "Linkit ilmestyvät tähän, kun vaalikone on valmis:" }),
+          el("ul", { class: "errlist" }, errs.map((e) => el("li", { text: e }))),
+        );
+        return;
+      }
+      try {
+        const base = location.origin + location.pathname;
+        const voterLink = base + "#k=" + (await V.encodeCompass(cleaned));
+        const candLink = base + "#e=" + (await V.encodeCompass(cleaned, { includeCandidates: false }));
+        if (token !== shareToken) return;
+        box.replaceChildren(
+          shareRow("Vastaajalinkki", "Jaa tämä äänestäjille.", voterLink, true),
+          shareRow("Ehdokaslinkki", "Lähetä tämä ehdokkaille.", candLink, false),
+        );
+      } catch (e) {
+        box.replaceChildren(el("p", { class: "hint", text: e.message }));
+      }
+    }
+
+    function shareRow(name, hint, link, preview) {
+      const inp = el("input", { class: "field mono", type: "text", readonly: "", value: link, onclick: (e) => e.target.select() });
+      return el("div", { class: "sharerow" },
+        el("div", { class: "sharehead" },
+          el("b", { text: name }), el("span", { class: "hint", text: " " + hint }),
+          el("span", { class: "linklen", text: Math.round(link.length / 100) / 10 + " k merkkiä" })),
+        el("div", { class: "importrow" },
+          inp,
+          el("button", { class: "btn brass", onclick: () => copyText(link, name + " kopioitu.") }, icon("copy"), "Kopioi"),
+          preview ? el("a", { class: "btn ghost", href: link, target: "_blank", rel: "noopener", text: "Esikatsele" }) : null,
+        ),
+      );
+    }
+  }
+
+  function candidateCard(d, c, ci) {
+    const answered = c.answers.filter((a) => a === V.YES || a === V.NO).length;
+    const det = el("details", { class: "cand" });
+    if (c.open) det.setAttribute("open", "");
+    det.addEventListener("toggle", () => { c.open = det.open; saveDraft(d); });
+
+    const sumName = el("b", { text: c.name.trim() || "Nimetön ehdokas" });
+    const sumParty = el("span", { class: "party", text: c.party.trim() });
+    det.appendChild(el("summary", null,
+      sumName, sumParty,
+      el("span", { class: "cstat", text: answered + "/" + d.questions.length + " kantaa" }),
+    ));
+
+    const nameIn = el("input", {
+      class: "field", type: "text", value: c.name, maxlength: String(V.LIMITS.name), placeholder: "Nimi",
+      oninput: (e) => {
+        c.name = e.target.value;
+        sumName.textContent = c.name.trim() || "Nimetön ehdokas";
+        saveDraft(d); scheduleShare();
+      },
+    });
+    const partyIn = el("input", {
+      class: "field", type: "text", value: c.party, maxlength: String(V.LIMITS.party), placeholder: "Puolue / ryhmä (valinnainen)",
+      oninput: (e) => {
+        c.party = e.target.value;
+        sumParty.textContent = c.party.trim();
+        saveDraft(d); scheduleShare();
+      },
+    });
+
+    const rows = el("div", { class: "canswers" });
+    d.questions.forEach((q, qi) => {
+      const seg = el("div", { class: "seg" },
+        [[V.YES, "Kyllä"], [V.NO, "Ei"], [V.SKIP, "–"]].map(([val, label]) =>
+          el("button", {
+            class: "segbtn" + (c.answers[qi] === val || (!c.answers[qi] && val === V.SKIP) ? " on " + val : ""),
+            onclick: (e) => {
+              c.answers[qi] = val; saveDraft(d);
+              seg.querySelectorAll(".segbtn").forEach((b) => { b.className = "segbtn"; });
+              e.currentTarget.className = "segbtn on " + val;
+              det.querySelector(".cstat").textContent =
+                c.answers.filter((a) => a === V.YES || a === V.NO).length + "/" + d.questions.length + " kantaa";
+              scheduleShare();
+            },
+          }, label)),
+      );
+      rows.appendChild(el("div", { class: "carow" },
+        el("span", { class: "qnum", text: String(qi + 1) }),
+        el("span", { class: "caq", text: q.trim() || "(tyhjä kysymys)" }),
+        seg,
+      ));
+    });
+
+    det.appendChild(el("div", { class: "cbody" },
+      el("div", { class: "crowinputs" }, nameIn, partyIn),
+      rows,
+      el("button", { class: "btn ghost danger", onclick: () => {
+        if (!confirm("Poistetaanko " + (c.name.trim() || "ehdokas") + "?")) return;
+        d.candidates.splice(ci, 1); saveDraft(d); renderEditor();
+      } }, "Poista ehdokas"),
+    ));
+    return det;
+  }
+
+  /* ==================== VASTAAJA & EHDOKAS ==================== */
+
+  function renderIntro(compass, mode) {
+    app.replaceChildren();
+    app.appendChild(header(null, true));
+    const isVoter = mode === "voter";
+    app.appendChild(card(null, null,
+      el("p", { class: "kicker small", text: isVoter ? "Vaalikone" : "Ehdokkaan vastauslomake" }),
+      el("h2", { class: "ctitle", text: compass.title }),
+      compass.desc ? el("p", { class: "cdesc", text: compass.desc }) : null,
+      el("p", { class: "meta", text: compass.questions.length + " kysymystä" + (isVoter ? " · " + compass.candidates.length + " ehdokasta" : "") }),
+      el("p", { class: "hint", text: isVoter
+        ? "Vastaa kyllä tai ei. Voit ohittaa merkityksettömän kysymyksen ja painottaa itsellesi tärkeitä."
+        : "Vastaa kyllä tai ei — tai ohita, jos et ota kantaa. Lopuksi saat koodin, jonka lähetät vaalikoneen tekijälle." }),
+      el("div", { class: "introbtns" },
+        el("button", { class: "btn brass big", onclick: () => renderQuestion(compass, mode, V.createSession(compass.questions.length)) },
+          isVoter ? "Aloita" : "Aloita vastaaminen"),
+      ),
+    ));
+    app.appendChild(footer());
+  }
+
+  function renderQuestion(compass, mode, session) {
+    if (session.done()) {
+      return mode === "voter" ? renderResults(compass, session) : renderReplyCode(compass, session);
+    }
+    const isVoter = mode === "voter";
+    const i = session.pos;
+    const prev = session.current();
+    let weight = prev && prev.w ? prev.w : V.DEFAULT_WEIGHT;
+
+    app.replaceChildren();
+    app.appendChild(header(null, true));
+
+    const pct = Math.round((i / session.count) * 100);
+    const progress = el("div", { class: "progress", role: "progressbar", "aria-valuenow": String(i), "aria-valuemax": String(session.count) },
+      el("div", { class: "progressfill", style: "width:" + pct + "%" }));
+
+    const answer = (a, w) => { session.answer(a, w); renderQuestion(compass, mode, session); };
+
+    let weightChips = null;
+    if (isVoter) {
+      const wsel = el("select", { class: "chip wsel", "aria-label": "Muu painoarvo" },
+        el("option", { value: "", text: "Muu…" }),
+        CUSTOM_WEIGHTS.map((v) => el("option", { value: String(v), text: fmtW(v) + "×" })));
+      weightChips = el("div", { class: "weights" },
+        el("span", { class: "wlabel", text: "Painoarvo:" }),
+        V.WEIGHTS.map((w) =>
+          el("button", {
+            class: "chip", "data-w": String(w),
+            onclick: () => { weight = w; setActiveWeight(); },
+          }, w === 1 ? "Normaali 1×" : w === 2 ? "Tärkeä 2×" : "Erittäin tärkeä 3×")),
+        wsel);
+      wsel.addEventListener("change", () => {
+        const v = parseFloat(wsel.value);
+        if (v > 0) weight = V.sanitizeWeight(v);
+        setActiveWeight();
+      });
+      const setActiveWeight = () => {
+        weightChips.querySelectorAll(".chip[data-w]").forEach((b) =>
+          b.classList.toggle("on", Number(b.getAttribute("data-w")) === weight));
+        const custom = !V.WEIGHTS.includes(weight);
+        wsel.classList.toggle("on", custom);
+        wsel.value = custom ? String(weight) : "";
+      };
+      setActiveWeight();
+    }
+
+    app.appendChild(el("section", { class: "card qcard" },
+      el("div", { class: "qtop" },
+        el("span", { class: "qcount", text: "Kysymys " + (i + 1) + " / " + session.count }),
+        el("span", { class: "qtitle", text: compass.title }),
+      ),
+      progress,
+      el("h2", { class: "claim", text: compass.questions[i] }),
+      weightChips,
+      el("div", { class: "answerbtns" },
+        el("button", { class: "btn yes big", onclick: () => answer(V.YES, weight) }, icon("yes"), "Kyllä"),
+        el("button", { class: "btn no big", onclick: () => answer(V.NO, weight) }, icon("no"), "Ei"),
+      ),
+      el("div", { class: "underbtns" },
+        el("button", { class: "btn ghost", onclick: () => answer(V.SKIP, 0) }, icon("skip"),
+          isVoter ? "Ohita — ei merkitystä minulle" : "Ohita — en ota kantaa"),
+        prev ? el("button", { class: "btn ghost", onclick: () => answer(prev.a, prev.a === V.SKIP ? 0 : prev.w) },
+          "Pidä ennallaan (" + ansLabel(prev.a) + ")") : null,
+      ),
+      el("div", { class: "navrow" },
+        i > 0 || prev
+          ? el("button", { class: "textbtn", onclick: () => { session.back(); renderQuestion(compass, mode, session); } }, icon("back"), " Edellinen")
+          : el("span"),
+        prev ? el("span", { class: "hint", text: "Aiempi vastauksesi: " + ansLabel(prev.a) }) : el("span"),
+      ),
+    ));
+    app.appendChild(footer());
+  }
+
+  /* --- Vastaajan tulokset --- */
+
+  function renderResults(compass, session) {
+    const results = V.matchAll(compass, session.answers);
+    const answered = session.answers.filter((x) => x && x.a !== V.SKIP).length;
+
+    app.replaceChildren();
+    app.appendChild(header(null, true));
+
+    const list = el("div", { class: "results" });
+    results.forEach((r, rank) => {
+      const det = el("details", { class: "result" + (rank === 0 && r.pct != null ? " top" : "") });
+      det.appendChild(el("summary", null,
+        el("span", { class: "rank", text: String(rank + 1) + "." }),
+        el("span", { class: "rname" },
+          el("b", { text: r.name }),
+          r.party ? el("span", { class: "party", text: r.party }) : null),
+        el("span", { class: "rbarwrap" },
+          el("span", { class: "rbar", style: "width:" + (r.pct || 0) + "%" })),
+        el("span", { class: "rpct", text: r.pct == null ? "–" : r.pct + " %" }),
+      ));
+      const rows = el("div", { class: "breakdown" });
+      if (r.pct == null) {
+        rows.appendChild(el("p", { class: "hint", text: "Ei yhteisiä vastattuja kysymyksiä — osuvuutta ei voi laskea." }));
+      } else {
+        rows.appendChild(el("p", { class: "hint", text: "Samaa mieltä " + r.agree + " · eri mieltä " + r.disagree + " · vertailussa " + r.compared + " kysymystä painotettuina." }));
+      }
+      r.detail.forEach((dd, qi) => {
+        rows.appendChild(el("div", { class: "brow " + dd.state },
+          el("span", { class: "qnum", text: String(qi + 1) }),
+          el("span", { class: "bq", text: compass.questions[qi] }),
+          el("span", { class: "bans" },
+            el("span", { class: "pill me " + dd.voter, text: "Sinä: " + ansLabel(dd.voter) + (dd.state !== "voterSkip" && dd.w !== 1 ? " " + fmtW(dd.w) + "×" : "") }),
+            el("span", { class: "pill " + dd.cand, text: ansLabel(dd.cand) }),
+          ),
+        ));
+      });
+      det.appendChild(rows);
+      list.appendChild(det);
+    });
+
+    app.appendChild(el("section", { class: "card" },
+      el("p", { class: "kicker small", text: compass.title }),
+      el("h2", { class: "ctitle", text: "Tuloksesi" }),
+      el("p", { class: "meta", text: "Vastasit " + answered + " / " + session.count + " kysymykseen. Osuvuus painottaa tärkeiksi merkitsemiäsi kysymyksiä." }),
+      list,
+      el("div", { class: "introbtns" },
+        el("button", { class: "btn ghost", onclick: () => { session.jump(0); renderQuestion(compass, "voter", session); } }, "Muuta vastauksia"),
+        el("button", { class: "btn ghost", onclick: () => renderIntro(compass, "voter") }, "Aloita alusta"),
+        el("a", { class: "btn ghost", href: location.pathname, text: "Tee oma vaalikone" }),
+      ),
+    ));
+    app.appendChild(footer());
+  }
+
+  /* --- Ehdokkaan vastauskoodi --- */
+
+  function renderReplyCode(compass, session) {
+    app.replaceChildren();
+    app.appendChild(header(null, true));
+
+    const answers = session.answers.map((x) => (x ? x.a : V.SKIP));
+    const taken = answers.filter((a) => a !== V.SKIP).length;
+    const nameIn = el("input", { class: "field", type: "text", maxlength: String(V.LIMITS.name), placeholder: "Etunimi Sukunimi" });
+    const out = el("textarea", { class: "field mono", rows: "3", readonly: "", onclick: (e) => e.target.select() });
+    const copyBtn = el("button", { class: "btn brass", disabled: "", onclick: () => copyText(out.value, "Vastauskoodi kopioitu.") }, icon("copy"), "Kopioi koodi");
+
+    let genToken = 0;
+    nameIn.addEventListener("input", async () => {
+      const token = ++genToken;
+      const name = nameIn.value.trim();
+      if (!name) { out.value = ""; copyBtn.setAttribute("disabled", ""); return; }
+      try {
+        const codeStr = await V.encodeReply(name, answers);
+        if (token !== genToken) return;
+        out.value = codeStr;
+        copyBtn.removeAttribute("disabled");
+        autoGrow(out);
+      } catch (e) { toast(e.message, true); }
+    });
+
+    app.appendChild(el("section", { class: "card" },
+      el("p", { class: "kicker small", text: compass.title }),
+      el("h2", { class: "ctitle", text: "Valmista!" }),
+      el("p", { class: "meta", text: "Otit kantaa " + taken + " / " + session.count + " kysymykseen." }),
+      el("p", { class: "hint", text: "Kirjoita nimesi, kopioi koodi ja lähetä se vaalikoneen tekijälle (esim. viestillä tai sähköpostilla). Tekijä liittää koodin muokkaimeen, jolloin vastauksesi tulevat mukaan vaalikoneeseen." }),
+      el("label", { class: "flabel", text: "Nimesi" }), nameIn,
+      el("label", { class: "flabel", text: "Vastauskoodisi" }), out,
+      el("div", { class: "introbtns" },
+        copyBtn,
+        el("button", { class: "btn ghost", onclick: () => { session.jump(0); renderQuestion(compass, "candidate", session); } }, "Muuta vastauksia"),
+      ),
+    ));
+    app.appendChild(footer());
+  }
+
+  /* ==================== Reititys ==================== */
+
+  function footer() {
+    return el("footer", { class: "foot" },
+      el("span", null, "Vaalikone · ", el("a", { class: "textlink", href: "/", text: "selainpelit.fi" })),
+      el("span", { class: "hint", text: "Ei tilejä, ei seurantaa — vaalikone kulkee kokonaan linkissä." }),
+    );
+  }
+
+  function renderError(message) {
+    app.replaceChildren();
+    app.appendChild(header(null, true));
+    app.appendChild(card("Hups", null,
+      el("p", { class: "cdesc", text: message }),
+      el("div", { class: "introbtns" },
+        el("a", { class: "btn brass", href: location.pathname, text: "Tee oma vaalikone" })),
+    ));
+    app.appendChild(footer());
+  }
+
+  async function route() {
+    const h = location.hash || "";
+    const m = /^#([ke])=(.+)$/.exec(h);
+    if (!m) { renderEditor(); return; }
+    try {
+      const compass = await V.decodeCompass(decodeURIComponent(m[2]));
+      if (m[1] === "k") {
+        if (compass.candidates.length === 0) throw new Error("Tässä linkissä ei ole ehdokkaita — pyydä tekijältä uusi vastaajalinkki.");
+        renderIntro(compass, "voter");
+      } else {
+        renderIntro(compass, "candidate");
+      }
+    } catch (e) {
+      renderError(e.message || "Linkkiä ei voitu avata.");
+    }
+  }
+
+  window.addEventListener("hashchange", route);
+  route();
+
+  // Selain-smoke-testien käyttöön (AGENTS.md: UI ilman DOM:ia + sama API selaimessa)
+  window.VaalikoneUI = { route, renderEditor, get draft() { return draft; }, set draft(d) { draft = d; } };
+})();
+
+</script>
+</body>
+</html>
