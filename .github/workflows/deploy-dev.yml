@@ -1,0 +1,112 @@
+name: Deploy dev
+
+# Deployaa feature-haarat dev-puolelle: jokainen push muuhun kuin
+# main/master-haaraan rakentaa koko sivuston ja rsyncaa sen
+# dev-hakemistoon (viimeisin push voittaa). Ei aja testejä — dev on
+# esikatselu; tuotantodeploy (deploy.yml) testaa ennen julkaisua.
+#
+# Secrets (samat kuin deploy.yml + valinnainen polku):
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_PORT
+#   DEPLOY_DEV_PATH=/var/www/selainpelit.fi/dev/public (oletus)
+
+on:
+  push:
+    branches-ignore: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
+jobs:
+  deploy-dev:
+    name: Build & rsync (dev)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: hertta/package-lock.json
+
+      - name: Build games
+        run: |
+          set -euo pipefail
+
+          # Hertta (Vite → dist/, base /hertta/)
+          (cd hertta && npm ci && npm run build)
+
+          # Itsenäiset HTML-niput
+          (cd tuppi && node build.js)
+          (cd sanaseppa && node build.js)
+          (cd sanapalat && node build.js)
+          (cd sanasato && node build.js)
+          (cd rypas && node build.js)
+          (cd holdem && node build.js)
+          (cd mylly && node build.js)
+          (cd tammi && node build.js)
+          (cd mosaiikki && node build.js)
+          (cd palikat && node build.js)
+          (cd labyrintti && node build.js)
+          (cd labyrintti2 && node build.js)
+          (cd vaalikone && node build.js)
+
+          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/mylly _site/tammi _site/mosaiikki _site/palikat _site/labyrintti _site/labyrintti2 _site/vaalikone _site/katko
+
+          cp -R hertta/dist/. _site/hertta/
+          cp tuppi/tuppi.html _site/tuppi/index.html
+          cp sanaseppa/index.html _site/sanaseppa/index.html
+          cp sanapalat/index.html _site/sanapalat/index.html
+          cp sanasato/index.html _site/sanasato/index.html
+          cp rypas/index.html _site/rypas/index.html
+          cp holdem/index.html _site/holdem/index.html
+          cp mylly/index.html _site/mylly/index.html
+          cp tammi/index.html _site/tammi/index.html
+          cp mosaiikki/index.html _site/mosaiikki/index.html
+          cp palikat/index.html _site/palikat/index.html
+          cp labyrintti/index.html _site/labyrintti/index.html
+          cp labyrintti2/index.html _site/labyrintti2/index.html
+          cp vaalikone/index.html _site/vaalikone/index.html
+          cp katko/index.html _site/katko/index.html
+
+          # Etusivu = repossa ylläpidetty home/index.html
+          cp home/index.html _site/index.html
+
+          # Dev-sivustoa ei indeksoida
+          printf 'User-agent: *\nDisallow: /\n' > _site/robots.txt
+
+      - name: Start ssh-agent
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add host to known_hosts
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          HOST="${DEPLOY_HOST:-viikkokisat.fi}"
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts
+
+      - name: Rsync to server (dev)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_DEV_PATH: ${{ secrets.DEPLOY_DEV_PATH }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          HOST="${DEPLOY_HOST:-viikkokisat.fi}"
+          USERNAME="${DEPLOY_USER:-root}"
+          DEST="${DEPLOY_DEV_PATH:-/var/www/selainpelit.fi/dev/public}"
+          PORT="${DEPLOY_PORT:-22}"
+          rsync -az \
+            -e "ssh -p $PORT -o StrictHostKeyChecking=yes" \
+            ./_site/ \
+            "${USERNAME}@${HOST}:${DEST}/"
