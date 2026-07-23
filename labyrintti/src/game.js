@@ -33,6 +33,10 @@
     hard: document.getElementById("diffHard")
   };
 
+  // Seinäosuman ääni/tärähdys laukeaa vain tätä nopeammalla törmäyksellä
+  // (px/s) — estää loputtoman pärinän kun kuula lepää/puristuu seinää vasten.
+  var WALL_HIT_MIN_SPEED = 55;
+
   var difficulty = "normal";
   try {
     var savedDiff = window.localStorage.getItem("labyrintti.difficulty");
@@ -87,11 +91,15 @@
     osc.stop(t0 + dur + 0.02);
   }
 
-  function soundWall() {
+  // Pehmeä puinen "tuk" seinäkosketukselle — sama kohinapurske-tekniikka kuin
+  // reikään putoamisessa (soundFall), ei kirskuva neliöaalto. intensity (0..1)
+  // skaalaa voimakkuuden: kevyt hipaisu on hiljainen, kova törmäys kuuluu selvästi.
+  function soundWall(intensity) {
     var now = performance.now();
-    if (now - lastTick < 70) return;
+    if (now - lastTick < 90) return;
     lastTick = now;
-    beep(150 + Math.random() * 40, 0.05, "square", 0.05);
+    var k = intensity == null ? 1 : intensity;
+    noiseBurst(260 + Math.random() * 30, 0.045 + k * 0.02, 0.05 + k * 0.1, 0, 3.2);
   }
   // Suodatettu kohinapurske (esim. puinen kopsahdus).
   function noiseBurst(freq, dur, gain, when, q) {
@@ -594,9 +602,15 @@
       if (spin > 1e6) spin -= 1e6;
       if (speed > 6) spinDir = Math.atan2(st.vy, st.vx);
       updateRoll(speed);
-      if (st.lastHit) {
-        shake = Math.min(1, shake + 0.35);
-        soundWall();
+      // Kynnysarvo suodattaa pois "puristuksen": kun kuula painuu seinää
+      // vasten jatkuvalla kallistuksella, painovoima syöttää sille pienen
+      // törmäysnopeuden JOKA ruudulla — ilman kynnystä ruutu tärisisi ja
+      // pärähtelisi loputtomiin niin kauan kuin kuula pysyy seinää vasten.
+      // Oikea kolahdus (pudotus, vauhdikas osuma) ylittää kynnyksen selvästi.
+      if (st.lastHit > WALL_HIT_MIN_SPEED) {
+        var hitIntensity = Math.min(1, (st.lastHit - WALL_HIT_MIN_SPEED) / 180);
+        shake = Math.min(0.6, shake + 0.14 + hitIntensity * 0.3);
+        soundWall(hitIntensity);
       }
       if (st.justCheckpoint) {
         soundCheckpoint();

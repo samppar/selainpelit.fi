@@ -163,5 +163,35 @@ ok(E.getView(E.createState(1, "hard")).difficulty === "hard", "view: vaikeus");
 // Tuntematon vaikeus → normaali (ei kaadu)
 ok(E.generateLevel(2, "bogus").difficulty === "normal", "tuntematon vaikeus → normaali");
 
+// —— lastHit on törmäysnopeus, ei true/false: kuula "puristuksissa" seinää
+// vasten jatkuvalla kallistuksella ei saa tuottaa suuria lastHit-arvoja
+// jatkuvasti (UI:ssa ruudun tärinä + ääni), vaan pieniä ja vaimenevia.
+// Peli (game.js) laukaisee tärinän/äänen vain kun lastHit ylittää kynnyksen
+// (WALL_HIT_MIN_SPEED = 55 px/s) — tässä varmistetaan moottorin tuottama
+// arvoalue tukee sitä kynnystä selvällä marginaalilla.
+{
+  const wall = L.walls.find((w) => w.h > w.w && w.x > 20 && w.x < L.width - 20);
+  const pinned = E.createState();
+  E.placeBall(pinned, wall.x - L.ballR - 0.5, wall.y + Math.min(wall.h, 20) / 2 + 2, 0, 0);
+  E.setTilt(pinned, 1, 0);
+  const pinnedHits = [];
+  for (let i = 0; i < 90; i++) {
+    E.step(pinned, 1 / 60);
+    if (pinned.lastHit) pinnedHits.push(pinned.lastHit);
+  }
+  const steadyState = pinnedHits.slice(-20);
+  ok(steadyState.every((h) => h < 40), "seinää vasten puristus pysyy pienenä (< 40 px/s), ei jatkuvaa isoa tärähdystä");
+
+  const fast = E.createState();
+  E.placeBall(fast, wall.x - L.ballR - 40, wall.y + Math.min(wall.h, 20) / 2 + 2, 220, 0);
+  let fastHit = 0;
+  for (let i = 0; i < 20; i++) {
+    E.step(fast, 1 / 60);
+    if (fast.lastHit > fastHit) fastHit = fast.lastHit;
+  }
+  ok(fastHit > 100, `oikea vauhdikas törmäys tuottaa selvästi suuremman lastHit-arvon (${fastHit.toFixed(1)})`);
+  ok(Math.min(...steadyState) < fastHit / 3, "puristus ja oikea törmäys erottuvat selvästi toisistaan");
+}
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -396,6 +396,10 @@
           : o.pos >= r && o.pos <= st.level.height - r;
         if (ok) { pick = o; break; }
       }
+      // lastHit tallentaa törmäysnopeuden (ei vain true/false), jotta UI voi
+      // erottaa oikean kolahduksen siitä, että kuula lepää/puristuu seinää
+      // vasten jatkuvan kallistuksen alla (pieni, toistuva "hipaisu" per ruutu).
+      var incoming = pick.axis === "x" ? Math.abs(st.vx) : Math.abs(st.vy);
       if (pick.axis === "x") {
         st.x = pick.pos;
         st.vx = -st.vx * BOUNCE;
@@ -405,7 +409,7 @@
         st.vy = -st.vy * BOUNCE;
         if (st.vy * pick.sign < 0) st.vy = pick.sign * Math.abs(st.vy);
       }
-      st.lastHit = 1;
+      st.lastHit = Math.max(st.lastHit, incoming);
       return;
     }
 
@@ -421,7 +425,7 @@
     if (vn < 0) {
       st.vx -= (1 + BOUNCE) * vn * nx;
       st.vy -= (1 + BOUNCE) * vn * ny;
-      st.lastHit = 1;
+      st.lastHit = Math.max(st.lastHit, Math.abs(vn));
     }
   }
 
