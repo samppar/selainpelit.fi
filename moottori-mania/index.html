@@ -23,6 +23,11 @@
     background:var(--paper);border:2px solid var(--ink);padding:6px 10px;cursor:pointer;
     box-shadow:3px 3px 0 rgba(0,0,0,.35);font-family:"Courier New",monospace}
   #demoBtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(0,0,0,.35)}
+  #homeBtn{position:fixed;top:178px;right:12px;color:var(--ink);font-weight:bold;font-size:13px;
+    background:var(--paper);border:2px solid var(--ink);padding:6px 10px;cursor:pointer;
+    box-shadow:3px 3px 0 rgba(0,0,0,.35);font-family:"Courier New",monospace;text-decoration:none;
+    display:inline-block}
+  #homeBtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(0,0,0,.35)}
   #demoBadge{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:none;
     background:var(--accent);color:#fff;font-family:"Courier New",monospace;font-weight:bold;
     padding:6px 14px;border:2px solid var(--ink);box-shadow:3px 3px 0 rgba(0,0,0,.35);font-size:13px;z-index:30}
@@ -74,6 +79,7 @@
 <input type="file" id="levFile" accept=".lev" style="display:none">
 <div id="menuBtn" title="Valitse kenttä (K)">KENTÄT</div>
 <div id="demoBtn" title="Tietokone näyttää mallin (M)">MALLI</div>
+<a id="homeBtn" href="/" title="Takaisin etusivulle">&#8962; ETUSIVU</a>
 <div id="demoBadge">MALLISUORITUS &#9654; mikä tahansa näppäin keskeyttää</div>
 <div id="lvlMenu"><div id="lvlCard">
   <h2>VALITSE KENTTÄ</h2>
