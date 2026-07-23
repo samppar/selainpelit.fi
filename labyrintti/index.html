@@ -1162,11 +1162,14 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
   var shake = 0;
   var trail = [];
   var overlayAction = begin;
+  var spin = 0;      // kuulan vierintävaihe (näkyvä pyöriminen)
+  var spinDir = 0;   // vierinnän suunta
 
   // —— Ääni (WebAudio, luodaan käyttäjän eleestä) ——
   var audioCtx = null;
   var soundOn = true;
   var lastTick = 0;
+  var rollNode = null, rollGain = null, rollFilter = null;
 
   function ensureAudio() {
     if (!soundOn) return null;
@@ -1201,9 +1204,39 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
     lastTick = now;
     beep(150 + Math.random() * 40, 0.05, "square", 0.05);
   }
+  // Suodatettu kohinapurske (esim. puinen kopsahdus).
+  function noiseBurst(freq, dur, gain, when, q) {
+    var ac = ensureAudio();
+    if (!ac) return;
+    var t0 = ac.currentTime + (when || 0);
+    var len = Math.max(1, Math.floor(ac.sampleRate * dur));
+    var buf = ac.createBuffer(1, len, ac.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var src = ac.createBufferSource();
+    src.buffer = buf;
+    var bp = ac.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = freq;
+    bp.Q.value = q || 4;
+    var g = ac.createGain();
+    g.gain.setValueAtTime(gain || 0.2, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(ac.destination);
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+  }
+
+  // Metallikuula putoaa puiseen reikään: puinen kopsahdus + metallinen helähdys + pari kimmahdusta.
   function soundFall() {
-    beep(220, 0.16, "sawtooth", 0.14);
-    beep(90, 0.28, "sine", 0.12, 0.02);
+    noiseBurst(300, 0.10, 0.24, 0, 3);           // puinen kopsahdus (matala, leveä)
+    beep(1650, 0.07, "triangle", 0.06, 0.004);   // metallinen helähdys
+    beep(2300, 0.05, "triangle", 0.03, 0.004);
+    noiseBurst(340, 0.06, 0.13, 0.075, 4);        // 2. kimmahdus
+    beep(1500, 0.04, "triangle", 0.03, 0.08);
+    noiseBurst(360, 0.04, 0.06, 0.13, 5);         // 3. kimmahdus
   }
   function soundCheckpoint() {
     beep(660, 0.1, "triangle", 0.1);
@@ -1213,6 +1246,46 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
     [523, 659, 784, 1047].forEach(function (f, i) {
       beep(f, 0.18, "triangle", 0.12, i * 0.09);
     });
+  }
+
+  // Jatkuva kuulan vierimisääni: ruskeaa kohinaa alipäästösuodattimen läpi,
+  // äänenvoimakkuus ja kirkkaus seuraavat kuulan nopeutta.
+  function ensureRoll() {
+    var ac = ensureAudio();
+    if (!ac || rollNode) return;
+    var buf = ac.createBuffer(1, Math.floor(ac.sampleRate * 1.2), ac.sampleRate);
+    var data = buf.getChannelData(0);
+    var last = 0;
+    for (var i = 0; i < data.length; i++) {
+      var w = Math.random() * 2 - 1;
+      last = (last + 0.025 * w) / 1.025;
+      data[i] = last * 3.2;
+    }
+    rollNode = ac.createBufferSource();
+    rollNode.buffer = buf;
+    rollNode.loop = true;
+    rollFilter = ac.createBiquadFilter();
+    rollFilter.type = "lowpass";
+    rollFilter.frequency.value = 400;
+    rollGain = ac.createGain();
+    rollGain.gain.value = 0;
+    rollNode.connect(rollFilter);
+    rollFilter.connect(rollGain);
+    rollGain.connect(ac.destination);
+    rollNode.start();
+  }
+
+  function updateRoll(speed) {
+    if (!soundOn || !audioCtx) {
+      if (rollGain) rollGain.gain.value = 0;
+      return;
+    }
+    ensureRoll();
+    if (!rollGain) return;
+    var norm = Math.min(1, speed / 260);
+    var g = norm * norm * 0.16;
+    rollGain.gain.setTargetAtTime(g, audioCtx.currentTime, 0.04);
+    rollFilter.frequency.setTargetAtTime(260 + speed * 4.5, audioCtx.currentTime, 0.04);
   }
 
   function fitCanvas() {
@@ -1423,29 +1496,78 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
       ctx.fill();
     }
 
-    // Pallo
+    // Pallo — kiiltävä teräskuula + näkyvä pyöriminen
     if (v.status !== "fallen" || fallDelay > 0.3) {
       var br = v.status === "fallen"
         ? v.ballR * Math.max(0.12, fallDelay / 0.55)
         : v.ballR;
       var bx = v.x;
       var by = v.y;
+
+      // varjo
       ctx.beginPath();
-      ctx.arc(bx + 1.4, by + 2, br, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(0,0,0,0.3)";
+      ctx.arc(bx + 1.6, by + 2.2, br * 1.03, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0,0,0,0.32)";
       ctx.fill();
-      var bg = ctx.createRadialGradient(bx - br * 0.38, by - br * 0.42, br * 0.08, bx, by, br);
-      bg.addColorStop(0, "#ffffff");
-      bg.addColorStop(0.35, "#d5dde4");
-      bg.addColorStop(1, "#7e8792");
+
+      // teräksen perusliuku (tumma reuna → keskiharmaa, valo lisätään erikseen)
+      var bg = ctx.createRadialGradient(bx - br * 0.3, by - br * 0.34, br * 0.1, bx + br * 0.16, by + br * 0.22, br * 1.2);
+      bg.addColorStop(0, "#eef2f6");
+      bg.addColorStop(0.32, "#c2ccd6");
+      bg.addColorStop(0.64, "#8b97a4");
+      bg.addColorStop(0.86, "#525d68");
+      bg.addColorStop(1, "#2b323a");
       ctx.beginPath();
       ctx.arc(bx, by, br, 0, Math.PI * 2);
       ctx.fillStyle = bg;
       ctx.fill();
+
+      // ympäristön heijastus alaosassa
+      var refl = ctx.createRadialGradient(bx + br * 0.22, by + br * 0.5, br * 0.05, bx, by, br);
+      refl.addColorStop(0, "rgba(214,226,238,0.5)");
+      refl.addColorStop(0.55, "rgba(150,165,180,0)");
+      refl.addColorStop(1, "rgba(150,165,180,0)");
       ctx.beginPath();
-      ctx.arc(bx - br * 0.28, by - br * 0.32, br * 0.22, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fillStyle = refl;
       ctx.fill();
+
+      // pyörivät pinnan merkit (näyttää vierimisen)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.clip();
+      var cosD = Math.cos(spinDir), sinD = Math.sin(spinDir);
+      for (var m = 0; m < 3; m++) {
+        var a = 2 * Math.PI * (spin + m / 3);
+        var depth = Math.cos(a);
+        if (depth <= 0.06) continue;
+        var along = Math.sin(a) * br * 0.66;
+        var across = (m - 1) * br * 0.42;
+        var mx = bx + cosD * along - sinD * across;
+        var my = by + sinD * along + cosD * across;
+        ctx.beginPath();
+        ctx.arc(mx, my, br * 0.15 * (0.6 + 0.4 * depth), 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(64, 76, 90," + (0.4 * depth).toFixed(3) + ")";
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // kirkas spekulaarivalo (ylävasen)
+      var spec = ctx.createRadialGradient(bx - br * 0.32, by - br * 0.38, 0, bx - br * 0.32, by - br * 0.38, br * 0.55);
+      spec.addColorStop(0, "rgba(255,255,255,0.96)");
+      spec.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.beginPath();
+      ctx.arc(bx - br * 0.26, by - br * 0.3, br * 0.46, 0, Math.PI * 2);
+      ctx.fillStyle = spec;
+      ctx.fill();
+
+      // ohut kirkas reunakaari (fresnel)
+      ctx.beginPath();
+      ctx.arc(bx, by, br * 0.95, Math.PI * 0.12, Math.PI * 0.82);
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = br * 0.09;
+      ctx.stroke();
     }
 
     ctx.restore();
@@ -1562,6 +1684,11 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
     if (running && st.status === "playing") {
       if (inputMode === "keys") E.updateKeyTilt(st, keys, dt);
       E.step(st, dt);
+      var speed = Math.sqrt(st.vx * st.vx + st.vy * st.vy);
+      spin += speed * dt / (st.level.ballR * 6.2832);
+      if (spin > 1e6) spin -= 1e6;
+      if (speed > 6) spinDir = Math.atan2(st.vy, st.vx);
+      updateRoll(speed);
       if (st.lastHit) {
         shake = Math.min(1, shake + 0.35);
         soundWall();
@@ -1574,8 +1701,9 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
       if (trail.length > 12) trail.shift();
       if (st.status === "fallen") onFallen();
       else if (st.status === "won") onWon();
-    } else if (st.status === "fallen" && fallDelay > 0) {
-      fallDelay -= dt;
+    } else {
+      updateRoll(0);
+      if (st.status === "fallen" && fallDelay > 0) fallDelay -= dt;
     }
 
     draw();
