@@ -76,34 +76,8 @@ jobs:
           cp labyrintti/index.html _site/labyrintti/index.html
           cp katko/index.html _site/katko/index.html
 
-          cat > _site/index.html <<'EOF'
-          <!DOCTYPE html>
-          <html lang="fi">
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>selainpelit.fi</title>
-          </head>
-          <body>
-            <h1>selainpelit.fi</h1>
-            <ul>
-              <li><a href="/hertta/">Hertta</a></li>
-              <li><a href="/tuppi/">Tuppi</a></li>
-              <li><a href="/katko/">Katko</a></li>
-              <li><a href="/sanasato/">Sanasato</a></li>
-              <li><a href="/sanaseppa/">Sanaseppä</a></li>
-              <li><a href="/sanapalat/">Sanapalat</a></li>
-              <li><a href="/rypas/">Rypäs</a></li>
-              <li><a href="/holdem/">Hold'em</a></li>
-              <li><a href="/mylly/">Mylly</a></li>
-              <li><a href="/tammi/">Tammi</a></li>
-              <li><a href="/mosaiikki/">Mosaiikki</a></li>
-              <li><a href="/palikat/">Palikat</a></li>
-              <li><a href="/labyrintti/">Labyrintti</a></li>
-            </ul>
-          </body>
-          </html>
-          EOF
+          # Etusivu = repossa ylläpidetty home/index.html
+          cp home/index.html _site/index.html
 
       - name: Start ssh-agent
         uses: webfactory/ssh-agent@v0.10.0
@@ -141,8 +115,6 @@ jobs:
           USERNAME="${DEPLOY_USER:-root}"
           DEST="${DEPLOY_PATH:-/var/www/selainpelit.fi/prod/public}"
           PORT="${DEPLOY_PORT:-22}"
-          # Älä korvaa käsin ylläpidettyä etusivua stubilla
-          rm -f _site/index.html
           rsync -az \
             -e "ssh -p $PORT -o StrictHostKeyChecking=yes" \
             ./_site/ \

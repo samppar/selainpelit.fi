@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="selainpelit.fi — käsintehtyjä selainpelejä: kortti-, lauta-, sana- ja palapelejä tietokonetta vastaan. Ei latauksia, ei mainoksia.">
+<meta name="theme-color" content="#1a120c">
+<meta property="og:title" content="selainpelit.fi">
+<meta property="og:description" content="Käsintehtyjä selainpelejä — kortti-, lauta-, sana- ja palapelejä suoraan selaimessa.">
+<meta property="og:type" content="website">
+<title>selainpelit.fi — käsintehtyjä selainpelejä</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --ink:      #f4ead6;
+  --ink-soft: #cdbfa6;
+  --muted:    #9a8a72;
+  --faint:    #6d5f4c;
+  --bg0:      #0e0a07;
+  --bg1:      #1a120c;
+  --bg2:      #241811;
+  --panel:    rgba(38, 27, 18, 0.62);
+  --panel-hi: rgba(52, 37, 24, 0.86);
+  --line:     rgba(196, 160, 90, 0.18);
+  --line-hi:  rgba(196, 160, 90, 0.42);
+  --brass:    #c9a35a;
+  --brass-hi: #e6c684;
+  --brass-dp: #8a6a2e;
+
+  --c-card:  #d8664e;  /* korttipelit */
+  --c-board: #6fae8f;  /* lautapelit  */
+  --c-word:  #e0b24c;  /* sanapelit   */
+  --c-shape: #7ba7d4;  /* palapelit    */
+  --c-lab:   #b48ad0;  /* kokeilut     */
+
+  --shadow: 0 22px 55px -28px rgba(0,0,0,0.85), 0 3px 10px -6px rgba(0,0,0,0.6);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { margin: 0; min-height: 100%; }
+
+body {
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Source Serif 4", Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background:
+    radial-gradient(ellipse 80% 55% at 12% -8%, rgba(201,163,90,0.16), transparent 55%),
+    radial-gradient(ellipse 65% 55% at 105% 8%, rgba(216,102,78,0.10), transparent 50%),
+    radial-gradient(ellipse 90% 60% at 50% 118%, rgba(111,174,143,0.08), transparent 55%),
+    linear-gradient(168deg, var(--bg2) 0%, var(--bg1) 44%, var(--bg0) 100%);
+  background-attachment: fixed;
+}
+
+/* fine grain overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(2.4rem, 5vw, 4.5rem) clamp(1.1rem, 4vw, 2.6rem) 4rem;
+}
+
+/* ---------- Masthead ---------- */
+.mast {
+  text-align: center;
+  padding-bottom: clamp(1.8rem, 4vw, 3.2rem);
+  animation: rise 0.9s cubic-bezier(.2,.7,.2,1) both;
+}
+.kicker {
+  font-family: "Fraunces", serif;
+  font-optical-sizing: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.42em;
+  font-size: clamp(0.62rem, 1.4vw, 0.74rem);
+  font-weight: 500;
+  color: var(--brass);
+  margin: 0 0 1.1rem;
+  padding-left: 0.42em;
+}
+.mast h1 {
+  font-family: "Fraunces", serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-size: clamp(3.1rem, 11vw, 6.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(255,240,210,0.06);
+}
+.mast h1 .dot { color: var(--brass); font-style: italic; font-weight: 500; }
+.rule {
+  width: min(360px, 62%);
+  height: 1px;
+  margin: 1.5rem auto 1.35rem;
+  background: linear-gradient(90deg, transparent, var(--brass-dp), var(--brass), var(--brass-dp), transparent);
+  position: relative;
+}
+.rule::after {
+  content: "\2726";
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--brass);
+  font-size: 0.8rem;
+  background: var(--bg1);
+  padding: 0 0.7rem;
+  text-shadow: 0 0 12px rgba(201,163,90,0.4);
+}
+.lede {
+  max-width: 40ch;
+  margin: 0 auto;
+  color: var(--ink-soft);
+  font-size: clamp(1.02rem, 2.2vw, 1.18rem);
+  line-height: 1.55;
+}
+.lede b { color: var(--ink); font-weight: 600; }
+
+/* ---------- Section ---------- */
+.section { margin-top: clamp(2.4rem, 5vw, 3.6rem); }
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  margin: 0 0 1.15rem;
+  padding: 0 0.2rem;
+}
+.section-head h2 {
+  font-family: "Fraunces", serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-size: clamp(1.15rem, 3vw, 1.5rem);
+  letter-spacing: 0.01em;
+  margin: 0;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.section-head .tick {
+  width: 0.66rem; height: 0.66rem;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  flex: none;
+  box-shadow: 0 0 14px -2px currentColor;
+}
+.section-head .fill {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--line-hi), transparent);
+}
+.section-head .count {
+  font-family: "Fraunces", serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---------- Grid & cards ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
+  gap: clamp(0.85rem, 1.8vw, 1.15rem);
+}
+.card {
+  --accent: var(--brass);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.25rem 1.3rem 1.35rem;
+  border-radius: 15px;
+  text-decoration: none;
+  color: inherit;
+  background:
+    linear-gradient(160deg, var(--panel-hi), var(--panel));
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform .38s cubic-bezier(.2,.7,.2,1), border-color .38s, box-shadow .38s;
+  animation: rise 0.7s cubic-bezier(.2,.7,.2,1) both;
+  animation-delay: var(--d, 0ms);
+}
+.card::before { /* accent wash */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(120% 80% at 100% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 60%);
+  opacity: 0.5;
+  transition: opacity .38s;
+}
+.card::after { /* top accent hairline */
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.55;
+  transition: opacity .38s;
+}
+.card:hover, .card:focus-visible {
+  transform: translateY(-6px);
+  border-color: var(--line-hi);
+  box-shadow: 0 34px 65px -30px rgba(0,0,0,0.9), 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+  outline: none;
+}
+.card:hover::before, .card:focus-visible::before { opacity: 0.95; }
+.card:hover::after,  .card:focus-visible::after  { opacity: 1; }
+.card:hover .emblem, .card:focus-visible .emblem { transform: translateY(-2px) rotate(-3deg); border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.card:hover .go, .card:focus-visible .go { color: var(--accent); gap: 0.6rem; }
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+.emblem {
+  flex: none;
+  width: 46px; height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: radial-gradient(120% 120% at 30% 20%, rgba(255,240,215,0.08), rgba(0,0,0,0.28));
+  border: 1px solid var(--line);
+  color: var(--accent);
+  transition: transform .38s cubic-bezier(.2,.7,.2,1), border-color .38s;
+}
+.emblem svg { width: 26px; height: 26px; display: block; }
+.tag {
+  font-family: "Fraunces", serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.26rem 0.6rem;
+  margin-top: 0.15rem;
+  white-space: nowrap;
+}
+.card h3 {
+  font-family: "Fraunces", serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  margin: 0.35rem 0 0;
+  color: var(--ink);
+}
+.card p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.94rem;
+  line-height: 1.42;
+  flex: 1;
+}
+.go {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  font-family: "Fraunces", serif;
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color .3s, gap .3s;
+}
+.go svg { width: 15px; height: 15px; }
+
+/* ---------- Footer ---------- */
+.foot {
+  margin-top: clamp(3rem, 6vw, 4.5rem);
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.6rem;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.foot .marks { display: flex; gap: 1.3rem; flex-wrap: wrap; }
+.foot .marks span { display: inline-flex; align-items: center; gap: 0.42rem; }
+.foot .marks b { color: var(--ink-soft); font-weight: 600; }
+.foot .sig { font-family: "Fraunces", serif; letter-spacing: 0.04em; }
+.foot .sig a { color: var(--brass); text-decoration: none; }
+.foot .sig a:hover { color: var(--brass-hi); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, .card, .mast { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header class="mast">
+    <p class="kicker">Käsintehtyjä selainpelejä</p>
+    <h1>selainpelit<span class="dot">.fi</span></h1>
+    <div class="rule"></div>
+    <p class="lede">Kortti-, lauta-, sana- ja palapelejä <b>tietokonetta vastaan</b> — suoraan selaimessa. Ei latauksia, ei tilejä, ei mainoksia.</p>
+  </header>
+
+  <!-- KORTTIPELIT -->
+  <section class="section" aria-labelledby="s-kortti">
+    <div class="section-head">
+      <span class="tick" style="color:var(--c-card)"></span>
+      <h2 id="s-kortti">Korttipelit</h2>
+      <span class="fill"></span>
+      <span class="count">Kolme</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="/hertta/" style="--accent:var(--c-card); --d:60ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.2-4.6-9.5-9C.9 8.6 2.6 5 6 5c2 0 3.2 1.2 4 2.4C10.8 6.2 12 5 14 5c3.4 0 5.1 3.6 3.5 7-2.3 4.4-5.5 9-5.5 9z"/></svg></span>
+          <span class="tag">Botti­areena</span>
+        </div>
+        <h3>Hertta</h3>
+        <p>Hearts neljälle. Vältä hertat ja pata-akka — tai kaappaise ne kaikki.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="card" href="/tuppi/" style="--accent:var(--c-card); --d:130ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c1.6 2.6 4 4.3 4 6.7A2.3 2.3 0 0 1 13 12c.3 1 .9 1.8 1.6 2.4H9.4c.7-.6 1.3-1.4 1.6-2.4A2.3 2.3 0 0 1 8 9.7C8 7.3 10.4 5.6 12 3z"/><rect x="7.4" y="15.2" width="9.2" height="5.6" rx="1.1"/></svg></span>
+          <span class="tag">Tikkipeli</span>
+        </div>
+        <h3>Tuppi</h3>
+        <p>Suomalainen tikkipeli tekoälykavereita ja -vastustajia vastaan.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="card" href="/holdem/" style="--accent:var(--c-card); --d:200ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none" opacity="0.85"/><path d="M12 3.6v2.2M12 18.2v2.2M3.6 12h2.2M18.2 12h2.2" stroke-linecap="round"/></svg></span>
+          <span class="tag">Pokeri</span>
+        </div>
+        <h3>Hold'em</h3>
+        <p>Texas Hold'em tietokonetta vastaan. Kerää chipit — paras käsi vie potin.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- LAUTAPELIT -->
+  <section class="section" aria-labelledby="s-lauta">
+    <div class="section-head">
+      <span class="tick" style="color:var(--c-board)"></span>
+      <h2 id="s-lauta">Lautapelit</h2>
+      <span class="fill"></span>
+      <span class="count">Kaksi</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="/mylly/" style="--accent:var(--c-board); --d:60ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="1"/><rect x="7" y="7" width="10" height="10" rx="1"/><rect x="11" y="11" width="2" height="2"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg></span>
+          <span class="tag">Mylly</span>
+        </div>
+        <h3>Mylly</h3>
+        <p>Nine Men's Morris. Muodosta kolmen suora ja syö vastustajan nappula.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="card" href="/tammi/" style="--accent:var(--c-board); --d:130ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="14" r="6.2"/><circle cx="12" cy="14" r="3" opacity="0.6"/><path d="M8 6.5l1.6 2.2M16 6.5l-1.6 2.2M12 4.2v3" stroke-linecap="round"/></svg></span>
+          <span class="tag">Tammi</span>
+        </div>
+        <h3>Tammi</h3>
+        <p>Klassinen tammi. Lyö vastustajan napit ja kruunaa kuningas.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- SANAPELIT -->
+  <section class="section" aria-labelledby="s-sana">
+    <div class="section-head">
+      <span class="tick" style="color:var(--c-word)"></span>
+      <h2 id="s-sana">Sanapelit</h2>
+      <span class="fill"></span>
+      <span class="count">Kolme</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="/sanaseppa/" style="--accent:var(--c-word); --d:60ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2.2"/><path d="M9 15.5l3-8 3 8M10 12.6h4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="tag">15×15</span>
+        </div>
+        <h3>Sanaseppä</h3>
+        <p>Lado kirjaimista sanoja ristikkolaudalle ja voita tietokone.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="card" href="/sanapalat/" style="--accent:var(--c-word); --d:130ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.2" y="7.2" width="7" height="7" rx="1.4"/><rect x="12.4" y="10" width="7" height="7" rx="1.4"/><path d="M5.4 10.7h2.6M14.6 13.5h2.6" stroke-linecap="round"/></svg></span>
+          <span class="tag">Laudanladonta</span>
+        </div>
+        <h3>Sanapalat</h3>
+        <p>Laattapeli, jossa kasvatat ristikkoa palasta palaan vastustajaa vastaan.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="card" href="/sanasato/" style="--accent:var(--c-word); --d:200ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M8.5 8.5v-.01M15.5 8.5v-.01M12 12v-.01M8.5 15.5v-.01M15.5 15.5v-.01" stroke-linecap="round" stroke-width="2.4"/><path d="M8.5 8.5l3.5 3.5 3.5 3.5" stroke-linecap="round"/></svg></span>
+          <span class="tag">Ruudukko</span>
+        </div>
+        <h3>Sanasato</h3>
+        <p>Kokoa sanat kirjainruudukosta. Tutkimuspohjaisesti suunniteltu.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- PALAPELIT & TAITO -->
+  <section class="section" aria-labelledby="s-pala">
+    <div class="section-head">
+      <span class="tick" style="color:var(--c-shape)"></span>
+      <h2 id="s-pala">Pala&shy;pelit &amp; taito</h2>
+      <span class="fill"></span>
+      <span class="count">Neljä</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="/rypas/" style="--accent:var(--c-shape); --d:60ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="5.5" height="9" rx="1.2"/><rect x="9.3" y="8" width="5.5" height="9" rx="1.2"/><rect x="15.6" y="8" width="5.5" height="9" rx="1.2"/><path d="M5.7 11v3M12 11v3M18.3 11v3" stroke-linecap="round"/></svg></span>
+          <span class="tag">Numeropalat</span>
+        </div>
+        <h3>Rypäs</h3>
+        <p>Muodosta numeroista ryhmiä ja jonoja ja tyhjennä telineesi ensin.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="card" href="/mosaiikki/" style="--accent:var(--c-shape); --d:130ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h6v6H4zM10 10h6v6h-6zM16 4h4v6h-4zM4 14h6v6H4zM16 14h4v6h-4z"/></svg></span>
+          <span class="tag">Sommittelu</span>
+        </div>
+        <h3>Mosaiikki</h3>
+        <p>Täytä annettu muoto värikkäillä polyominopaloilla ilman aukkoja.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="card" href="/palikat/" style="--accent:var(--c-shape); --d:200ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/><path d="M10 10l4 4" stroke-linecap="round"/></svg></span>
+          <span class="tag">Blokus-tyyli</span>
+        </div>
+        <h3>Palikat</h3>
+        <p>Aseta palikat kulmasta kulmaan ja tuki vastustaja nurkkaan.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="card" href="/labyrintti/" style="--accent:var(--c-shape); --d:270ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M7 7h10v3H10v4h7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="16.5" r="1.8" fill="currentColor" stroke="none"/></svg></span>
+          <span class="tag">Taitopeli</span>
+        </div>
+        <h3>Labyrintti</h3>
+        <p>Kallista lautaa, vieritä kuula maaliin ja vältä 35 reikää matkalla.</p>
+        <span class="go">Pelaa <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- KOKEILUT -->
+  <section class="section" aria-labelledby="s-koe">
+    <div class="section-head">
+      <span class="tick" style="color:var(--c-lab)"></span>
+      <h2 id="s-koe">Kokeilut</h2>
+      <span class="fill"></span>
+      <span class="count">Verstas</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="/katko/" style="--accent:var(--c-lab); --d:60ms">
+        <div class="card-top">
+          <span class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v5a2 2 0 0 0 2 2h6M4 19v-5a2 2 0 0 1 2-2h6M12 8h4M12 16h4"/><circle cx="19" cy="8" r="1.6"/><circle cx="19" cy="16" r="1.6"/></svg></span>
+          <span class="tag">Turnaus</span>
+        </div>
+        <h3>Katko</h3>
+        <p>Turnaus- ja moottorikokeiluja — verstas, jossa botit ottavat mittaa toisistaan.</p>
+        <span class="go">Katso <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="marks">
+      <span><b>13</b> peliä</span>
+      <span>Selaimessa — <b>ei latauksia</b></span>
+      <span>Ei mainoksia, ei tilejä</span>
+    </div>
+    <div class="sig">Tehty käsin &middot; <a href="/">selainpelit.fi</a></div>
+  </footer>
+
+</main>
+</body>
+</html>
