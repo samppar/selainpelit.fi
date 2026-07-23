@@ -1,4 +1,4 @@
-/* Labyrintti 2: aloitustason valinta alkuperäisen kuulalaudan päälle. */
+/* Labyrintti: aloitustason valinta kuulalaudan päälle. */
 .difficulty-picker {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

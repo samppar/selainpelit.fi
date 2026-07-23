@@ -18,8 +18,11 @@ Monorepo for browser games hosted at selainpelit.fi.
 | `tammi/` | Tammi — English draughts vs. computer |
 | `mosaiikki/` | Mosaiikki — polyomino shape-filling puzzle |
 | `palikat/` | Palikat — Blokus Duo -tyylinen polyominopeli vs. computer |
+| `labyrintti/` | Labyrintti — kallistettava kuulalabyrintti, kolme vaikeustasoa |
 
 Each game is self-contained in its folder. See the README inside a game for run instructions.
+
+`arkisto/` contains retired game versions kept for reference (not built, tested, or deployed).
 
 **Agent / implementation rule:** all browser games must follow
 [`AGENTS.md`](AGENTS.md) — what players value *and* how to make games engaging

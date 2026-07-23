@@ -1,10 +1,16 @@
-<!DOCTYPE html><html lang="fi"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Labyrintti 2 — kallista lautaa, vieritä kuula maaliin ja vältä reiät.">
-<meta name="theme-color" content="#2a1c12"><title>Labyrintti 2 — selainpelit.fi</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Labyrintti — kallistettava kuulapeli. Vie kuula maaliin, vältä reiät.">
+<meta name="theme-color" content="#2a1c12">
+<title>Labyrintti — selainpelit.fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
-<style>/* Labyrintti — koivulauta, verstashenki */
+<style>
+/* Labyrintti — koivulauta, verstashenki */
 :root {
   --ink: #1a1410;
   --muted: #6e5748;
@@ -429,51 +435,74 @@ body.is-fullscreen .stage {
 body.is-fullscreen .board-frame { padding: 10px; }
 body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
 
-/* Labyrintti 2: aloitustason valinta alkuperäisen kuulalaudan päälle. */
-.difficulty-picker {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.55rem;
-  margin-top: 1rem;
-}
-.difficulty-picker button {
-  border: 1px solid rgba(255, 237, 196, 0.26);
-  border-radius: 10px;
-  padding: 0.72rem 0.45rem;
-  color: #fff4db;
-  background: linear-gradient(160deg, rgba(196, 160, 90, 0.32), rgba(61, 41, 24, 0.62));
-  font-weight: 700;
-}
-.difficulty-picker button:hover {
-  border-color: #dfbd75;
-  transform: translateY(-2px);
-}
-.difficulty-picker small {
-  display: block;
-  margin-top: 0.22rem;
-  color: rgba(255, 244, 219, 0.66);
-  font-size: 0.67rem;
-  font-weight: 400;
-}
-.overlay:not(.chosen) #overlayBtn { display: none; }
-.overlay.chosen .difficulty-picker { display: none; }
-@media (max-width: 460px) {
-  .difficulty-picker { grid-template-columns: 1fr; }
-  .difficulty-picker button { padding: 0.48rem; }
-}
-</style></head><body><main class="shell">
-<section class="board-col" aria-label="Labyrintti-lauta"><div class="brand"><h1>Labyrintti 2</h1><p>Kallista · vieritä · vältä reiät</p></div>
-<div class="stage"><div id="boardTilt" class="board-tilt"><div class="board-frame">
-<canvas id="board" width="500" height="460" role="img" aria-label="Kuulalabyrintti"></canvas>
-<div id="overlay" class="overlay show" role="dialog" aria-modal="true"><div class="overlay-card"><h2 id="overlayTitle">Valitse vaikeus</h2><p id="overlayText">Vie kuula START-pisteestä maaliin ja vältä reiät.</p>
-  <div class="difficulty-picker" aria-label="Valitse vaikeustaso">
-    <button type="button" data-level="1" data-difficulty="easy">Rento<small>pieni lauta · lempeä kuula</small></button>
-    <button type="button" data-level="6" data-difficulty="normal">Haastava<small>isompi lauta · tiheämpi sokkelo</small></button>
-    <button type="button" data-level="11" data-difficulty="hard">Mestari<small>suurin lauta · armoton veto</small></button>
-  </div><button id="overlayBtn" type="button">Jatka</button></div></div>
-</div></div></div><div class="hud" aria-live="polite"><div class="stat"><strong id="statLevel">1</strong><span>Taso</span></div><div class="stat"><strong id="statProgress">0%</strong><span>Reitti</span></div><div class="stat"><strong id="statAttempts">0</strong><span>Yritykset</span></div><div class="stat"><strong id="statTime">0:00</strong><span>Aika</span></div></div></section>
-<aside class="side"><p id="phase" class="phase">Valitse vaikeus</p><p id="message" class="message">Kallista lautaa ja vältä mustat reiät.</p><h2>Kallistus</h2><div class="tilt-meter" aria-hidden="true"><span id="tiltDot"></span></div><h2>Ohjaus</h2><p>Nuolinäppäimet tai WASD. Puhelimella kallistus. <strong>F</strong> = koko ruutu.</p><div class="hint-keys" aria-hidden="true"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd><kbd>F</kbd></div><h2>Tavoite</h2><p>Vieritä metallikuula mustaa viivaa pitkin FINISH-pisteeseen. Reikään putoaminen palauttaa viimeiseen tarkistuspisteeseen.</p><div class="controls"><button id="btnStart" class="primary" type="button">Aloita</button><button id="btnRetry" type="button">Uusi yritys</button><button id="btnNew" type="button">Uusi peli</button><button id="btnFullscreen" type="button">Koko ruutu</button><button id="btnSound" type="button" aria-pressed="true">Ääni: päällä</button></div></aside>
-</main><div id="toast" class="toast" role="status"></div><script>// Labyrintti — fysiikka + proseduraalinen kuulalauta (Node + selain).
+</style>
+</head>
+<body>
+<main class="shell">
+  <section class="board-col" aria-label="Labyrintti-lauta">
+    <div class="brand">
+      <h1>Labyrintti</h1>
+      <p>Kallista · väistä · maaliin</p>
+    </div>
+    <div class="stage">
+      <button id="btnFsCorner" class="fs-corner" type="button" aria-label="Koko ruutu" title="Koko ruutu (F)">⛶</button>
+      <div id="boardTilt" class="board-tilt">
+        <div class="board-frame">
+          <canvas id="board" width="500" height="460" role="img" aria-label="Pelilauta"></canvas>
+          <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+            <div class="overlay-card">
+              <h2 id="overlayTitle">Labyrintti</h2>
+              <p id="overlayText"></p>
+              <button id="overlayBtn" type="button">Aloita</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hud" aria-live="polite">
+      <div class="stat"><strong id="statLevel">1</strong><span>Taso</span></div>
+      <div class="stat"><strong id="statProgress">0%</strong><span>Reitti</span></div>
+      <div class="stat"><strong id="statAttempts">0</strong><span>Yritykset</span></div>
+      <div class="stat"><strong id="statTime">0:00</strong><span>Aika</span></div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <p id="phase" class="phase">Valmis lähtöön</p>
+    <p id="message" class="message">Vie kuula START-pisteestä FINISH-pisteeseen.</p>
+
+    <h2>Kallistus</h2>
+    <div class="tilt-meter" aria-hidden="true"><span id="tiltDot"></span></div>
+
+    <h2>Ohjaus</h2>
+    <p>Nuolinäppäimet tai WASD. Puhelimella kallistus. <strong>F</strong> = koko ruutu.</p>
+    <div class="hint-keys" aria-hidden="true">
+      <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd><kbd>F</kbd>
+    </div>
+
+    <h2>Vaikeustaso</h2>
+    <div class="diff-row" role="group" aria-label="Vaikeustaso">
+      <button id="diffEasy" class="diff" type="button" aria-pressed="false">Helppo</button>
+      <button id="diffNormal" class="diff" type="button" aria-pressed="true">Keskitaso</button>
+      <button id="diffHard" class="diff" type="button" aria-pressed="false">Vaikea</button>
+    </div>
+    <p class="diff-note">Vaikeampi = suurempi sokkelo, enemmän reikiä, herkemmät reiät ja nopeampi kuula.</p>
+
+    <h2>Säännöt</h2>
+    <p>Seuraa mustaa viivaa. Tipahdus reikään palauttaa viimeiseen tarkistuspisteeseen (vihreä piste). Maaliin päästyä taso vaihtuu vaikeammaksi.</p>
+
+    <div class="controls">
+      <button id="btnStart" class="primary" type="button">Aloita</button>
+      <button id="btnRetry" type="button">Uusi yritys</button>
+      <button id="btnNew" type="button">Uusi peli</button>
+      <button id="btnFullscreen" type="button">Koko ruutu</button>
+      <button id="btnSound" type="button" aria-pressed="true">Ääni: päällä</button>
+    </div>
+  </aside>
+</main>
+<div id="toast" class="toast" role="status"></div>
+<script>
+// Labyrintti — fysiikka + proseduraalinen kuulalauta (Node + selain).
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
   else root.LabyrinttiEngine = factory();
@@ -1077,10 +1106,12 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
     clamp: clamp
   };
 });
-</script><script>// Labyrintti — canvas-UI: nuolet, kallistus, koko ruutu, tasot, äänet.
+
+</script>
+<script>
+// Labyrintti — canvas-UI: nuolet, kallistus, koko ruutu, tasot, äänet.
 (function () {
   "use strict";
-  var selectedLevel = 1;
 
   var E = window.LabyrinttiEngine;
   if (!E) throw new Error("LabyrinttiEngine puuttuu");
@@ -1119,7 +1150,7 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
     if (savedDiff && E.DIFFICULTY[savedDiff]) difficulty = savedDiff;
   } catch (e) { /* localStorage ei käytettävissä */ }
 
-  var st = E.createState(selectedLevel, difficulty);
+  var st = E.createState(1, difficulty);
   var keys = Object.create(null);
   var running = false;
   var inputMode = "keys";
@@ -1721,7 +1752,7 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
   function startGame(useOrient) {
     hideOverlay();
     ensureAudio();
-    st = E.createState(selectedLevel, difficulty);
+    st = E.createState(1, difficulty);
     st.attempts = 1;
     running = true;
     lastTs = 0;
@@ -1752,7 +1783,7 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
       startGame(inputMode === "orient");
       showToast(label);
     } else {
-      st = E.createState(selectedLevel, difficulty);
+      st = E.createState(1, difficulty);
       draw();
       updateHud();
       showToast("Vaikeustaso: " + label);
@@ -1841,7 +1872,6 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
 
   window.LabyrinttiUI = {
     getState: function () { return E.getView(st); },
-    startAt: function (level, diff) { selectedLevel = Math.max(1, level | 0); if (diff && E.DIFFICULTY[diff]) difficulty = diff; begin(); },
     start: begin,
     nextLevel: nextLevel,
     setDifficulty: setDifficulty,
@@ -1872,5 +1902,7 @@ body.is-fullscreen #board { max-height: calc(100dvh - 36px); }
   );
   requestAnimationFrame(tick);
 })();
+
 </script>
-<script>document.querySelectorAll("[data-level]").forEach(function(button){button.addEventListener("click",function(){document.getElementById("overlay").classList.add("chosen");window.LabyrinttiUI.startAt(Number(button.dataset.level), button.dataset.difficulty);});});</script></body></html>
+</body>
+</html>

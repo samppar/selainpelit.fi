@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        game: [tuppi, sanaseppa, sanapalat, sanasato, rypas, holdem, mylly, tammi, mosaiikki, palikat, labyrintti, labyrintti2, katko]
+        game: [tuppi, sanaseppa, sanapalat, sanasato, rypas, holdem, mylly, tammi, mosaiikki, palikat, labyrintti, katko]
     defaults:
       run:
         working-directory: ${{ matrix.game }}
@@ -59,10 +59,9 @@ jobs:
           (cd mosaiikki && node build.js)
           (cd palikat && node build.js)
           (cd labyrintti && node build.js)
-          (cd labyrintti2 && node build.js)
           (cd katko && node build.js)
 
-          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/mylly _site/tammi _site/mosaiikki _site/palikat _site/labyrintti _site/labyrintti2 _site/katko
+          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/mylly _site/tammi _site/mosaiikki _site/palikat _site/labyrintti _site/katko
 
           cp -R hertta/dist/. _site/hertta/
           cp tuppi/tuppi.html _site/tuppi/index.html
@@ -76,7 +75,6 @@ jobs:
           cp mosaiikki/index.html _site/mosaiikki/index.html
           cp palikat/index.html _site/palikat/index.html
           cp labyrintti/index.html _site/labyrintti/index.html
-          cp labyrintti2/index.html _site/labyrintti2/index.html
           cp katko/dist/index.html _site/katko/index.html
 
           # Etusivu = repossa ylläpidetty home/index.html
