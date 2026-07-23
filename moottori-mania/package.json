@@ -4,6 +4,7 @@
   "private": true,
   "description": "Moottori-Mania — Elasto Mania -henkinen ajopeli, aito portattu fysiikka (selainpeli).",
   "scripts": {
-    "test": "node tools/bot.js && node tools/verify.js"
+    "test": "node tools/bot.js",
+    "verify-demos": "node tools/verify.js"
   }
 }

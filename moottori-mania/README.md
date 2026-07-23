@@ -36,8 +36,18 @@ hyvää syytä (portattu alkuperäisestä moottorista).
 | `tools/verify.js` | Toistaa upotetut demot ja tarkistaa että ne yhä vievät maaliin |
 
 ```bash
-npm test                          # botti kaikki kentät + upotettujen demojen toisto (10/10)
-node tools/bot.js 7                # yksi kenttä
-node tools/trace.js 7              # kuolemaa edeltävät ruudut
-node tools/embed.js && node tools/verify.js   # demot uusiksi kenttämuutoksen jälkeen
+npm test                           # botti kaikki 10 kenttää (CI-portti: pitää löytää läpäisy jokaiselle)
+node tools/bot.js 7                 # yksi kenttä
+node tools/trace.js 7               # kuolemaa edeltävät ruudut
+node tools/embed.js && npm run verify-demos   # demot uusiksi kenttämuutoksen jälkeen
 ```
+
+**Huom CI:stä:** `npm test` ajaa vain `bot.js`:n (löytyykö läpäisy — tämä on
+arkkitehtuurin/kenttien oikea regressiotesti, deterministinen ruutumäärältään).
+`verify-demos` (upotettujen demojen bittitarkka toisto) **ei** ole CI:ssä,
+koska pitkän kaoottisen fysiikkasimulaation liukulukutulos ei ole taattu
+identtinen eri CPU-arkkitehtuurien/JS-moottorien välillä (havaittu: samat
+upotetut demot toistuivat eri lopputuloksella macOS/arm64-kehityskoneella ja
+Linux/x86_64 CI-ajurilla, vaikka botin oma haku on ruutumäärältään
+deterministinen). Aja `verify-demos` paikallisesti samalla koneella jolla
+`embed.js` ajettiin.
