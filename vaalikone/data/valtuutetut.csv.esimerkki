@@ -1,0 +1,8 @@
+# Oulun valtuutettujen äänet — ESIMERKKI (keksityt nimet ja äänet).
+# Muoto: nimi;puolue;v1;v2;v3;v4   (k = kyllä, e = ei, o = poissa/tyhjä)
+# Sarakkeet v1..v4 vastaavat valtuutetut-vaalikone.js:n QUESTIONS-listaa.
+# Kopioi tämä nimellä valtuutetut.csv ja täytä oikeat äänet
+# pöytäkirjojen äänestysliitteistä (asiakirjat.ouka.fi).
+nimi;puolue;v1;v2;v3;v4
+Esimerkki Ehdokas;Testiryhmä;k;k;e;o
+Toinen Esimerkki;Testiryhmä;e;k;k;k

@@ -71,6 +71,16 @@ const SAMPLE = {
   }));
   ok(long.title.length === V.LIMITS.title, "liian pitkä otsikko leikataan rajaan");
 
+  // Kokonainen valtuusto mahtuu mukaan (esim. Oulussa 67 valtuutettua)
+  const bigCompass = await V.decodeCompass(await V.encodeCompass({
+    title: "Valtuusto", desc: "", questions: ["a", "b", "c", "d"],
+    candidates: Array.from({ length: 67 }, (_, i) => ({
+      name: "Valtuutettu " + (i + 1), party: "Ryhmä " + (i % 8),
+      answers: ["k", "e", "o", "k"],
+    })),
+  }));
+  ok(bigCompass.candidates.length === 67, "67 ehdokasta säilyy koodauksessa");
+
   /* ---------- ehdokkaan vastauskoodi ---------- */
   const reply = await V.encodeReply("Maija Meikäläinen", ["k", "o", "e"]);
   ok(/^VE[12]\./.test(reply), "vastauskoodi on VE-muotoa");

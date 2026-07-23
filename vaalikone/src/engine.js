@@ -26,7 +26,7 @@ const LIMITS = {
   desc: 600,
   questions: 60,
   questionText: 300,
-  candidates: 60,
+  candidates: 100,
   name: 80,
   party: 80,
 };

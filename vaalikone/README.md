@@ -42,6 +42,10 @@ koottu aineisto (uutislähteistä 23.7.2026; ei kata kaikkia äänestyksiä):
   Ryhmätason likiarvo: kanta merkitty vain, jos se on lähteistä
   todennettavissa; muuten ”ei kantaa”. Valtuutettukohtaiset äänet saa
   pöytäkirjojen äänestysliitteistä (asiakirjat.ouka.fi).
+- `data/valtuutetut-vaalikone.js` — yksilötason vaalikone: täytä
+  valtuutettujen äänet CSV:hen (malli `data/valtuutetut.csv.esimerkki`,
+  lähteeksi pöytäkirjojen äänestysliitteet) ja aja
+  `node data/valtuutetut-vaalikone.js`.
 
 ## Kehitys
 
