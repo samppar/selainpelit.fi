@@ -1,0 +1,590 @@
+[
+  {
+    "date": "8.6.2026",
+    "bid": "48240",
+    "items": [
+      {
+        "pykala": "38",
+        "title": "Palveluverkkoa koskeva päätös: Aseman koulu",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726600",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 61,
+            "ei": 5,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 2,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "39",
+        "title": "Palveluverkkoa koskeva päätös: Martinniemen koulu",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726604",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 60,
+            "ei": 6,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 2,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "40",
+        "title": "Palveluverkkoa koskeva päätös: Kontion koulun Huttukylän yksikkö",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726606",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "41",
+        "title": "Palveluverkkoa koskeva päätös: Ylikiimingin koulu ja Ylikiimingin koulun Vesalan yksikkö",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726874",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "42",
+        "title": "Palveluverkkoa koskeva päätös: Oulunsalon kirkonkylän koulu",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726879",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "43",
+        "title": "Palveluverkkoa koskeva päätös: Oulun normaalikoulun Koskelan yksikkö ja Paulaharjun koulu",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726882",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "44",
+        "title": "Palveluverkkoa koskeva päätös: Knuutilankankaan koulu",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726888",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "45",
+        "title": "Palveluverkkoa koskeva päätös: Tiernan koulun sairaalakoulun Tuiranpuiston toimipiste",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726944",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "46",
+        "title": "Palveluverkkoa koskeva päätös: Ritaharjun koulun tilaelementit",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726958",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "47",
+        "title": "Palveluverkkoa koskeva päätös: Metsokankaan koulun Korpimetso-rakennus",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726964",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "48",
+        "title": "Palveluverkkoa koskeva päätös: Tiernan koulun Heinätorin yksikkö",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726970",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "49",
+        "title": "Palveluverkkoa koskeva päätös: Pöllönkankaan koulun Kuivasjärven yksikkö",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726973",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "50",
+        "title": "Palveluverkkoa koskeva päätös: Oulunlahden koulun Sarasuon yksikkö",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726980",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "51",
+        "title": "Palveluverkkoa koskeva päätös: Oulunlahden pääkoulu",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726991",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "52",
+        "title": "Palveluverkkoa koskeva päätös: varhaiskasvatus",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3726994",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "53",
+        "title": "Palveluverkkoa koskeva päätös: nuorisopalvelut",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3727003",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "54",
+        "title": "Palveluverkkoa koskeva päätös: yhteisötoiminta",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3727010",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "55",
+        "title": "Palveluverkkoa koskeva päätös: liikuntapalvelut",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3727018",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 52,
+            "ei": 14,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 2,
+            "jaa": 54,
+            "ei": 12,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 3,
+            "jaa": 61,
+            "ei": 5,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 4,
+            "jaa": 60,
+            "ei": 5,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "56",
+        "title": "Palveluverkkoa koskeva päätös: kulttuuripalvelut",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3727024",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 62,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "18.5.2026",
+    "bid": "47937",
+    "items": [
+      {
+        "pykala": "35",
+        "title": "Hyvinvointisuunnitelma 20262029",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3698932",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 61,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 2,
+            "jaa": 60,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 3,
+            "jaa": 59,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 4,
+            "jaa": 58,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "27.4.2026",
+    "bid": "47580",
+    "items": [
+      {
+        "pykala": "24",
+        "title": "Lähijunaliikenteen käynnistäminen ja rahoittaminen",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3676030",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 59,
+            "ei": 8,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "30.3.2026",
+    "bid": "46417",
+    "items": [
+      {
+        "pykala": "13",
+        "title": "Kaupunkistrategia Oulu 2035",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3647523",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 63,
+            "ei": 4,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 2,
+            "jaa": 62,
+            "ei": 5,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "18",
+        "title": "Asemakaava ja tonttijako 564-2359, Kaijonharjun kaupunginosa (Tapionranta)",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3647533",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 50,
+            "ei": 15,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "26.1.2026",
+    "bid": "46119",
+    "items": []
+  },
+  {
+    "date": "8.12.2025",
+    "bid": "44938",
+    "items": [
+      {
+        "pykala": "97",
+        "title": "Talousarvio 2026 ja taloussuunnitelma 2027-2028",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3555963",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 43,
+            "ei": 24,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 2,
+            "jaa": 42,
+            "ei": 25,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 3,
+            "jaa": 34,
+            "ei": 33,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 4,
+            "jaa": 49,
+            "ei": 18,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 5,
+            "jaa": 62,
+            "ei": 5,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 6,
+            "jaa": 36,
+            "ei": 31,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 7,
+            "jaa": 41,
+            "ei": 25,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 8,
+            "jaa": 47,
+            "ei": 19,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 9,
+            "jaa": 37,
+            "ei": 30,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 10,
+            "jaa": 48,
+            "ei": 18,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 11,
+            "jaa": 51,
+            "ei": 16,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 12,
+            "jaa": 47,
+            "ei": 18,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 13,
+            "jaa": 36,
+            "ei": 30,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 14,
+            "jaa": 64,
+            "ei": 1,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 15,
+            "jaa": 47,
+            "ei": 20,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "10.11.2025",
+    "bid": "44625",
+    "items": [
+      {
+        "pykala": "83",
+        "title": "Tuloveroprosentin ja kiinteistöveroprosenttien vahvistaminen vuodelle 2026",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3527805",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 61,
+            "ei": 5,
+            "tyhja": null,
+            "poissa": null
+          },
+          {
+            "aanestysNro": 2,
+            "jaa": 36,
+            "ei": 30,
+            "tyhja": null,
+            "poissa": null
+          }
+        ]
+      },
+      {
+        "pykala": "93",
+        "title": "Asemakaava ja tonttijako 564-2577, Raksilan kaupunginosa (Oulun vesiliikuntakeskus)",
+        "docUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3527825",
+        "tallies": [
+          {
+            "aanestysNro": 1,
+            "jaa": 50,
+            "ei": 10,
+            "tyhja": null,
+            "poissa": 7
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "6.10.2025",
+    "bid": "44080",
+    "items": []
+  },
+  {
+    "date": "25.8.2025",
+    "bid": "43501",
+    "items": []
+  },
+  {
+    "date": "2.6.2025",
+    "bid": "43121",
+    "items": []
+  }
+]

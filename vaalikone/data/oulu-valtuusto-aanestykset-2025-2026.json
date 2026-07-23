@@ -1,0 +1,173 @@
+{
+  "kuvaus": "Oulun kaupunginvaltuuston äänestyksiä valtuustokaudella 2025–2029 (kauden alku 1.6.2025). Kokonaisluvut (jaa/ei/tyhjä/poissa) haettu suoraan pöytäkirjoista 23.7.2026 skriptillä data/hae-aanestystulokset.js; raakadata data/aanestystulokset/kaikki.json. EI sisällä valtuutettukohtaisia ääniä — niitä EI julkaista asiakirjat.ouka.fi:ssä kaupunginvaltuuston osalta (tarkistettu käymällä läpi kaikki 63 pöytäkirja-asiaa 10 kokouksesta). Ks. data/oulu-valtuusto-aanestykset-2025-2026.md kohta 'Tärkeä havainto'.",
+  "huomautus": "Kentta 'lahde': 'poytakirja' = luku poimittu suoraan pöytäkirjan päätöstekstistä (varma); 'uutinen' = ei vahvistettu pöytäkirjasta, säilytetty vain taustatietona.",
+  "kokoukset": [
+    {
+      "pvm": "2025-06-02",
+      "kokous": "Järjestäytymiskokous (uusi valtuusto)",
+      "paatokset": "Valtuuston puheenjohtajiston vaali ja kaupunginhallituksen vaali toimikaudelle 2025–2029.",
+      "aanestykset": [],
+      "lahteet": ["https://www.ouka.fi/uutiset/oulun-kaupunginvaltuusto-262025-ennakkotiedote-paatoksista"]
+    },
+    {
+      "pvm": "2025-10-06",
+      "kokous": "150-vuotisjuhlakokous",
+      "paatokset": "Mm. Raksilan asemakeskuksen ja matkakeskusalueen asemakaava hyväksyttiin esityksen mukaisesti. Kokous kesti 22 minuuttia — ei äänestyksiä.",
+      "aanestykset": [],
+      "lahteet": [
+        "https://www.ouka.fi/uutiset/ennakkotiedote-kaupunginvaltuuston-150-vuotisjuhlakokouksen-paatoksista-6102025",
+        "https://www.kaleva.fi/oulun-kaupunginvaltuuston-juhlakokous-nuijittiin-k/11357018"
+      ]
+    },
+    {
+      "pvm": "2025-11-10",
+      "kokous": "Veroprosentit 2026 ja Raksilan vesiliikuntakeskuksen asemakaava",
+      "paatokset": "Tuloveroprosentti pysyi 8,10 %:ssa (ei muutosta vuodesta 2025); rakentamattoman rakennuspaikan kiinteistöveroon ei tullut erillistä korotusta; vesiliikuntakeskuksen asemakaava ja tonttijako hyväksyttiin.",
+      "aanestykset": [
+        {
+          "pykala": "83",
+          "aihe": "Tuloveroprosentti 2026: kh:n pohjaesitys (pysyy 8,10 %) vs. Jukka Huotarin (ps.) esitys laskea 7,90 %:iin",
+          "jaa": 61, "ei": 5, "tyhja": 0, "poissa": 1,
+          "tulos": "Kh:n esitys voitti; tulovero pysyi 8,10 %:ssa",
+          "esittaja": "Jukka Huotari, kannattaja Jani Törmi",
+          "lahde": "poytakirja",
+          "lahdeUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3527805"
+        },
+        {
+          "pykala": "83",
+          "aihe": "Rakentamattoman rakennuspaikan kiinteistövero: kh:n pohjaesitys (ei erillistä veroa) vs. Pirjo Sirviön esitys 4,00 %",
+          "jaa": 36, "ei": 30, "tyhja": 0, "poissa": 1,
+          "tulos": "Kh:n esitys voitti; ei erillistä veroa rakentamattomalle rakennuspaikalle",
+          "esittaja": "Pirjo Sirviö, kannattaja Marika Koivuniemi",
+          "lahde": "poytakirja",
+          "lahdeUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3527805"
+        },
+        {
+          "pykala": "93",
+          "aihe": "Raksilan vesiliikuntakeskuksen (Oulun vesiliikuntakeskus) asemakaava ja tonttijako, 564-2577",
+          "jaa": 50, "ei": 10, "tyhja": 0, "poissa": 7,
+          "tulos": "Asemakaava ja tonttijako hyväksyttiin",
+          "esittaja": null,
+          "lahde": "poytakirja",
+          "lahdeUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3527825"
+        }
+      ],
+      "lahteet": [
+        "https://www.munoulu.fi/kaupunki/raksilan-vesiliikuntakeskuksessa-kuntalaiset-paasevat-uimaan-myos-kilpailujen-aikana/"
+      ]
+    },
+    {
+      "pvm": "2025-12-08",
+      "kokous": "Talousarvio 2026 ja taloussuunnitelma 2027–2028 (keskustelu alkoi 24.11.2025, äänestykset 8.12.2025)",
+      "paatokset": "Talousarvio 2026 hyväksyttiin kh:n esityksen mukaisena, täydennettynä kahdella yksimielisesti hyväksytyllä lisäyksellä (Sirviön termimuutos, Meriläisen hyte-lisäys). Kaikki 21 muut muutos-/lisäysehdotusta hylättiin. Investoinnit 2026–2028 n. 655 M€, nettolainanotto 2026 n. 191,2 M€.",
+      "aanestykset": [
+        { "pykala": "97.1", "aihe": "Anneli Näppä: s.20 Työllistymisen edistäminen -lisäkappale", "jaa": 43, "ei": 24, "tyhja": null, "poissa": null, "esittaja": "Anneli Näppä", "lahde": "poytakirja" },
+        { "pykala": "97.2", "aihe": "Johanna Karjula: s.20 Yritystoiminta ja vienti", "jaa": 42, "ei": 25, "tyhja": null, "poissa": null, "esittaja": "Johanna Karjula", "lahde": "poytakirja" },
+        { "pykala": "97.3", "aihe": "Susa Vikeväkorva: s.25 Vaikutusten arviointi talousarvioprosessiin", "jaa": 34, "ei": 33, "tyhja": null, "poissa": null, "esittaja": "Susa Vikeväkorva", "lahde": "poytakirja" },
+        { "pykala": "97.4", "aihe": "Esa Aalto: s.28 Katuverkon korjausvelan kasvun taittaminen", "jaa": 49, "ei": 18, "tyhja": null, "poissa": null, "esittaja": "Esa Aalto", "lahde": "poytakirja" },
+        { "pykala": "97.5", "aihe": "Jukka Huotari: s.30 Hallinnon henkilöstön sopeuttamisohjelma", "jaa": 62, "ei": 5, "tyhja": null, "poissa": null, "esittaja": "Jukka Huotari", "lahde": "poytakirja" },
+        { "pykala": "97.6", "aihe": "Jukka Huotari: s.30 Hankintojen lisäsäästö", "jaa": 62, "ei": 5, "tyhja": null, "poissa": null, "esittaja": "Jukka Huotari", "lahde": "poytakirja" },
+        { "pykala": "97.7", "aihe": "Pirjo Sirviö: s.43 'Venäjän Ukrainaan tekemä hyökkäyssota' -termi", "jaa": null, "ei": null, "tyhja": null, "poissa": null, "tulos": "hyväksyttiin yksimielisesti, ei äänestystä", "esittaja": "Pirjo Sirviö", "lahde": "poytakirja" },
+        { "pykala": "97.8", "aihe": "Jorma Leskelä: s.65 Hankintojen ohjaus -lisäkappale", "jaa": 43, "ei": 24, "tyhja": null, "poissa": null, "esittaja": "Jorma Leskelä", "lahde": "poytakirja" },
+        { "pykala": "97.9", "aihe": "Mariam Kandelberg: s.72 Loistokarin luonnonsuojelualueen kehittäminen", "jaa": 36, "ei": 31, "tyhja": null, "poissa": null, "esittaja": "Mariam Kandelberg", "lahde": "poytakirja" },
+        { "pykala": "97.10", "aihe": "Onni-Jonatan Matilainen: s.103 ONE:n puhe- ja läsnäolo-oikeus kh:ssa", "jaa": 41, "ei": 25, "tyhja": 1, "poissa": null, "esittaja": "Onni-Jonatan Matilainen", "lahde": "poytakirja" },
+        { "pykala": "97.11", "aihe": "Jorma Leskelä: s.113 Kotihoidon tuen kuntalisä", "jaa": 47, "ei": 19, "tyhja": 1, "poissa": null, "esittaja": "Jorma Leskelä", "lahde": "poytakirja" },
+        { "pykala": "97.12", "aihe": "Mikko Viitanen: s.115 Resursseja työpajatoimintaan", "jaa": 43, "ei": 24, "tyhja": null, "poissa": null, "esittaja": "Mikko Viitanen", "lahde": "poytakirja" },
+        { "pykala": "97.13", "aihe": "Outi Einistö: s.122 Koulujen pihoille vehreyttä", "jaa": 37, "ei": 30, "tyhja": null, "poissa": null, "esittaja": "Outi Einistö", "lahde": "poytakirja" },
+        { "pykala": "97.14", "aihe": "Miia Immonen: s.123 1,4 M€ lisärahoitus oppimisen tuen uudistukseen", "jaa": 48, "ei": 18, "tyhja": 1, "poissa": null, "esittaja": "Miia Immonen", "lahde": "poytakirja" },
+        { "pykala": "97.15", "aihe": "Joni Meriläinen: s.135-136 Hyte-kertoimen kohdennus", "jaa": null, "ei": null, "tyhja": null, "poissa": null, "tulos": "hyväksyttiin yksimielisesti, ei äänestystä", "esittaja": "Joni Meriläinen", "lahde": "poytakirja" },
+        { "pykala": "97.16", "aihe": "Olli Kohonen: s.136 Lisää yhteisöllistä asumista", "jaa": 36, "ei": 31, "tyhja": null, "poissa": null, "esittaja": "Olli Kohonen", "lahde": "poytakirja" },
+        { "pykala": "97.17", "aihe": "Jukka Huotari: s.138 Kiintiöpakolaisten vastaanoton keskeytys", "jaa": 62, "ei": 5, "tyhja": null, "poissa": null, "esittaja": "Jukka Huotari", "lahde": "poytakirja" },
+        { "pykala": "97.18", "aihe": "Johanna Karjula: s.152 Kadut ja liikenne", "jaa": 51, "ei": 16, "tyhja": null, "poissa": null, "esittaja": "Johanna Karjula", "lahde": "poytakirja" },
+        { "pykala": "97.19", "aihe": "Mariam Kandelberg: s.153 Metsämaan hiilinielun palautus", "jaa": 47, "ei": 18, "tyhja": 2, "poissa": null, "esittaja": "Mariam Kandelberg", "lahde": "poytakirja" },
+        { "pykala": "97.20", "aihe": "Raudaskoski/Meriläinen/Koivuniemi (yhdistetty): s.159 Joukkoliikenteen rahoituksen lisääminen", "jaa": 36, "ei": 30, "tyhja": 1, "poissa": null, "esittaja": "Mikko Raudaskoski, Joni Meriläinen, Marika Koivuniemi", "lahde": "poytakirja" },
+        { "pykala": "97.23", "aihe": "Jukka Huotari: s.213 Prosenttitaiteesta luopuminen", "jaa": 62, "ei": 5, "tyhja": null, "poissa": null, "esittaja": "Jukka Huotari", "lahde": "poytakirja" },
+        { "pykala": "97.p1", "aihe": "Ponsi, Joni Meriläinen: Oppimisen tuen uudistus", "jaa": 64, "ei": 1, "tyhja": 2, "poissa": null, "tulos": "hyväksytty", "esittaja": "Joni Meriläinen", "lahde": "poytakirja" },
+        { "pykala": "97.p2", "aihe": "Ponsi, Miia Immonen: Sivistyslautakunnan lisä-TA-esitys keväällä", "jaa": 47, "ei": 20, "tyhja": null, "poissa": null, "tulos": "hyväksytty", "esittaja": "Miia Immonen", "lahde": "poytakirja" }
+      ],
+      "korjaus": "Aiempi versio väitti virheellisesti: 'Eeva-Maria Parkkisen (kesk.) esitys koululaisliikenteen pilottilinjasta Ylikiiminki-Muhos, 45-19 (1 tyhjä)'. Pöytäkirjasta (docid 3555963) ei löydy ketään Parkkista eikä Ylikiiminki-Muhos-esitystä 23 äänestyksen joukosta. Poistettu virheellisenä ja korvattu täydellisellä, pöytäkirjaan perustuvalla listalla.",
+      "lahdeUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3555963",
+      "lahteet": []
+    },
+    {
+      "pvm": "2026-03-30",
+      "kokous": "Kaupunkistrategia Oulu 2035 ja Tapionrannan asemakaava",
+      "paatokset": "Kaupunkistrategia 2035 hyväksyttiin kh:n esityksen mukaisena, kaikki 8 muutosesitystä hylättiin. Tapionrannan (Kaijonharju) asemakaava ja tonttijako hyväksyttiin.",
+      "aanestykset": [
+        { "pykala": "13.1", "aihe": "Haho/Huotari: s.6 'maailmanluokan' -maininnan poisto", "jaa": 63, "ei": 4, "tyhja": 0, "poissa": null, "esittaja": "Urho Haho, kannattaja Jukka Huotari", "lahde": "poytakirja", "huom": "Merkittiin, että Aittakumpu äänesti vahingossa JAA, piti äänestää EI." },
+        { "pykala": "13.2", "aihe": "s.8 '3-30-300'-periaatteen poisto", "jaa": 62, "ei": 5, "tyhja": 0, "poissa": null, "esittaja": "Jukka Huotari, kannattaja Urho Haho", "lahde": "poytakirja" },
+        { "pykala": "13.3", "aihe": "s.8, 14 Luonnonarvohehtaari-maininnan poisto", "jaa": 62, "ei": 5, "tyhja": 0, "poissa": null, "esittaja": "Jukka Huotari, kannattaja Urho Haho", "lahde": "poytakirja" },
+        { "pykala": "13.4", "aihe": "s.8 Hiilineutraalius-tavoitteen muutos", "jaa": 62, "ei": 5, "tyhja": 0, "poissa": null, "esittaja": "Jukka Huotari, kannattaja Urho Haho", "lahde": "poytakirja" },
+        { "pykala": "13.5", "aihe": "s.9 Puhtaan siirtymän maininta", "jaa": 62, "ei": 5, "tyhja": 0, "poissa": null, "esittaja": "Jukka Huotari, kannattaja Urho Haho", "lahde": "poytakirja" },
+        { "pykala": "13.6", "aihe": "s.9 kohta 5, Puhtaan siirtymän maininta", "jaa": 62, "ei": 5, "tyhja": 0, "poissa": null, "esittaja": "Jukka Huotari, kannattaja Urho Haho", "lahde": "poytakirja" },
+        { "pykala": "13.7", "aihe": "s.16 Strateginen tavoite", "jaa": 62, "ei": 5, "tyhja": 0, "poissa": null, "esittaja": "Jukka Huotari, kannattaja Urho Haho", "lahde": "poytakirja" },
+        { "pykala": "13.8", "aihe": "s.14 Päästövähennystavoite", "jaa": 62, "ei": 5, "tyhja": 0, "poissa": null, "esittaja": "Jukka Huotari, kannattaja Urho Haho", "lahde": "poytakirja" },
+        { "pykala": "18", "aihe": "Tapionrannan (Kaijonharju) asemakaava ja tonttijako 564-2359 vs. Olli Kohosen vastaesitys", "jaa": 50, "ei": 15, "tyhja": 0, "poissa": 2, "esittaja": "Olli Kohonen", "lahde": "poytakirja" }
+      ],
+      "lahdeUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3647523",
+      "lahteet": []
+    },
+    {
+      "pvm": "2026-04-27",
+      "kokous": "Lähijunaliikenne",
+      "paatokset": "Oulu lähtee Kempeleen ja Limingan kanssa hankkimaan lähijunaliikennettä 2030-luvulle yhden junakaluston verran osana valtion ostoliikenteen kilpailutusta; kaupunki rahoittaa kolmasosan.",
+      "aanestykset": [
+        {
+          "pykala": "24",
+          "aihe": "Lähijunaliikenteeseen osallistuminen: kh:n pohjaesitys vs. Jukka Huotarin (ps.) esitys, ettei Oulu lähde mukaan",
+          "jaa": 59, "ei": 8, "tyhja": 0, "poissa": null,
+          "tulos": "Kh:n esitys hyväksyttiin. Perussuomalaisten valtuustoryhmä jätti eriävän mielipiteen.",
+          "esittaja": "Jukka Huotari, kannattaja Aittakumpu",
+          "lahde": "poytakirja",
+          "lahdeUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3676030"
+        }
+      ],
+      "lahteet": [
+        "https://www.munoulu.fi/kaupunki/oulun-kaupunginvaltuusto-kannatti-lahijunaa-selvalla-enemmistolla/",
+        "https://yle.fi/a/74-20222609"
+      ]
+    },
+    {
+      "pvm": "2026-05-18",
+      "kokous": "Tilinpäätös 2025 ja hyvinvointisuunnitelma 2026–2029",
+      "paatokset": "Tilinpäätös 2025 (alijäämä n. 16,5 M€) hyväksyttiin; hyvinvointisuunnitelma 2026–2029 hyväksyttiin kh:n esityksen mukaisesti, Huotarin 12 muutosesitystä hylättiin.",
+      "aanestykset": [
+        { "pykala": "35.1", "aihe": "Huotarin muutosesitys 1 hyvinvointisuunnitelmaan", "jaa": 61, "ei": 4, "tyhja": null, "poissa": null, "esittaja": "Jukka Huotari, kannattaja Aittakumpu", "lahde": "poytakirja" },
+        { "pykala": "35.2", "aihe": "Huotarin muutosesitys 2", "jaa": 60, "ei": 4, "tyhja": null, "poissa": null, "esittaja": "Jukka Huotari", "lahde": "poytakirja" },
+        { "pykala": "35.3-12", "aihe": "Huotarin muutosesitykset 3-12 (10 äänestystä)", "jaa": 59, "ei": 4, "tyhja": null, "poissa": null, "esittaja": "Jukka Huotari", "lahde": "poytakirja", "huom": "kaikki 10 äänestettiin 59-4" },
+        { "pykala": "35.p1", "aihe": "Pitkon ponsiesitys", "jaa": 58, "ei": 4, "tyhja": null, "poissa": null, "tulos": "hyväksytty", "esittaja": "Valtuutettu Pitko, kannattaja Kohonen", "lahde": "poytakirja" }
+      ],
+      "lahdeUrl": "http://asiakirjat.ouka.fi/ktwebscr/fileshow?doctype=3&docid=3698932",
+      "lahteet": [
+        "https://www.kaleva.fi/valtuusto-hyvaksyi-oulun-165-miljoonaa-miinukselle/13499706"
+      ]
+    },
+    {
+      "pvm": "2026-06-08",
+      "kokous": "Opetuksen ja kasvatuksen palveluverkko (19 päätöskohtaa)",
+      "paatokset": "Valtuusto hyväksyi palveluverkkomuutokset kh:n esityksen mukaisesti (säästötavoite n. 18 M€): koulujen, päiväkotien, kirjastojen ja liikuntapaikkojen (Raatin uimahalli) lakkautuksia/muutoksia. Alkuperäisestä selvityksestä poiketen mm. Aseman koulu, Martinniemen koulu ja Kontion koulun Huttukylän yksikkö jatkavat.",
+      "aanestykset": [
+        { "pykala": "38", "aihe": "Aseman koulu", "jaa": 61, "ei": 5, "tyhja": 0, "poissa": 1, "lahde": "poytakirja", "huom": "kaksi äänestystä: 61-5 ja 62-4" },
+        { "pykala": "39", "aihe": "Martinniemen koulu", "jaa": 60, "ei": 6, "tyhja": 0, "poissa": 1, "lahde": "poytakirja", "huom": "kaksi äänestystä: 60-6 ja 62-4" },
+        { "pykala": "40-54", "aihe": "Muut koulut, päiväkodit, nuoriso- ja yhteisötoiminta (15 kohtaa)", "jaa": 62, "ei": 4, "tyhja": 0, "poissa": 1, "lahde": "poytakirja", "huom": "tyypillinen tulos kaikissa" },
+        { "pykala": "55.1", "aihe": "Liikuntapalvelut: Viitasen vastaesitys (Raatti jatkaa uimahallina, Värtön korvaavat tilat)", "jaa": 52, "ei": 14, "tyhja": 0, "poissa": 1, "esittaja": "Mikko Viitanen, kannattaja Einistö", "lahde": "poytakirja" },
+        { "pykala": "55.2", "aihe": "Liikuntapalvelut: Huotarin laajempi vastaesitys (Raatti + Pateniemen uimaranta säilyvät, loppuraporttia ei hyväksytä usealta osin)", "jaa": 54, "ei": 12, "tyhja": 0, "poissa": 1, "esittaja": "Jukka Huotari, kannattaja Rasinkangas", "lahde": "poytakirja" },
+        { "pykala": "55.3", "aihe": "Liikuntapalvelut, äänestys 3", "jaa": 61, "ei": 5, "tyhja": 0, "poissa": 1, "lahde": "poytakirja" },
+        { "pykala": "55.4", "aihe": "Liikuntapalvelut, äänestys 4", "jaa": 60, "ei": 5, "tyhja": 1, "poissa": 1, "lahde": "poytakirja" },
+        { "pykala": "56", "aihe": "Kulttuuripalvelut (kirjastot): 4 äänestystä kh:n pohjasta + ponsiesityksiä (Kohosen ponsi hyväksytty 62-4, Huotarin ponsi hylätty 26-40, Immosen ponsi hyväksytty 62-4)", "jaa": 62, "ei": 4, "tyhja": 0, "poissa": 1, "lahde": "poytakirja" }
+      ],
+      "lahdeUrl": "http://asiakirjat.ouka.fi/ktwebscr/pk_asil_tweb.htm?bid=48240",
+      "lahteet": [
+        "https://yle.fi/a/74-20230399",
+        "https://www.kaleva.fi/oulu-lakkauttaa-kouluja-ja-raatin-uimahallin-kaikk/13532602",
+        "https://www.munoulu.fi/kaupunki/oulun-kaupunginvaltuusto-hyvaksyi-palveluverkkoon-esitetyt-muutokset/"
+      ]
+    }
+  ],
+  "aukot_ja_jatko": {
+    "muut_kokoukset": "Muina kuukausina (elo-syyskuu 2025, tammi-helmikuu 2026, heinäkuu 2026) ei ollut kaupunginvaltuuston kokouksia tai niissä ei äänestetty tällä haulla (01.06.2025-23.07.2026, ks. data/hae-aanestystulokset.js).",
+    "valtuutettukohtaiset_aanet": "EI SAATAVILLA asiakirjat.ouka.fi:stä kaupunginvaltuuston osalta — vahvistettu käymällä läpi kaikki 63 pöytäkirja-asiaa. Ks. data/oulu-valtuusto-aanestykset-2025-2026.md.",
+    "videot": "Valtuuston kokousvideot Oulun kaupungin YouTube-kanavalla — voisivat sisältää nimenhuutoäänestykset, ei litteroitu tässä.",
+    "avoin_data": "https://www.avoindata.fi/data/fi/dataset/oulun-kaupungin-kokoukset-ja-paatokset"
+  }
+}

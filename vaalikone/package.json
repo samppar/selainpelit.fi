@@ -1,0 +1,10 @@
+{
+  "name": "vaalikone",
+  "version": "1.0.0",
+  "description": "Vaalikone — tee oma vaalikone ja jaa se linkkinä (selainpelit.fi).",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run_tests.js"
+  },
+  "license": "MIT"
+}
