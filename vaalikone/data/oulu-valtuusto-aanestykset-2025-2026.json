@@ -1,0 +1,132 @@
+{
+  "kuvaus": "Oulun kaupunginvaltuuston äänestyksiä valtuustokaudella 2025–2029 (kauden alku 1.6.2025). Koottu julkisista uutislähteistä 23.7.2026. EI kata kaikkia äänestyksiä eikä sisällä valtuutettukohtaisia ääniä — ne löytyvät pöytäkirjojen äänestysliitteistä osoitteessa http://asiakirjat.ouka.fi.",
+  "huomautus": "Kentta 'varmuus': 'vahvistettu' = useampi lähde tai selkeä uutisointi; 'varmistettava' = yksityiskohta syytä tarkistaa pöytäkirjasta.",
+  "kokoukset": [
+    {
+      "pvm": "2025-06-02",
+      "kokous": "Järjestäytymiskokous (uusi valtuusto)",
+      "paatokset": "Valtuuston puheenjohtajiston vaali ja kaupunginhallituksen vaali toimikaudelle 2025–2029.",
+      "aanestykset": [],
+      "lahteet": ["https://www.ouka.fi/uutiset/oulun-kaupunginvaltuusto-262025-ennakkotiedote-paatoksista"]
+    },
+    {
+      "pvm": "2025-10-06",
+      "kokous": "150-vuotisjuhlakokous",
+      "paatokset": "Mm. Raksilan asemakeskuksen ja matkakeskusalueen asemakaava hyväksyttiin esityksen mukaisesti. Kokous kesti 22 minuuttia — ei äänestyksiä.",
+      "aanestykset": [],
+      "lahteet": [
+        "https://www.ouka.fi/uutiset/ennakkotiedote-kaupunginvaltuuston-150-vuotisjuhlakokouksen-paatoksista-6102025",
+        "https://www.kaleva.fi/oulun-kaupunginvaltuuston-juhlakokous-nuijittiin-k/11357018"
+      ]
+    },
+    {
+      "pvm": "2025-11-10",
+      "kokous": "Veroprosentit 2026 ja Raksilan vesiliikuntakeskuksen asemakaava",
+      "paatokset": "Kunnallisveroprosentti nostettiin 7,9:stä 8,1:een; vesiliikuntakeskuksen asemakaava ja tonttijako hyväksyttiin.",
+      "aanestykset": [
+        {
+          "aihe": "Kunnallisveroprosentti 2026: korotus 8,1 %:iin (Liisa Väisänen, vihr.) vs. alennus 7,7 %:iin (Sami Pikkuaho, kok.)",
+          "tulos": "38–26 korotuksen (8,1) hyväksi",
+          "lopputulos": "Väisäsen esitys jatkoon",
+          "varmuus": "vahvistettu"
+        },
+        {
+          "aihe": "Kunnallisveroprosentti 2026: korotus 8,1 % vs. pohjaesitys 7,9 %",
+          "tulos": "36–30 korotuksen hyväksi",
+          "lopputulos": "Kunnallisveroprosentiksi 2026 päätettiin 8,1",
+          "varmuus": "vahvistettu"
+        },
+        {
+          "aihe": "Vesiliikuntakeskuksen (Raksila) pysäköinti: vähintään 215 autopaikkaa keskuksen yhteyteen",
+          "tulos": "50–10 (7 poissa)",
+          "lopputulos": "Vähintään 215 autopaikkaa toteutetaan; asemakaava hyväksyttiin",
+          "varmuus": "vahvistettu"
+        }
+      ],
+      "lahteet": [
+        "https://yle.fi/a/74-20123888",
+        "https://www.kaleva.fi/oulun-kaupunginvaltuusto-paatti-nostaa-veroprosent/11399496",
+        "https://www.munoulu.fi/kaupunki/raksilan-vesiliikuntakeskuksessa-kuntalaiset-paasevat-uimaan-myos-kilpailujen-aikana/"
+      ]
+    },
+    {
+      "pvm": "2025-12-08",
+      "kokous": "Talousarvio 2026 ja taloussuunnitelma",
+      "paatokset": "Talousarvio 2026 hyväksyttiin vähäisin muutoksin, joilla ei taloudellisia vaikutuksia. Veronkorotuksen tuottamat miljoonat ohjattiin sivistystoimelle. Investoinnit 2026–2028 yht. n. 655 M€, nettolainanotto 2026 n. 190 M€.",
+      "aanestykset": [
+        {
+          "aihe": "Eeva-Maria Parkkisen (kesk.) esitys koululaisliikenteen pilottilinjasta Ylikiiminki–Muhos",
+          "tulos": "kaatui äänin 45–19 (1 tyhjä)",
+          "lopputulos": "Esitys hylättiin",
+          "varmuus": "varmistettava (lukema Rantapohjan uutisoinnista; tarkista pöytäkirjasta 8.12.2025)"
+        }
+      ],
+      "lahteet": [
+        "https://www.munoulu.fi/kaupunki/kaupunginvaltuusto-hyvaksyi-talousarvion-vuodelle-2026-investointimenot-ovat-seuraavien-kolmen-vuoden-aikana-yhteensa-noin-655-miljoonaa-euroa/",
+        "https://www.rantapohja.fi/haukipudas/oulun-kaupungin-talousarvioon-ei-aanestetty-muutoksia/"
+      ]
+    },
+    {
+      "pvm": "2026-04-27",
+      "kokous": "Lähijunaliikenne ym.",
+      "paatokset": "Oulu lähtee Kempeleen ja Limingan kanssa hankkimaan lähijunaliikennettä 2030-luvulle yhden junakaluston verran osana valtion ostoliikenteen kilpailutusta; kaupunki rahoittaa kolmasosan.",
+      "aanestykset": [
+        {
+          "aihe": "Lähijunaliikenteeseen osallistuminen: kh:n pohjaesitys vs. Jukka Huotarin (ps.) esitys, ettei Oulu lähde mukaan",
+          "tulos": "59–8 pohjaesityksen hyväksi",
+          "lopputulos": "Oulu mukaan lähijunaliikenteeseen. Vastaan äänestivät ps:n valtuustoryhmä sekä kokoomuksen Jussi Arponen, Veli-Pekka Pohjola ja Lyly Rajala.",
+          "varmuus": "vahvistettu"
+        }
+      ],
+      "lahteet": [
+        "https://www.ouka.fi/uutiset/ennakkotiedote-oulun-kaupunginvaltuuston-paatoksista-2742026",
+        "https://www.munoulu.fi/kaupunki/oulun-kaupunginvaltuusto-kannatti-lahijunaa-selvalla-enemmistolla/",
+        "https://yle.fi/a/74-20222609",
+        "https://www.kaleva.fi/lahijunalle-vihreaa-valoa-oulusta-kempeleesta-ja-l/13457914"
+      ]
+    },
+    {
+      "pvm": "2026-05-18",
+      "kokous": "Tilinpäätös 2025 ja hyvinvointisuunnitelma 2026–2029",
+      "paatokset": "Tilinpäätös 2025 (alijäämä n. 16,5 M€) ja arviointikertomus hyväksyttiin; hyvinvointisuunnitelma 2026–2029 hyväksyttiin kh:n esityksen mukaisesti.",
+      "aanestykset": [
+        {
+          "aihe": "Jukka Huotarin (ps.) 12 muutosesitystä hyvinvointisuunnitelmaan",
+          "tulos": "kaikki hylättiin äänestyksissä",
+          "lopputulos": "Kaupunginhallituksen päätösesitys hyväksyttiin",
+          "varmuus": "vahvistettu (äänilukemat pöytäkirjasta)"
+        }
+      ],
+      "lahteet": [
+        "https://www.ouka.fi/uutiset/ennakkotiedote-oulun-kaupunginvaltuuston-paatoksista-1852026",
+        "https://www.kaleva.fi/valtuusto-hyvaksyi-oulun-165-miljoonaa-miinukselle/13499706"
+      ]
+    },
+    {
+      "pvm": "2026-06-08",
+      "kokous": "Opetuksen ja kasvatuksen palveluverkko (19 päätöskohtaa)",
+      "paatokset": "Valtuusto hyväksyi palveluverkkomuutokset kh:n esityksen mukaisesti (säästötavoite n. 18 M€): koulujen, päiväkotien ja kirjastojen lakkautuksia/yhdistämisiä sekä Raatin uimahallin lakkautus. Osa lakkautuksista ehdollisia lapsimäärän kehitykselle. Alkuperäisestä selvityksestä poiketen mm. Aseman koulu, Martinniemen koulu ja Kontion koulun Huttukylän yksikkö jatkavat. Kokous kesti n. 5,5–6 tuntia.",
+      "aanestykset": [
+        {
+          "aihe": "Perussuomalaisten (ja muiden) vastaesitykset kaikkiin 19 palveluverkkokohtaan",
+          "tulos": "kymmeniä äänestyksiä; kaikki vastaesitykset kaatuivat, tyypillisesti äänin 62–4, yksittäisissä kohdissa esim. 60–5 ja 60–6",
+          "lopputulos": "Kaupunginhallituksen esitys hyväksyttiin kaikilta osin",
+          "varmuus": "vahvistettu (kohtakohtaiset lukemat pöytäkirjasta)"
+        }
+      ],
+      "lahteet": [
+        "https://www.ouka.fi/uutiset/ennakkotiedote-oulun-kaupunginvaltuuston-paatoksista-862026",
+        "https://yle.fi/a/74-20230399",
+        "https://www.kaleva.fi/oulu-lakkauttaa-kouluja-ja-raatin-uimahallin-kaikk/13532602",
+        "https://www.munoulu.fi/kaupunki/oulun-kaupunginvaltuusto-hyvaksyi-palveluverkkoon-esitetyt-muutokset/",
+        "https://www.epressi.com/tiedotteet/kaupungit-ja-kunnat/kaupunginvaltuusto-paatti-8.6.2026-opetuksen-ja-kasvatuksen-palveluverkosta.html"
+      ]
+    }
+  ],
+  "aukot_ja_jatko": {
+    "puuttuvat_kokoukset": "Elo–syyskuun 2025 sekä tammi–maaliskuun 2026 kokouksista ei löytynyt uutisoituja äänestyksiä tällä haulla — niissä on voinut olla äänestyksiä (mm. valtuustoaloitteet, kaavat).",
+    "valtuutettukohtaiset_aanet": "Jokaisen äänestyksen valtuutettukohtainen jaa/ei/tyhjä/poissa-lista on pöytäkirjan äänestysliitteessä: http://asiakirjat.ouka.fi (Kaupunginvaltuusto > kokous > pykälä > äänestykset). Pöytäkirjat 1.6.2017 alkaen.",
+    "videot": "Valtuuston kokousvideot Oulun kaupungin YouTube-kanavalla.",
+    "avoin_data": "Koneluettava aineisto: https://www.avoindata.fi/data/fi/dataset/oulun-kaupungin-kokoukset-ja-paatokset"
+  }
+}

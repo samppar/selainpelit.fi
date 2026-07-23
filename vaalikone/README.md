@@ -30,6 +30,19 @@ osuvuus-% = 100 × Σ(paino · samaa mieltä) / Σ(paino)
 
 Jos yhteisiä vastattuja kysymyksiä ei ole, osuvuutta ei lasketa (–).
 
+## Esimerkkidata: Oulun valtuusto 2025–2026
+
+`data/`-kansiossa on Oulun kaupunginvaltuuston tämän kauden äänestyksistä
+koottu aineisto (uutislähteistä 23.7.2026; ei kata kaikkia äänestyksiä):
+
+- `data/oulu-valtuusto-aanestykset-2025-2026.json` / `.md` — äänestykset,
+  tulokset ja lähteet.
+- `data/oulu-ryhmavaalikone.js` — generoi aineistosta ryhmätason
+  vaalikoneen jakolinkin: `node data/oulu-ryhmavaalikone.js`.
+  Ryhmätason likiarvo: kanta merkitty vain, jos se on lähteistä
+  todennettavissa; muuten ”ei kantaa”. Valtuutettukohtaiset äänet saa
+  pöytäkirjojen äänestysliitteistä (asiakirjat.ouka.fi).
+
 ## Kehitys
 
 ```
