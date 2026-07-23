@@ -1,0 +1,9 @@
+{
+  "name": "moottori-mania",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Moottori-Mania — Elasto Mania -henkinen ajopeli, aito portattu fysiikka (selainpeli).",
+  "scripts": {
+    "test": "node tools/bot.js && node tools/verify.js"
+  }
+}

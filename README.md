@@ -19,6 +19,7 @@ Monorepo for browser games hosted at selainpelit.fi.
 | `mosaiikki/` | Mosaiikki — polyomino shape-filling puzzle |
 | `palikat/` | Palikat — Blokus Duo -tyylinen polyominopeli vs. computer |
 | `labyrintti/` | Labyrintti — kallistettava kuulalabyrintti, kolme vaikeustasoa |
+| `moottori-mania/` | Moottori-Mania — Elasto Mania -henkinen ajopeli, portattu fysiikka |
 
 Each game is self-contained in its folder. See the README inside a game for run instructions.
 
