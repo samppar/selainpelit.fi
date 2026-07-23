@@ -106,7 +106,10 @@ jobs:
           USERNAME="${DEPLOY_USER:-root}"
           DEST="${DEPLOY_DEV_PATH:-/var/www/selainpelit.fi/dev/public}"
           PORT="${DEPLOY_PORT:-22}"
-          rsync -az \
+          ssh -p "$PORT" -o StrictHostKeyChecking=yes "${USERNAME}@${HOST}" "mkdir -p '${DEST}'"
+          # --omit-dir-times: dev-hakemistossa voi olla käsin luotuja
+          # hakemistoja, joiden aikaleimoja deploy-käyttäjä ei saa muuttaa.
+          rsync -az --omit-dir-times \
             -e "ssh -p $PORT -o StrictHostKeyChecking=yes" \
             ./_site/ \
             "${USERNAME}@${HOST}:${DEST}/"
