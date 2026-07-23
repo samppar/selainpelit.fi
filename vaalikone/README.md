@@ -5,6 +5,15 @@ tallennusta. Koko vaalikone (kysymykset, ehdokkaat ja heidän kantansa)
 pakataan deflate-algoritmilla URL-fragmenttiin, joten jakolinkki on
 itsenäinen: sivusto vain tulkitsee sen.
 
+**HUOM — ei linkkiä etusivulta.** Tämä on väliaikaisesti selainpelit.fi:n
+repossa, mutta ei ole peli — se kuuluu oikeastaan omalle sivustolleen.
+**Älä lisää linkkiä `/vaalikone/`-osoitteeseen `home/index.html`:ään** (tai
+mihinkään muuhun etusivuun/valikkoon) ennen kuin toisin päätetään. Sivu on
+tarkoituksella listaamaton — saavutettavissa vain suoralla URL:lla. (Toisella
+haaralla `claude/oma-vaalikone-bi4nie` on valmisteltu etusivulle "Työkalut"
+-osio ja vaalikonekortti — sitä hunkia ei pidä tuoda mukaan, jos/kun haara
+joskus yhdistetään.)
+
 ## Ominaisuudet
 
 - **Muokkain** — kirjoita kyllä/ei-väitteet, lisää ehdokkaat ja merkitse
