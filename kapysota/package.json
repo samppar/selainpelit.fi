@@ -1,0 +1,7 @@
+{
+  "name": "kapysota",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Käpysota — Worms-henkinen oravien vuoropohjainen tykistöpeli tuhoutuvassa metsämaastossa (selainpeli).",
+  "scripts": { "test": "node test/run_tests.js", "build": "node build.js" }
+}
