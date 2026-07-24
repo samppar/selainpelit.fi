@@ -16,6 +16,7 @@ function wrapCjs(label, code) {
   var require = function(req) {
     if (req === "./engine.js" || req === "../engine.js") return globalThis.HoldemEngine;
     if (req === "./botUtil.js" || req === "../botUtil.js") return globalThis.HoldemBotUtil;
+    if (req.indexOf("preflopEquity") >= 0) return globalThis.HoldemPreflopEquity;
     if (req.indexOf("randomBot") >= 0) return globalThis.__HoldemBotFiles.random;
     if (req.indexOf("basicBot") >= 0) return globalThis.__HoldemBotFiles.basic;
     if (req.indexOf("normalBot") >= 0) return globalThis.__HoldemBotFiles.normal;
@@ -30,6 +31,7 @@ function wrapCjs(label, code) {
 }
 
 const engine = read("src/engine.js");
+const preflopEquityCode = read("src/preflopEquity.js");
 const botUtilCode = read("src/botUtil.js");
 const bots = {
   random: read("src/bots/randomBot.js"),
@@ -44,6 +46,7 @@ const css = read("src/style.css");
 
 const botBundle = `
 globalThis.__HoldemBotFiles = {};
+globalThis.HoldemPreflopEquity = ${wrapCjs("preflopEquity", preflopEquityCode)};
 globalThis.HoldemBotUtil = ${wrapCjs("botUtil", botUtilCode)};
 globalThis.__HoldemBotFiles.random = ${wrapCjs("randomBot", bots.random)};
 globalThis.__HoldemBotFiles.basic = ${wrapCjs("basicBot", bots.basic)};

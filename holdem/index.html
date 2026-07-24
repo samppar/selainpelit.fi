@@ -1810,6 +1810,30 @@ button.ghost:hover:not(:disabled) { background: rgba(244, 239, 228, 0.28); }
 <script>
 
 globalThis.__HoldemBotFiles = {};
+globalThis.HoldemPreflopEquity = 
+/* ---- preflopEquity ---- */
+(function(){
+  var module = { exports: {} };
+  var exports = module.exports;
+  var require = function(req) {
+    if (req === "./engine.js" || req === "../engine.js") return globalThis.HoldemEngine;
+    if (req === "./botUtil.js" || req === "../botUtil.js") return globalThis.HoldemBotUtil;
+    if (req.indexOf("preflopEquity") >= 0) return globalThis.HoldemPreflopEquity;
+    if (req.indexOf("randomBot") >= 0) return globalThis.__HoldemBotFiles.random;
+    if (req.indexOf("basicBot") >= 0) return globalThis.__HoldemBotFiles.basic;
+    if (req.indexOf("normalBot") >= 0) return globalThis.__HoldemBotFiles.normal;
+    if (req.indexOf("hardBot") >= 0) return globalThis.__HoldemBotFiles.hard;
+    if (req.indexOf("templateBot") >= 0) return globalThis.__HoldemBotFiles.template;
+    if (req.indexOf("botRegistry") >= 0) return globalThis.HoldemRegistry;
+    throw new Error("bundle require: " + req);
+  };
+  // preflopEquity.js — GENEROITU (tools/genPreflopEquity.js, 12000 iteraatiota/solu). Älä muokkaa käsin.
+// Avain: hi_lo_p|s|o (p=pari, s=suited, o=offsuit); arvo: equity vs [1,2,3] satunnaista vastustajaa.
+"use strict";
+module.exports = {"2_2_p":[0.5,0.306,0.219],"3_2_s":[0.36,0.243,0.185],"3_2_o":[0.326,0.192,0.136],"3_3_p":[0.539,0.33,0.239],"4_2_s":[0.367,0.242,0.188],"4_2_o":[0.329,0.206,0.146],"4_3_s":[0.386,0.264,0.206],"4_3_o":[0.361,0.223,0.161],"4_4_p":[0.569,0.366,0.263],"5_2_s":[0.381,0.258,0.192],"5_2_o":[0.341,0.212,0.151],"5_3_s":[0.396,0.268,0.219],"5_3_o":[0.36,0.237,0.17],"5_4_s":[0.408,0.296,0.229],"5_4_o":[0.386,0.258,0.187],"5_5_p":[0.604,0.4,0.279],"6_2_s":[0.371,0.248,0.192],"6_2_o":[0.344,0.207,0.141],"6_3_s":[0.398,0.268,0.202],"6_3_o":[0.363,0.227,0.166],"6_4_s":[0.415,0.285,0.222],"6_4_o":[0.385,0.238,0.175],"6_5_s":[0.441,0.298,0.237],"6_5_o":[0.4,0.272,0.201],"6_6_p":[0.641,0.432,0.323],"7_2_s":[0.386,0.25,0.182],"7_2_o":[0.355,0.208,0.14],"7_3_s":[0.4,0.259,0.198],"7_3_o":[0.363,0.224,0.155],"7_4_s":[0.419,0.285,0.216],"7_4_o":[0.388,0.246,0.18],"7_5_s":[0.436,0.298,0.233],"7_5_o":[0.411,0.265,0.201],"7_6_s":[0.458,0.319,0.257],"7_6_o":[0.426,0.279,0.207],"7_7_p":[0.663,0.462,0.344],"8_2_s":[0.395,0.258,0.198],"8_2_o":[0.372,0.22,0.151],"8_3_s":[0.414,0.263,0.197],"8_3_o":[0.369,0.223,0.153],"8_4_s":[0.428,0.279,0.215],"8_4_o":[0.396,0.249,0.173],"8_5_s":[0.445,0.305,0.237],"8_5_o":[0.421,0.262,0.194],"8_6_s":[0.462,0.323,0.243],"8_6_o":[0.436,0.281,0.206],"8_7_s":[0.48,0.335,0.264],"8_7_o":[0.443,0.293,0.233],"8_8_p":[0.692,0.494,0.375],"9_2_s":[0.429,0.272,0.206],"9_2_o":[0.397,0.227,0.166],"9_3_s":[0.43,0.273,0.204],"9_3_o":[0.399,0.239,0.17],"9_4_s":[0.438,0.29,0.214],"9_4_o":[0.416,0.251,0.172],"9_5_s":[0.456,0.305,0.229],"9_5_o":[0.418,0.269,0.19],"9_6_s":[0.474,0.322,0.244],"9_6_o":[0.443,0.285,0.207],"9_7_s":[0.49,0.347,0.268],"9_7_o":[0.462,0.303,0.234],"9_8_s":[0.498,0.355,0.287],"9_8_o":[0.482,0.327,0.245],"9_9_p":[0.717,0.533,0.412],"10_2_s":[0.443,0.282,0.205],"10_2_o":[0.417,0.247,0.174],"10_3_s":[0.461,0.289,0.221],"10_3_o":[0.425,0.25,0.176],"10_4_s":[0.468,0.303,0.224],"10_4_o":[0.432,0.267,0.18],"10_5_s":[0.466,0.309,0.23],"10_5_o":[0.435,0.267,0.203],"10_6_s":[0.489,0.328,0.252],"10_6_o":[0.466,0.301,0.219],"10_7_s":[0.512,0.343,0.266],"10_7_o":[0.477,0.313,0.233],"10_8_s":[0.519,0.369,0.288],"10_8_o":[0.493,0.348,0.251],"10_9_s":[0.537,0.396,0.304],"10_9_o":[0.515,0.357,0.278],"10_10_p":[0.751,0.573,0.455],"11_2_s":[0.476,0.299,0.226],"11_2_o":[0.45,0.266,0.183],"11_3_s":[0.485,0.313,0.238],"11_3_o":[0.452,0.275,0.188],"11_4_s":[0.494,0.321,0.241],"11_4_o":[0.462,0.28,0.207],"11_5_s":[0.502,0.319,0.248],"11_5_o":[0.473,0.292,0.209],"11_6_s":[0.504,0.341,0.248],"11_6_o":[0.474,0.302,0.214],"11_7_s":[0.525,0.358,0.268],"11_7_o":[0.494,0.323,0.232],"11_8_s":[0.547,0.371,0.293],"11_8_o":[0.513,0.347,0.247],"11_9_s":[0.556,0.402,0.305],"11_9_o":[0.53,0.363,0.28],"11_10_s":[0.576,0.412,0.342],"11_10_o":[0.553,0.388,0.3],"11_11_p":[0.774,0.604,0.486],"12_2_s":[0.498,0.32,0.241],"12_2_o":[0.475,0.295,0.205],"12_3_s":[0.515,0.334,0.255],"12_3_o":[0.483,0.288,0.207],"12_4_s":[0.525,0.339,0.257],"12_4_o":[0.483,0.315,0.216],"12_5_s":[0.528,0.343,0.266],"12_5_o":[0.509,0.313,0.223],"12_6_s":[0.539,0.356,0.269],"12_6_o":[0.508,0.325,0.228],"12_7_s":[0.54,0.357,0.278],"12_7_o":[0.521,0.33,0.234],"12_8_s":[0.554,0.384,0.295],"12_8_o":[0.524,0.36,0.262],"12_9_s":[0.578,0.411,0.312],"12_9_o":[0.556,0.376,0.278],"12_10_s":[0.596,0.431,0.342],"12_10_o":[0.573,0.398,0.313],"12_11_s":[0.596,0.441,0.353],"12_11_o":[0.578,0.409,0.328],"12_12_p":[0.801,0.653,0.532],"13_2_s":[0.535,0.348,0.256],"13_2_o":[0.508,0.32,0.219],"13_3_s":[0.537,0.358,0.264],"13_3_o":[0.516,0.323,0.232],"13_4_s":[0.544,0.365,0.275],"13_4_o":[0.524,0.332,0.235],"13_5_s":[0.563,0.372,0.28],"13_5_o":[0.539,0.337,0.244],"13_6_s":[0.567,0.379,0.293],"13_6_o":[0.536,0.347,0.253],"13_7_s":[0.579,0.396,0.303],"13_7_o":[0.547,0.351,0.261],"13_8_s":[0.578,0.398,0.319],"13_8_o":[0.555,0.369,0.274],"13_9_s":[0.594,0.423,0.327],"13_9_o":[0.583,0.387,0.296],"13_10_s":[0.62,0.451,0.357],"13_10_o":[0.603,0.421,0.315],"13_11_s":[0.629,0.458,0.371],"13_11_o":[0.605,0.431,0.337],"13_12_s":[0.638,0.476,0.379],"13_12_o":[0.614,0.447,0.362],"13_13_p":[0.824,0.679,0.59],"14_2_s":[0.578,0.391,0.289],"14_2_o":[0.547,0.351,0.252],"14_3_s":[0.583,0.399,0.302],"14_3_o":[0.559,0.361,0.27],"14_4_s":[0.588,0.406,0.307],"14_4_o":[0.569,0.372,0.273],"14_5_s":[0.595,0.41,0.315],"14_5_o":[0.574,0.384,0.28],"14_6_s":[0.597,0.411,0.318],"14_6_o":[0.573,0.373,0.278],"14_7_s":[0.612,0.423,0.324],"14_7_o":[0.579,0.395,0.285],"14_8_s":[0.614,0.436,0.331],"14_8_o":[0.604,0.403,0.301],"14_9_s":[0.631,0.451,0.348],"14_9_o":[0.609,0.417,0.312],"14_10_s":[0.637,0.472,0.374],"14_10_o":[0.629,0.436,0.338],"14_11_s":[0.652,0.481,0.389],"14_11_o":[0.637,0.453,0.346],"14_12_s":[0.662,0.489,0.402],"14_12_o":[0.645,0.472,0.365],"14_13_s":[0.678,0.508,0.418],"14_13_o":[0.657,0.484,0.392],"14_14_p":[0.845,0.741,0.639]};
+
+  return module.exports;
+})();
 globalThis.HoldemBotUtil = 
 /* ---- botUtil ---- */
 (function(){
@@ -1818,6 +1842,7 @@ globalThis.HoldemBotUtil =
   var require = function(req) {
     if (req === "./engine.js" || req === "../engine.js") return globalThis.HoldemEngine;
     if (req === "./botUtil.js" || req === "../botUtil.js") return globalThis.HoldemBotUtil;
+    if (req.indexOf("preflopEquity") >= 0) return globalThis.HoldemPreflopEquity;
     if (req.indexOf("randomBot") >= 0) return globalThis.__HoldemBotFiles.random;
     if (req.indexOf("basicBot") >= 0) return globalThis.__HoldemBotFiles.basic;
     if (req.indexOf("normalBot") >= 0) return globalThis.__HoldemBotFiles.normal;
@@ -1850,6 +1875,18 @@ function handStrengthPreflop(hole) {
 var CAT = [0.15, 0.35, 0.5, 0.62, 0.72, 0.8, 0.88, 0.94, 0.98, 1];
 
 var SUITS = ["s", "h", "d", "c"];
+
+// Precomputed 169 aloituskäden equity (tools/genPreflopEquity.js) — sama jako
+// kuin Pluribusissa: preflop katsotaan valmiiksi lasketusta "blueprintistä".
+var PREFLOP = null;
+try { PREFLOP = require("./preflopEquity.js"); } catch (e) { PREFLOP = null; }
+
+function preflopKey(hole) {
+  var hi = Math.max(hole[0].rank, hole[1].rank);
+  var lo = Math.min(hole[0].rank, hole[1].rank);
+  var kind = hi === lo ? "p" : hole[0].suit === hole[1].suit ? "s" : "o";
+  return hi + "_" + lo + "_" + kind;
+}
 
 function compareVec(a, b) {
   var len = Math.max(a.length, b.length);
@@ -1894,6 +1931,13 @@ function estimateEquity(view, opts) {
     return aggro ? AGGRO_FLOOR : 0;
   });
   if (!floors.length) floors = [0];
+
+  // Preflop ilman korottajaa: valmiiksi laskettu taulukko (nopea + tarkka).
+  var filtered = floors.some(function (f) { return f > 0; });
+  if (!board.length && !filtered && PREFLOP) {
+    var row = PREFLOP[preflopKey(view.hole)];
+    if (row) return row[Math.min(opps, 3) - 1];
+  }
 
   var known = {};
   view.hole.concat(board).forEach(function (c) { known[c.rank + c.suit] = true; });
@@ -2016,6 +2060,7 @@ globalThis.__HoldemBotFiles.random =
   var require = function(req) {
     if (req === "./engine.js" || req === "../engine.js") return globalThis.HoldemEngine;
     if (req === "./botUtil.js" || req === "../botUtil.js") return globalThis.HoldemBotUtil;
+    if (req.indexOf("preflopEquity") >= 0) return globalThis.HoldemPreflopEquity;
     if (req.indexOf("randomBot") >= 0) return globalThis.__HoldemBotFiles.random;
     if (req.indexOf("basicBot") >= 0) return globalThis.__HoldemBotFiles.basic;
     if (req.indexOf("normalBot") >= 0) return globalThis.__HoldemBotFiles.normal;
@@ -2057,6 +2102,7 @@ globalThis.__HoldemBotFiles.basic =
   var require = function(req) {
     if (req === "./engine.js" || req === "../engine.js") return globalThis.HoldemEngine;
     if (req === "./botUtil.js" || req === "../botUtil.js") return globalThis.HoldemBotUtil;
+    if (req.indexOf("preflopEquity") >= 0) return globalThis.HoldemPreflopEquity;
     if (req.indexOf("randomBot") >= 0) return globalThis.__HoldemBotFiles.random;
     if (req.indexOf("basicBot") >= 0) return globalThis.__HoldemBotFiles.basic;
     if (req.indexOf("normalBot") >= 0) return globalThis.__HoldemBotFiles.normal;
@@ -2111,6 +2157,7 @@ globalThis.__HoldemBotFiles.normal =
   var require = function(req) {
     if (req === "./engine.js" || req === "../engine.js") return globalThis.HoldemEngine;
     if (req === "./botUtil.js" || req === "../botUtil.js") return globalThis.HoldemBotUtil;
+    if (req.indexOf("preflopEquity") >= 0) return globalThis.HoldemPreflopEquity;
     if (req.indexOf("randomBot") >= 0) return globalThis.__HoldemBotFiles.random;
     if (req.indexOf("basicBot") >= 0) return globalThis.__HoldemBotFiles.basic;
     if (req.indexOf("normalBot") >= 0) return globalThis.__HoldemBotFiles.normal;
@@ -2178,6 +2225,7 @@ globalThis.__HoldemBotFiles.hard =
   var require = function(req) {
     if (req === "./engine.js" || req === "../engine.js") return globalThis.HoldemEngine;
     if (req === "./botUtil.js" || req === "../botUtil.js") return globalThis.HoldemBotUtil;
+    if (req.indexOf("preflopEquity") >= 0) return globalThis.HoldemPreflopEquity;
     if (req.indexOf("randomBot") >= 0) return globalThis.__HoldemBotFiles.random;
     if (req.indexOf("basicBot") >= 0) return globalThis.__HoldemBotFiles.basic;
     if (req.indexOf("normalBot") >= 0) return globalThis.__HoldemBotFiles.normal;
@@ -2268,6 +2316,7 @@ globalThis.__HoldemBotFiles.template =
   var require = function(req) {
     if (req === "./engine.js" || req === "../engine.js") return globalThis.HoldemEngine;
     if (req === "./botUtil.js" || req === "../botUtil.js") return globalThis.HoldemBotUtil;
+    if (req.indexOf("preflopEquity") >= 0) return globalThis.HoldemPreflopEquity;
     if (req.indexOf("randomBot") >= 0) return globalThis.__HoldemBotFiles.random;
     if (req.indexOf("basicBot") >= 0) return globalThis.__HoldemBotFiles.basic;
     if (req.indexOf("normalBot") >= 0) return globalThis.__HoldemBotFiles.normal;
@@ -2315,6 +2364,7 @@ globalThis.HoldemRegistry =
   var require = function(req) {
     if (req === "./engine.js" || req === "../engine.js") return globalThis.HoldemEngine;
     if (req === "./botUtil.js" || req === "../botUtil.js") return globalThis.HoldemBotUtil;
+    if (req.indexOf("preflopEquity") >= 0) return globalThis.HoldemPreflopEquity;
     if (req.indexOf("randomBot") >= 0) return globalThis.__HoldemBotFiles.random;
     if (req.indexOf("basicBot") >= 0) return globalThis.__HoldemBotFiles.basic;
     if (req.indexOf("normalBot") >= 0) return globalThis.__HoldemBotFiles.normal;

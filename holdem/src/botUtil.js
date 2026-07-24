@@ -23,6 +23,18 @@ var CAT = [0.15, 0.35, 0.5, 0.62, 0.72, 0.8, 0.88, 0.94, 0.98, 1];
 
 var SUITS = ["s", "h", "d", "c"];
 
+// Precomputed 169 aloituskäden equity (tools/genPreflopEquity.js) — sama jako
+// kuin Pluribusissa: preflop katsotaan valmiiksi lasketusta "blueprintistä".
+var PREFLOP = null;
+try { PREFLOP = require("./preflopEquity.js"); } catch (e) { PREFLOP = null; }
+
+function preflopKey(hole) {
+  var hi = Math.max(hole[0].rank, hole[1].rank);
+  var lo = Math.min(hole[0].rank, hole[1].rank);
+  var kind = hi === lo ? "p" : hole[0].suit === hole[1].suit ? "s" : "o";
+  return hi + "_" + lo + "_" + kind;
+}
+
 function compareVec(a, b) {
   var len = Math.max(a.length, b.length);
   for (var i = 0; i < len; i++) {
@@ -66,6 +78,13 @@ function estimateEquity(view, opts) {
     return aggro ? AGGRO_FLOOR : 0;
   });
   if (!floors.length) floors = [0];
+
+  // Preflop ilman korottajaa: valmiiksi laskettu taulukko (nopea + tarkka).
+  var filtered = floors.some(function (f) { return f > 0; });
+  if (!board.length && !filtered && PREFLOP) {
+    var row = PREFLOP[preflopKey(view.hole)];
+    if (row) return row[Math.min(opps, 3) - 1];
+  }
 
   var known = {};
   view.hole.concat(board).forEach(function (c) { known[c.rank + c.suit] = true; });

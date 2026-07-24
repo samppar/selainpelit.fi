@@ -4,6 +4,7 @@
   "description": "Texas Hold'em — pokeri tietokonetta vastaan (selainpeli).",
   "scripts": {
     "build": "node build.js",
+    "gen:preflop": "node tools/genPreflopEquity.js",
     "test": "node test/run_tests.js",
     "arena": "node test/arena.js",
     "tournament": "node test/arena.js"
