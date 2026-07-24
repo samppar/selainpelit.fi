@@ -9,8 +9,12 @@
   var COLORS = ["K", "S", "P", "O"]; // musta, sininen, punainen, keltainen
   var COLOR_NAMES = { K: "musta", S: "sininen", P: "punainen", O: "keltainen" };
   var RACK_SIZE = 14; // oletus
-  var RACK_SIZE_CHOICES = [7, 10, 14];
-  var INITIAL_MELD = 30;
+  var RACK_SIZE_MIN = 5;
+  var RACK_SIZE_MAX = 20;
+  var RACK_SIZE_CHOICES = [7, 10, 14]; // vanha API, säilytetty
+  var INITIAL_MELD = 30; // oletus, säädettävissä (openMin)
+  var OPEN_MIN_MIN = 0;
+  var OPEN_MIN_MAX = 50;
   var JOKER_PENALTY = 30;
   var PLAYER_COUNT = 2; // oletus
   var PLAYER_COUNT_CHOICES = [2, 3, 4];
@@ -18,8 +22,22 @@
 
   function clampRackSize(n) {
     var v = n | 0;
-    if (RACK_SIZE_CHOICES.indexOf(v) >= 0) return v;
-    return RACK_SIZE;
+    if (!v && v !== 0) return RACK_SIZE;
+    if (v < RACK_SIZE_MIN) return RACK_SIZE;
+    if (v > RACK_SIZE_MAX) return RACK_SIZE_MAX;
+    return v;
+  }
+
+  function clampOpenMin(n) {
+    if (n == null || isNaN(+n)) return INITIAL_MELD;
+    var v = +n | 0;
+    if (v < OPEN_MIN_MIN) return OPEN_MIN_MIN;
+    if (v > OPEN_MIN_MAX) return OPEN_MIN_MAX;
+    return v;
+  }
+
+  function openMinOf(state) {
+    return state.openMin != null ? state.openMin : INITIAL_MELD;
   }
 
   function clampPlayerCount(n) {
@@ -227,6 +245,7 @@
    */
   function validatePlay(state, newBoard, newRack) {
     var p = state.turn;
+    var openMin = openMinOf(state);
     var oldRack = state.racks[p];
     var oldBoard = state.board;
 
@@ -270,10 +289,10 @@
             return { ok: false, error: "Avauksessa käytä vain omia palojasi" };
           }
           var meldScore = scoreTiles(fromRack);
-          if (meldScore < INITIAL_MELD) {
+          if (meldScore < openMin) {
             return {
               ok: false,
-              error: "Avaus vaatii vähintään " + INITIAL_MELD + " pistettä (nyt " + meldScore + ")",
+              error: "Avaus vaatii vähintään " + openMin + " pistettä (nyt " + meldScore + ")",
               score: meldScore,
             };
           }
@@ -284,20 +303,20 @@
             return { ok: false, error: "Pelaa uusia rypäitä avaukseen" };
           }
           var ms = scoreTiles(played.tiles);
-          if (ms < INITIAL_MELD) {
+          if (ms < openMin) {
             return {
               ok: false,
-              error: "Avaus vaatii vähintään " + INITIAL_MELD + " pistettä (nyt " + ms + ")",
+              error: "Avaus vaatii vähintään " + openMin + " pistettä (nyt " + ms + ")",
               score: ms,
             };
           }
         }
       } else {
         var ms0 = scoreTiles(played.tiles);
-        if (ms0 < INITIAL_MELD) {
+        if (ms0 < openMin) {
           return {
             ok: false,
-            error: "Avaus vaatii vähintään " + INITIAL_MELD + " pistettä (nyt " + ms0 + ")",
+            error: "Avaus vaatii vähintään " + openMin + " pistettä (nyt " + ms0 + ")",
             score: ms0,
           };
         }
@@ -393,6 +412,7 @@
       seed: seed,
       difficulty: opts.difficulty || "normaali",
       rackSize: rackSize,
+      openMin: clampOpenMin(opts.openMin),
     };
   }
 
@@ -429,6 +449,7 @@
       seed: nextSeed,
       difficulty: state.difficulty,
       rackSize: state.rackSize,
+      openMin: openMinOf(state),
       playerCount: playerCountOf(state),
       matchScores: state.matchScores.slice(),
       matchTarget: state.matchTarget,
@@ -616,6 +637,7 @@
     var rack = state.racks[player].slice();
     var board = cloneBoard(state.board);
     var hasMelded = state.hasMelded[player];
+    var openMin = openMinOf(state);
 
     if (!hasMelded) {
       // Etsi yhdistelmä rypäitä joiden pisteet ≥ 30
@@ -625,7 +647,7 @@
       for (var i = 0; i < sets.length; i++) {
         var s = sets[i];
         var sc = scoreTiles(s.tiles);
-        if (sc >= INITIAL_MELD) {
+        if (sc >= openMin) {
           var cand = {
             board: board.concat([cloneSet(s.tiles)]),
             rack: removeTiles(rack, s.tiles),
@@ -648,7 +670,7 @@
           });
           if (overlap) continue;
           var sc2 = scoreTiles(sets[a].tiles) + scoreTiles(sets[b].tiles);
-          if (sc2 >= INITIAL_MELD) {
+          if (sc2 >= openMin) {
             var cand2 = {
               board: board.concat([cloneSet(sets[a].tiles), cloneSet(sets[b].tiles)]),
               rack: removeTiles(removeTiles(rack, sets[a].tiles), sets[b].tiles),
@@ -759,6 +781,11 @@
     RACK_SIZE: RACK_SIZE,
     RACK_SIZE_CHOICES: RACK_SIZE_CHOICES,
     clampRackSize: clampRackSize,
+    RACK_SIZE_MIN: RACK_SIZE_MIN,
+    RACK_SIZE_MAX: RACK_SIZE_MAX,
+    OPEN_MIN_MIN: OPEN_MIN_MIN,
+    OPEN_MIN_MAX: OPEN_MIN_MAX,
+    clampOpenMin: clampOpenMin,
     INITIAL_MELD: INITIAL_MELD,
     JOKER_PENALTY: JOKER_PENALTY,
     PLAYER_COUNT: PLAYER_COUNT,
