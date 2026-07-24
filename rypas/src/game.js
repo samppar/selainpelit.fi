@@ -256,12 +256,43 @@
     renderPool();
     renderRack();
     renderControls();
+    renderSelInfo();
+  }
+
+  /** Elävä palaute valinnasta: kelpaako rypääksi, riittääkö avaukseen. */
+  function renderSelInfo() {
+    var host = el("selInfo");
+    var tiles = selectedTiles();
+    if (!tiles.length || G.turn !== 0 || G.over || busy) {
+      host.textContent = "";
+      host.className = "sel-info";
+      return;
+    }
+    var sum = E.scoreTiles(tiles);
+    var valid = tiles.length >= 3 && E.isValidSet(tiles);
+    var txt = tiles.length + " valittu · ";
+    var cls = "sel-info";
+    if (!G.hasMelded[0] && G.openMin > 0) {
+      txt += sum + "/" + G.openMin + " p avaukseen";
+    } else {
+      txt += sum + " p";
+    }
+    if (valid) {
+      txt += " · rypäs ✓";
+      cls += " ok";
+    } else if (tiles.length >= 3) {
+      txt += " · ei kelpaa rypääksi";
+      cls += " no";
+    }
+    host.textContent = txt;
+    host.className = cls;
   }
 
   function renderHud() {
     for (var p = 0; p < G.playerCount; p++) {
       var hud = el("hudP" + p);
-      hud.className = "pscore" + (G.turn === p && !G.over ? " turn" : "");
+      hud.className = "pscore" + (G.turn === p && !G.over ? " turn" : "") +
+        (p !== 0 && !G.over && G.racks[p].length <= 2 ? " danger" : "");
       el("s" + p + "name").textContent = NAMES[p];
       el("m" + p).textContent = G.matchScores[p];
       el("s" + p).textContent = G.racks[p].length;
@@ -493,7 +524,10 @@
 
   function renderControls() {
     var human = G.turn === 0 && !G.over && !busy;
-    el("btnForm").disabled = !human || selectedTiles().length < 3;
+    var selTiles = selectedTiles();
+    el("btnForm").disabled = !human || selTiles.length < 3;
+    el("btnForm").classList.toggle("ready",
+      human && selTiles.length >= 3 && E.isValidSet(selTiles));
     el("btnConfirm").disabled = !human;
     el("btnReset").disabled = !human;
     el("btnDraw").disabled = !human;

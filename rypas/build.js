@@ -55,7 +55,7 @@ ${css}
 
     <div class="section">
       <div class="section-h">
-        <div class="table-label">Telineesi</div>
+        <div class="table-label">Telineesi <span class="sel-info" id="selInfo"></span></div>
         <div class="sortbtns">
           <button class="mini" id="btnSortVal" type="button" title="Järjestä numeron mukaan">1–13</button>
           <button class="mini" id="btnSortCol" type="button" title="Järjestä värin mukaan">Väri</button>

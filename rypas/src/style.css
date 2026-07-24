@@ -488,6 +488,49 @@ button.danger:hover:not(:disabled) {
 }
 .section-h .table-label { margin-bottom: 0; }
 .sortbtns { display: flex; gap: 6px; }
+
+/* Valintapalaute — näkyy telineen otsikossa */
+.sel-info {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ink-soft);
+  margin-left: 8px;
+}
+.sel-info.ok { color: var(--ok); }
+.sel-info.no { color: var(--warn); }
+
+/* Muodosta rypäs hehkuu kun valinta kelpaa */
+#btnForm.ready:not(:disabled) {
+  animation: readyPulse 1.4s ease-in-out infinite;
+}
+@keyframes readyPulse {
+  0%, 100% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.5) inset,
+      0 3px 0 var(--brass-ink),
+      0 8px 20px rgba(230, 182, 84, 0.22),
+      0 6px 16px var(--shadow-deep);
+  }
+  50% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.5) inset,
+      0 3px 0 var(--brass-ink),
+      0 0 24px rgba(255, 214, 121, 0.65),
+      0 6px 16px var(--shadow-deep);
+  }
+}
+
+/* Vastustaja lähellä voittoa — varoitussyke HUD:ssa */
+.pscore.danger {
+  animation: dangerPulse 1.6s ease-in-out infinite;
+}
+.pscore.danger .lm { color: var(--warn); font-weight: 700; }
+@keyframes dangerPulse {
+  0%, 100% { background: rgba(201, 50, 48, 0.08); }
+  50% { background: rgba(201, 50, 48, 0.22); }
+}
 button.mini {
   padding: 4px 12px;
   font-size: 11px;

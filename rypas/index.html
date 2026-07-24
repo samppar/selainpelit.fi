@@ -499,6 +499,49 @@ button.danger:hover:not(:disabled) {
 }
 .section-h .table-label { margin-bottom: 0; }
 .sortbtns { display: flex; gap: 6px; }
+
+/* Valintapalaute — näkyy telineen otsikossa */
+.sel-info {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ink-soft);
+  margin-left: 8px;
+}
+.sel-info.ok { color: var(--ok); }
+.sel-info.no { color: var(--warn); }
+
+/* Muodosta rypäs hehkuu kun valinta kelpaa */
+#btnForm.ready:not(:disabled) {
+  animation: readyPulse 1.4s ease-in-out infinite;
+}
+@keyframes readyPulse {
+  0%, 100% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.5) inset,
+      0 3px 0 var(--brass-ink),
+      0 8px 20px rgba(230, 182, 84, 0.22),
+      0 6px 16px var(--shadow-deep);
+  }
+  50% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.5) inset,
+      0 3px 0 var(--brass-ink),
+      0 0 24px rgba(255, 214, 121, 0.65),
+      0 6px 16px var(--shadow-deep);
+  }
+}
+
+/* Vastustaja lähellä voittoa — varoitussyke HUD:ssa */
+.pscore.danger {
+  animation: dangerPulse 1.6s ease-in-out infinite;
+}
+.pscore.danger .lm { color: var(--warn); font-weight: 700; }
+@keyframes dangerPulse {
+  0%, 100% { background: rgba(201, 50, 48, 0.08); }
+  50% { background: rgba(201, 50, 48, 0.22); }
+}
 button.mini {
   padding: 4px 12px;
   font-size: 11px;
@@ -854,7 +897,7 @@ input[type="range"].slider::-moz-range-thumb {
 
     <div class="section">
       <div class="section-h">
-        <div class="table-label">Telineesi</div>
+        <div class="table-label">Telineesi <span class="sel-info" id="selInfo"></span></div>
         <div class="sortbtns">
           <button class="mini" id="btnSortVal" type="button" title="Järjestä numeron mukaan">1–13</button>
           <button class="mini" id="btnSortCol" type="button" title="Järjestä värin mukaan">Väri</button>
@@ -1962,12 +2005,43 @@ input[type="range"].slider::-moz-range-thumb {
     renderPool();
     renderRack();
     renderControls();
+    renderSelInfo();
+  }
+
+  /** Elävä palaute valinnasta: kelpaako rypääksi, riittääkö avaukseen. */
+  function renderSelInfo() {
+    var host = el("selInfo");
+    var tiles = selectedTiles();
+    if (!tiles.length || G.turn !== 0 || G.over || busy) {
+      host.textContent = "";
+      host.className = "sel-info";
+      return;
+    }
+    var sum = E.scoreTiles(tiles);
+    var valid = tiles.length >= 3 && E.isValidSet(tiles);
+    var txt = tiles.length + " valittu · ";
+    var cls = "sel-info";
+    if (!G.hasMelded[0] && G.openMin > 0) {
+      txt += sum + "/" + G.openMin + " p avaukseen";
+    } else {
+      txt += sum + " p";
+    }
+    if (valid) {
+      txt += " · rypäs ✓";
+      cls += " ok";
+    } else if (tiles.length >= 3) {
+      txt += " · ei kelpaa rypääksi";
+      cls += " no";
+    }
+    host.textContent = txt;
+    host.className = cls;
   }
 
   function renderHud() {
     for (var p = 0; p < G.playerCount; p++) {
       var hud = el("hudP" + p);
-      hud.className = "pscore" + (G.turn === p && !G.over ? " turn" : "");
+      hud.className = "pscore" + (G.turn === p && !G.over ? " turn" : "") +
+        (p !== 0 && !G.over && G.racks[p].length <= 2 ? " danger" : "");
       el("s" + p + "name").textContent = NAMES[p];
       el("m" + p).textContent = G.matchScores[p];
       el("s" + p).textContent = G.racks[p].length;
@@ -2199,7 +2273,10 @@ input[type="range"].slider::-moz-range-thumb {
 
   function renderControls() {
     var human = G.turn === 0 && !G.over && !busy;
-    el("btnForm").disabled = !human || selectedTiles().length < 3;
+    var selTiles = selectedTiles();
+    el("btnForm").disabled = !human || selTiles.length < 3;
+    el("btnForm").classList.toggle("ready",
+      human && selTiles.length >= 3 && E.isValidSet(selTiles));
     el("btnConfirm").disabled = !human;
     el("btnReset").disabled = !human;
     el("btnDraw").disabled = !human;
