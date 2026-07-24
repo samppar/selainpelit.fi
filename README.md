@@ -21,6 +21,7 @@ Monorepo for browser games hosted at selainpelit.fi.
 | `labyrintti/` | Labyrintti — kallistettava kuulalabyrintti, kolme vaikeustasoa |
 | `moottori-mania/` | Moottori-Mania — Elasto Mania -henkinen ajopeli, portattu fysiikka |
 | `romuralli/` | Romuralli — Death Rally -henkinen aseellinen kilpa-ajopeli ylhäältä kuvattuna |
+| `sladi/` | Sladi — Slicks 'n Slide -henkinen liukukaahailu, koko rata yhdessä ruudussa |
 
 Each game is self-contained in its folder. See the README inside a game for run instructions.
 
