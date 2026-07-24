@@ -1,0 +1,7 @@
+{
+  "name": "sladi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sladi — Slicks 'n Slide -henkinen ylhäältä kuvattu liukukaahailu: koko rata näkyvissä, autot sladaavat (selainpeli).",
+  "scripts": { "test": "node test/run_tests.js", "build": "node build.js" }
+}
