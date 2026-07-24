@@ -50,51 +50,67 @@
       master.gain.value = 0.5;
       master.connect(ac.destination);
     }
-    // V8-henkinen moottori: sahalaita + ali-oskillaattori (pörinä) + kevyt
-    // särö; kaasu avaa suodatinta, tyhjäkäynnillä epätasainen "loppatus".
+    // Moottori: proseduraalinen pakoputkilooppi. Puskurissa on jono
+    // sytytyspulsseja (matala jysähdys + suodatettu kohinapurske,
+    // epätasaisin voimakkuuksin) ja sitä ajetaan playbackRatella
+    // kierrosluvun mukaan — kuulostaa polttomoottorilta, ei sireeniltä.
+    function makeEngineBuffer() {
+      const sr = ac.sampleRate;
+      const pulseLen = Math.floor(sr / 30); // sytytystaajuus 30 Hz nopeudella 1.0
+      const pulses = 8;                     // vaihteleva jakso → eloisa käynti
+      const n = pulses * pulseLen;
+      const buf = ac.createBuffer(1, n, sr);
+      const d = buf.getChannelData(0);
+      const rnd = E.mulberry32(715517);
+      let lpn = 0;
+      for (let p = 0; p < pulses; p++) {
+        const amp = 0.7 + rnd() * 0.55;                  // joka pauke eri voimalla
+        const start = p * pulseLen + Math.floor(rnd() * pulseLen * 0.06);
+        const len = Math.floor(pulseLen * 1.5);          // häntä limittyy seuraavaan
+        for (let i = 0; i < len; i++) {
+          const t = i / sr;
+          const env = Math.exp(-t * 80);
+          lpn += 0.22 * ((rnd() * 2 - 1) - lpn);         // pehmennetty kohina
+          d[(start + i) % n] += amp * env * (lpn * 1.1 + Math.sin(2 * Math.PI * 57 * t) * 0.85);
+        }
+      }
+      let max = 0;
+      for (let i = 0; i < n; i++) max = Math.max(max, Math.abs(d[i]));
+      for (let i = 0; i < n; i++) d[i] = (d[i] / max) * 0.9;
+      return buf;
+    }
     function engine(on, speed, throttle) {
       ensure();
       if (!ac) return;
       if (on && !eng) {
-        const o1 = ac.createOscillator(); o1.type = "sawtooth";
-        const o2 = ac.createOscillator(); o2.type = "square";   // ali-oktaavi
-        const o3 = ac.createOscillator(); o3.type = "sawtooth"; // levitys
-        o3.detune.value = 11;
-        const oGain2 = ac.createGain(); oGain2.gain.value = 0.55;
-        const pre = ac.createGain(); pre.gain.value = 1.6;      // aja säröön kuumana
+        const src = ac.createBufferSource();
+        src.buffer = makeEngineBuffer();
+        src.loop = true;
         const shaper = ac.createWaveShaper();
         const curve = new Float32Array(257);
-        for (let i = 0; i <= 256; i++) curve[i] = Math.tanh((i / 128 - 1) * 2.6);
+        for (let i = 0; i <= 256; i++) curve[i] = Math.tanh((i / 128 - 1) * 1.8);
         shaper.curve = curve;
-        shaper.oversample = "2x";
         const filter = ac.createBiquadFilter();
         filter.type = "lowpass";
-        filter.frequency.value = 240;
-        filter.Q.value = 1.1;
+        filter.frequency.value = 500;
+        filter.Q.value = 0.7;
         const g = ac.createGain(); g.gain.value = 0;
-        // Käyntiepätasaisuus: hidas LFO heiluttaa kierroksia hieman
-        const lfo = ac.createOscillator(); lfo.type = "triangle"; lfo.frequency.value = 9;
-        const lfoG = ac.createGain(); lfoG.gain.value = 2.5;
-        lfo.connect(lfoG);
-        lfoG.connect(o1.frequency);
-        lfoG.connect(o2.frequency);
-        o1.connect(pre); o3.connect(pre);
-        o2.connect(oGain2).connect(pre);
-        pre.connect(shaper).connect(filter).connect(g).connect(master);
-        o1.start(); o2.start(); o3.start(); lfo.start();
-        eng = { o1, o2, o3, lfo, lfoG, filter, g };
+        src.connect(shaper).connect(filter).connect(g).connect(master);
+        src.start();
+        eng = { src, filter, g };
       }
       if (eng) {
         const th = Math.max(0, throttle || 0);
-        const f = 34 + speed * 0.22;
-        eng.o1.frequency.setTargetAtTime(f, ac.currentTime, 0.09);
-        eng.o3.frequency.setTargetAtTime(f, ac.currentTime, 0.09);
-        eng.o2.frequency.setTargetAtTime(f / 2, ac.currentTime, 0.09);
-        eng.lfo.frequency.setTargetAtTime(8 + speed * 0.03, ac.currentTime, 0.2);
-        eng.lfoG.gain.setTargetAtTime(Math.max(0.6, 3 - speed * 0.01), ac.currentTime, 0.2);
-        eng.filter.frequency.setTargetAtTime(170 + speed * 2.4 + th * 260, ac.currentTime, 0.12);
-        // Tyhjäkäynti hiljaa, ääni kasvaa vauhdin ja kaasun mukana
-        const vol = 0.026 + Math.min(1, speed / 330) * 0.05 + th * 0.018;
+        // Arcade-vaihteisto: kierrokset nousevat vaihteen sisällä ja
+        // putoavat vaihdettaessa → kiihdytys kuulostaa kiihdytykseltä
+        const gears = [0, 85, 170, 260, 470];
+        let gi = 0;
+        while (gi < gears.length - 2 && speed >= gears[gi + 1]) gi++;
+        const within = Math.min(1, Math.max(0, (speed - gears[gi]) / (gears[gi + 1] - gears[gi])));
+        const rate = 0.62 + within * 1.15 + th * 0.08;
+        eng.src.playbackRate.setTargetAtTime(rate, ac.currentTime, 0.07);
+        eng.filter.frequency.setTargetAtTime(380 + within * 800 + th * 600, ac.currentTime, 0.1);
+        const vol = 0.05 + within * 0.035 + th * 0.035;
         eng.g.gain.setTargetAtTime(on && enabled ? vol : 0, ac.currentTime, 0.1);
       }
     }
