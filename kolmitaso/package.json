@@ -1,0 +1,7 @@
+{
+  "name": "kolmitaso",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kolmitaso — Triplane Turmoil -henkinen sivusta kuvattu ilmataistelupeli (selainpeli).",
+  "scripts": { "test": "node test/run_tests.js", "build": "node build.js" }
+}

@@ -1,0 +1,2089 @@
+<!DOCTYPE html><html lang="fi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Kolmitaso — Triplane Turmoil -henkinen ilmataistelu: nouse, pommita vihollisen tukikohta ja laskeudu huoltoon omalle kentälle.">
+<meta name="theme-color" content="#0f141d"><title>Kolmitaso — selainpelit.fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Staatliches&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<style>:root {
+  --bg: #0f141d;
+  --bg2: #141b26;
+  --panel: #1a2330;
+  --panel2: #222d3d;
+  --line: #2c3a4d;
+  --ink: #ece5d3;
+  --muted: #94a0ac;
+  --accent: #e8a44c;
+  --accent-soft: #e8a44c26;
+  --sky: #7fb4e0;
+  --ok: #74c69d;
+  --danger: #e5484d;
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 520px at 50% -12%, #2b3c5455, transparent 60%),
+    repeating-linear-gradient(0deg, #ffffff04 0 1px, transparent 1px 34px),
+    linear-gradient(180deg, var(--bg2), var(--bg) 45%);
+  color: var(--ink);
+  font-family: "Barlow", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.shell {
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: clamp(0.6rem, 2vw, 1.4rem);
+  display: flex;
+  gap: 1.1rem;
+  align-items: flex-start;
+}
+.board-col { flex: 1 1 auto; min-width: 0; }
+.brand { display: flex; align-items: baseline; gap: 0.9rem; margin: 0.2rem 0 0.7rem 0.2rem; flex-wrap: wrap; }
+.brand h1 {
+  font-family: "Staatliches", "Barlow", sans-serif;
+  font-size: clamp(1.6rem, 3.6vw, 2.35rem);
+  margin: 0;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fbe7c2, var(--accent) 78%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 18px #e8a44c2e;
+}
+.brand p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+.stage { position: relative; }
+.board-frame {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px #000a, inset 0 0 0 1px #ffffff08;
+  background: #0b0e14;
+}
+canvas#board { display: block; width: 100%; height: auto; }
+.fs-corner {
+  position: absolute; top: 10px; right: 10px; z-index: 5;
+  width: 38px; height: 38px; border-radius: 10px;
+  border: 1px solid #ffffff22; background: #0009; color: #fff;
+  font-size: 1.1rem; cursor: pointer; opacity: 0.55; transition: opacity 0.15s;
+}
+.fs-corner:hover { opacity: 1; }
+
+/* ——— Overlay (valikko / tulokset) ——— */
+.overlay {
+  position: absolute; inset: 0; z-index: 6;
+  display: none; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #0a0d13b8, #0a0d13d9);
+  backdrop-filter: blur(3px);
+  padding: 1rem;
+}
+.overlay.show { display: flex; }
+.overlay-card {
+  width: min(580px, 96%);
+  max-height: 96%;
+  overflow: auto;
+  text-align: center;
+  padding: 1.4rem 1.5rem 1.3rem;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #232f40f2, #18202bf6);
+  border: 1px solid #38485e;
+  box-shadow: 0 30px 80px #000c, inset 0 1px 0 #ffffff14;
+}
+.overlay-card h2 {
+  font-family: "Staatliches", sans-serif;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  margin: 0 0 0.2rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fbe7c2;
+}
+.overlay-card .sub { color: var(--muted); margin: 0 0 1rem; font-size: 0.95rem; }
+.mission-picker { display: flex; flex-direction: column; gap: 0.55rem; }
+.mission-picker button {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--panel2), var(--panel));
+  color: var(--ink); font: inherit; cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  text-align: left;
+}
+.mission-picker button:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  box-shadow: 0 8px 26px #e8a44c22;
+}
+.mission-picker .m-name { font-family: "Staatliches", sans-serif; font-size: 1.05rem; letter-spacing: 0.07em; text-transform: uppercase; }
+.mission-picker .m-name small { display: block; font-family: "Barlow", sans-serif; text-transform: none; letter-spacing: 0; color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+.mission-picker .m-name small.m-best { color: var(--accent); }
+.mission-picker .m-tier { color: var(--sky); font-weight: 600; white-space: nowrap; font-size: 0.85rem; }
+.mission-picker .m-tier.t-keski { color: var(--accent); }
+.mission-picker .m-tier.t-vaikea { color: var(--danger); }
+.menu-hint { color: var(--muted); font-size: 0.85rem; margin: 1rem 0 0; line-height: 1.7; }
+.menu-hint kbd, .side kbd {
+  background: #ffffff12; border: 1px solid #ffffff22; border-bottom-width: 2px;
+  border-radius: 5px; padding: 0.05rem 0.4rem; font-size: 0.8em;
+}
+
+/* Tulokset */
+.res-title {
+  font-family: "Staatliches", sans-serif;
+  font-size: clamp(2.1rem, 7vw, 3.2rem);
+  line-height: 1.1; letter-spacing: 0.06em;
+  margin: 0.2rem 0 0.1rem;
+  text-transform: uppercase;
+}
+.res-title.win { color: var(--accent); text-shadow: 0 0 30px #e8a44c44; }
+.res-title.out { color: var(--danger); }
+.res-sub { color: var(--muted); margin: 0 0 0.4rem; }
+.res-rows { margin: 0.9rem auto 0.4rem; max-width: 330px; text-align: left; }
+.res-rows .r { display: flex; justify-content: space-between; padding: 0.3rem 0.2rem; color: var(--muted); border-bottom: 1px dashed #ffffff14; }
+.res-rows .r b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.res-rows .r.hl { border-bottom: 0; color: var(--ink); font-weight: 600; }
+.res-rows .r.hl b { color: var(--accent); font-family: "Staatliches", sans-serif; letter-spacing: 0.04em; }
+.btn-row { display: flex; gap: 0.6rem; justify-content: center; margin-top: 1.1rem; flex-wrap: wrap; }
+button.big {
+  font: inherit; font-weight: 600; letter-spacing: 0.04em;
+  padding: 0.7rem 1.4rem; border-radius: 12px; cursor: pointer;
+  border: 1px solid transparent;
+  background: linear-gradient(180deg, #f4c684, var(--accent));
+  color: #241708;
+  box-shadow: 0 10px 26px #e8a44c33, inset 0 1px 0 #ffffff55;
+  transition: transform 0.12s, filter 0.12s;
+}
+button.big:hover { transform: translateY(-1px); filter: brightness(1.06); }
+button.big.ghost {
+  background: #ffffff10; color: var(--ink); border-color: #ffffff24; box-shadow: none;
+}
+
+/* ——— Sivupaneeli ——— */
+.side {
+  flex: 0 0 300px;
+  position: sticky; top: 1rem;
+  background: linear-gradient(180deg, var(--panel), #151c27);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.05rem 1.1rem;
+  box-shadow: 0 18px 44px #0008;
+}
+.side h2 {
+  font-family: "Staatliches", sans-serif;
+  font-size: 0.85rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted); margin: 1.1rem 0 0.5rem;
+}
+.side h2:first-child { margin-top: 0; }
+.side p { font-size: 0.88rem; line-height: 1.45; color: #c6cdd3; margin: 0.3rem 0; }
+#missionChip {
+  background: #7fb4e00f; border: 1px solid #7fb4e030; border-radius: 10px;
+  padding: 0.5rem 0.8rem; font-size: 0.88rem; color: #c6cdd3;
+}
+#missionChip b { color: var(--sky); font-family: "Staatliches", sans-serif; letter-spacing: 0.05em; font-size: 1rem; }
+.targets { display: flex; flex-direction: column; gap: 0.32rem; }
+.targets .row {
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.34rem 0.55rem; border-radius: 9px;
+  background: #ffffff06; border: 1px solid transparent;
+  font-size: 0.86rem; color: #c6cdd3;
+}
+.targets .ic { width: 1.35em; text-align: center; flex: 0 0 auto; }
+.targets .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.targets .bar { flex: 0 0 74px; height: 7px; border-radius: 4px; background: #ffffff14; overflow: hidden; }
+.targets .bar i { display: block; height: 100%; background: var(--danger); border-radius: 4px; }
+.targets .row.down { opacity: 0.55; }
+.targets .row.down .nm { text-decoration: line-through; }
+.targets .row.down .st { color: var(--ok); }
+.targets .st { font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.7rem; }
+.controls button {
+  font: inherit; font-size: 0.85rem; font-weight: 600;
+  padding: 0.5rem 0.8rem; border-radius: 10px; cursor: pointer;
+  background: #ffffff0c; color: var(--ink); border: 1px solid #ffffff1e;
+}
+.controls button:hover { background: #ffffff16; }
+.controls button.warn { color: #ffb3b6; border-color: #e5484d44; }
+.hint-keys { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.3rem; }
+.hint-keys kbd {
+  background: #ffffff10; border: 1px solid #ffffff22; border-bottom-width: 2px;
+  border-radius: 5px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #c6cdd3;
+}
+
+/* ——— Kosketusohjaimet ——— */
+.touchbar {
+  display: none;
+  gap: 0.5rem; margin-top: 0.7rem;
+  user-select: none; -webkit-user-select: none;
+}
+.touchbar .grp { display: flex; gap: 0.5rem; flex: 1; }
+.touchbar button {
+  flex: 1; font: inherit; font-size: 1.2rem; font-weight: 700;
+  padding: 0.9rem 0; border-radius: 12px;
+  background: #ffffff0e; color: var(--ink); border: 1px solid #ffffff20;
+  touch-action: none;
+}
+.touchbar button:active { background: var(--accent-soft); border-color: var(--accent); }
+.touchbar .fire { background: #e5484d22; border-color: #e5484d55; color: #ffb3b6; font-size: 0.95rem; letter-spacing: 0.08em; }
+.touchbar .bomb { background: #e8a44c1c; border-color: #e8a44c55; color: #f4d9a8; font-size: 0.95rem; letter-spacing: 0.08em; }
+@media (pointer: coarse) { .touchbar { display: flex; } }
+
+.toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+  background: #1d2531f0; color: var(--ink); border: 1px solid #38485e;
+  border-radius: 12px; padding: 0.6rem 1.1rem; font-size: 0.92rem;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
+  box-shadow: 0 14px 40px #000a; z-index: 40;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 1020px) {
+  .shell { flex-direction: column; }
+  .side { position: static; flex: 1 1 auto; width: 100%; }
+}
+:fullscreen .board-frame { border-radius: 0; height: 100%; }
+:fullscreen canvas#board { height: 100%; object-fit: contain; }
+</style></head><body><main class="shell">
+<section class="board-col" aria-label="Kolmitaso-ilmataistelu">
+  <div class="brand"><h1>Kolmitaso</h1><p>Nouse, pommita ja tuo kone ehjänä kotiin — kolmitasojen ilmasota</p></div>
+  <div class="stage">
+    <div class="board-frame">
+      <canvas id="board" width="960" height="600" role="img" aria-label="Ilmataistelu sivusta kuvattuna"></canvas>
+      <button id="btnFsCorner" class="fs-corner" type="button" title="Koko ruutu" aria-label="Koko ruutu">⛶</button>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+        <div class="overlay-card">
+          <div id="menuSection">
+            <h2>Kolmitaso</h2>
+            <p class="sub">Tuhoa vihollisen hallit, varikot ja it-tykit. Käy välillä omalla kentällä: laskeudu, niin mekaanikot tankkaavat, korjaavat ja ripustavat uudet pommit.</p>
+            <div id="missionPicker" class="mission-picker" aria-label="Valitse tehtävä"></div>
+            <p class="menu-hint">Ohjaus: <kbd>←</kbd><kbd>→</kbd> kierto · <kbd>↑</kbd><kbd>↓</kbd> kaasu · <kbd>Väli</kbd> konekivääri · <kbd>B</kbd> pommi · <kbd>X</kbd> rullaus</p>
+          </div>
+          <div id="resultsSection" style="display:none">
+            <p id="resTitle" class="res-title">—</p>
+            <p id="resSub" class="res-sub"></p>
+            <div id="resRows" class="res-rows"></div>
+            <div class="btn-row">
+              <button id="btnAgain" class="big" type="button">Uusi yritys</button>
+              <button id="btnNext" class="big" type="button" style="display:none">Seuraava tehtävä</button>
+              <button id="btnResMenu" class="big ghost" type="button">Valikkoon</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="touchbar" aria-label="Kosketusohjaimet">
+    <div class="grp">
+      <button id="tCcw" type="button" aria-label="Kierrä vastapäivään">⟲</button>
+      <button id="tCw" type="button" aria-label="Kierrä myötäpäivään">⟳</button>
+    </div>
+    <div class="grp">
+      <button id="tPowDown" type="button" aria-label="Vähennä kaasua">▼</button>
+      <button id="tPowUp" type="button" aria-label="Lisää kaasua">▲</button>
+    </div>
+    <div class="grp">
+      <button id="tFlip" type="button" aria-label="Rullaus">⇅</button>
+      <button id="tBomb" class="bomb" type="button" aria-label="Pudota pommi">POMMI</button>
+      <button id="tFire" class="fire" type="button" aria-label="Ammu">AMMU</button>
+    </div>
+  </div>
+</section>
+<aside class="side">
+  <h2>Tehtävä</h2>
+  <div id="missionChip">—</div>
+  <h2>Maalit</h2>
+  <div id="targetList" class="targets" aria-live="polite"></div>
+  <h2>Ohjaus</h2>
+  <p><kbd>←</kbd><kbd>→</kbd> kiertävät konetta, <kbd>↑</kbd><kbd>↓</kbd> säätävät kaasua. <strong>Väli</strong> ampuu, <strong>B</strong> pudottaa pommin, <strong>X</strong> tekee rullauksen. <strong>F</strong> koko ruutu, <strong>Esc</strong> keskeyttää.</p>
+  <h2>Kentältä</h2>
+  <p>Laskeudu <strong>loivasti omalle kiitoradalle</strong> ja pysähdy: kone tankataan, korjataan ja pommitetaan täyteen. Pidä vauhti sakkausrajan yläpuolella — hidas kone tipahtaa nokka edellä.</p>
+  <div class="controls">
+    <button id="btnMenuOpen" type="button">Valikko</button>
+    <button id="btnAbort" class="warn" type="button">Keskeytä</button>
+    <button id="btnFullscreen" type="button">Koko ruutu</button>
+    <button id="btnSound" type="button" aria-pressed="true">Ääni: päällä</button>
+  </div>
+</aside>
+</main><div id="toast" class="toast" role="status"></div>
+<script>"use strict";
+// Kolmitaso — pelin ydin (puhdas JS, ei DOM:ia, deterministinen seedillä).
+// Triplane Turmoil -henkinen sivusta kuvattu ilmataistelu: lentofysiikka
+// sakkauksineen, konekivääri, pommit, it-tykit, vihollishävittäjien AI,
+// laskeutuminen ja huolto omalla kentällä sekä tehtävien voitto/häviö.
+(function (global) {
+  const TAU = Math.PI * 2;
+  const DT = 1 / 60;          // kiinteä fysiikka-askel
+  const G = 240;              // painovoima px/s^2
+  const THRUST = 310;         // täyden kaasun työntö
+  const DRAG = 0.92;          // nopeusverrannollinen vastus (huippu ~337)
+  const ALIGN = 4.2;          // nopeusvektorin kääntyminen nokan suuntaan /s
+  const STALL = 105;          // sakkausnopeus
+  const TURN = 2.5;           // kiertonopeus rad/s täydellä auktoriteetilla
+  const TAKEOFF_V = 135;      // irtoamisnopeus
+  const LAND_VMAX = 215;      // laskeutumisen enimmäisvauhti
+  const LAND_VYMAX = 150;     // enimmäisvajoaminen
+  const LAND_ANG = 0.42;      // sallittu kulma vaakatasosta
+  const PLANE_R = 15;         // osumasäde
+  const WHEEL_H = 13;         // pyörien etäisyys rungon keskeltä
+  const FUEL_RATE = 1.15;     // polttoaine /s täydellä kaasulla
+  const GUN_ROF = 9;          // laukauksia /s
+  const GUN_SPEED = 540;
+  const GUN_TTL = 0.9;
+  const GUN_DMG_PLANE = 6;
+  const GUN_DMG_STRUCT = 7;
+  const BOMB_DMG = 190;       // keskellä
+  const BOMB_R = 85;          // vaikutussäde
+  const BOMB_CD = 0.45;
+  const FLAK_R = 46;          // it-kranaatin sirpalesäde
+  const LIVES = 3;
+  const RESPAWN_T = 2.6;
+  const SERVICE = { hp: 26, fuel: 34, ammo: 60, bombEvery: 1.5 }; // /s kentällä
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+  function angDiff(a, b) {
+    let d = (a - b) % TAU;
+    if (d > Math.PI) d -= TAU;
+    if (d < -Math.PI) d += TAU;
+    return d;
+  }
+
+  // ———————————————————————— Tehtävät ————————————————————————
+  const MISSIONS = [
+    {
+      id: "rintama", name: "Rintamalinja", tier: "helppo", seed: 11, W: 5200,
+      sub: "kaksi it-tykkiä · rauhalliset lentäjät",
+      desc: "Tuhoa vihollisen halli­t ja it-tykit rintaman takana.",
+      aa: 2, hangars: 2, tents: 1, rough: 90,
+      enemy: { max: 1, total: 3, spawnEvery: 12, skill: 0.8, aimErr: 0.22, aggr: 0.4, hp: 55, gunDmg: 3.5, fireR: 380 },
+      aaDef: { reload: 2.7, aimErr: 0.30, range: 560, dmg: 20, shellSpeed: 300 },
+      theme: { skyTop: "#2a3f66", skyMid: "#7f9cc4", skyLow: "#e8c9a0", sun: "#ffd9a0", sunX: 0.22, sunY: 0.30, ground: "#5b7f46", dirt: "#4a3a2c", hill: "#49663a", far: "#6f88a8", cloud: "#f2ead9" },
+    },
+    {
+      id: "laakso", name: "Punalaakso", tier: "keski", seed: 29, W: 6000,
+      sub: "kolme it-tykkiä · kaksi hävittäjää ilmassa",
+      desc: "Laakson perällä on kolme hallia ja tiukempi ilmatorjunta.",
+      aa: 3, hangars: 3, tents: 2, rough: 140,
+      enemy: { max: 2, total: 6, spawnEvery: 10, skill: 0.92, aimErr: 0.12, aggr: 0.65, hp: 62, gunDmg: 5 },
+      aaDef: { reload: 2.0, aimErr: 0.20, range: 620, dmg: 22, shellSpeed: 320 },
+      theme: { skyTop: "#39699e", skyMid: "#8db4d8", skyLow: "#d8e4e2", sun: "#fff3c8", sunX: 0.68, sunY: 0.22, ground: "#6a8a4a", dirt: "#54402e", hill: "#557344", far: "#7fa0b8", cloud: "#ffffff" },
+    },
+    {
+      id: "teras", name: "Teräsmyrsky", tier: "vaikea", seed: 47, W: 6800,
+      sub: "neljä it-tykkiä · armottomat ässät",
+      desc: "Raskaasti linnoitettu tukikohta ja taitavat vastustajat.",
+      aa: 4, hangars: 3, tents: 2, rough: 180,
+      enemy: { max: 3, total: 9, spawnEvery: 8, skill: 1.0, aimErr: 0.07, aggr: 0.8, hp: 70, gunDmg: 6 },
+      aaDef: { reload: 1.6, aimErr: 0.14, range: 680, dmg: 24, shellSpeed: 340 },
+      theme: { skyTop: "#3a2f4a", skyMid: "#8a6a7e", skyLow: "#d8a06a", sun: "#ff9c5a", sunX: 0.80, sunY: 0.34, ground: "#5f6a44", dirt: "#463628", hill: "#4c5840", far: "#6c6280", cloud: "#e2cdc2" },
+    },
+  ];
+
+  // ———————————————————————— Maasto ————————————————————————
+  const TSTEP = 16; // korkeusnäytteen väli px
+  function makeTerrain(def) {
+    const rng = mulberry32((def.seed * 2654435761) >>> 0);
+    const W = def.W, H = 1400;
+    const n = Math.floor(W / TSTEP) + 1;
+    const base = 1120;
+    // Pehmeä satunnaiskumpuilu: summa muutamasta seedatusta siniaallosta
+    const waves = [];
+    for (let k = 0; k < 5; k++) {
+      waves.push({ amp: (def.rough || 120) * (0.5 - k * 0.08), freq: (0.7 + rng() * 1.6) * (k + 1) / W, ph: rng() * TAU });
+    }
+    const hs = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = i * TSTEP;
+      let h = base;
+      for (const w of waves) h += Math.sin(x * w.freq * TAU + w.ph) * w.amp;
+      hs[i] = h;
+    }
+    // Kiitoradat: oma vasemmalla, vihollisen oikealla — tasataan ja siloitetaan reunat
+    const runways = [
+      { side: 0, x0: 280, x1: 960, y: 0 },
+      { side: 1, x0: W - 960, x1: W - 280, y: 0 },
+    ];
+    for (const rw of runways) {
+      const i0 = Math.floor(rw.x0 / TSTEP), i1 = Math.ceil(rw.x1 / TSTEP);
+      let sum = 0, cnt = 0;
+      for (let i = i0; i <= i1; i++) { sum += hs[i]; cnt++; }
+      const y = clamp(sum / cnt, base - 60, base + 100);
+      rw.y = y;
+      for (let i = i0; i <= i1; i++) hs[i] = y;
+      const R = 14; // liuska ympärille
+      for (let k = 1; k <= R; k++) {
+        const t = k / R;
+        const a = i0 - k, b = i1 + k;
+        if (a >= 0) hs[a] = y * (1 - t) + hs[a] * t;
+        if (b < n) hs[b] = y * (1 - t) + hs[b] * t;
+      }
+    }
+    const terrain = { W, H, step: TSTEP, hs, runways };
+    // Rakennukset vihollisen puolelle
+    const structures = [];
+    const gy = (x) => groundY(terrain, x);
+    const eRw = runways[1];
+    // Hallit kiitoradan takaosaan
+    for (let i = 0; i < def.hangars; i++) {
+      const x = eRw.x1 - 90 - i * 150;
+      structures.push({ type: "halli", side: 1, x, y: gy(x), w: 110, h: 52, hp: 150, maxHp: 150, target: true });
+    }
+    // Teltat/varikot hallien lomaan
+    for (let i = 0; i < (def.tents || 0); i++) {
+      const x = eRw.x0 + 80 + i * 130;
+      structures.push({ type: "varikko", side: 1, x, y: gy(x), w: 70, h: 34, hp: 80, maxHp: 80, target: true });
+    }
+    // It-tykit kukkuloille keskimaaston ja kentän välille
+    for (let i = 0; i < def.aa; i++) {
+      const t = (i + 1) / (def.aa + 1);
+      const x = W * 0.52 + (eRw.x0 - 200 - W * 0.52) * t + (rng() - 0.5) * 120;
+      structures.push({
+        type: "it", side: 1, x, y: gy(x), w: 34, h: 26, hp: 60, maxHp: 60, target: true,
+        cd: 1 + rng() * (def.aaDef.reload || 2), aim: 0,
+      });
+    }
+    return { terrain, structures };
+  }
+
+  function groundY(terrain, x) {
+    const { hs, step } = terrain;
+    const fx = clamp(x, 0, terrain.W - 0.001) / step;
+    const i = Math.floor(fx), t = fx - i;
+    const a = hs[clamp(i, 0, hs.length - 1)], b = hs[clamp(i + 1, 0, hs.length - 1)];
+    return a * (1 - t) + b * t;
+  }
+  function onRunway(terrain, x, side) {
+    for (const rw of terrain.runways) {
+      if (side != null && rw.side !== side) continue;
+      if (x >= rw.x0 && x <= rw.x1) return rw;
+    }
+    return null;
+  }
+
+  // ———————————————————————— Koneet ————————————————————————
+  function makePlane(id, side, isPlayer, x, y, facing, hp) {
+    return {
+      id, side, isPlayer,
+      x, y, ang: facing > 0 ? 0 : Math.PI, vx: 0, vy: 0,
+      flipped: facing < 0, throttle: 0,
+      hp: hp || 100, maxHp: hp || 100,
+      gunDmg: GUN_DMG_PLANE,
+      fuel: 100, ammo: 120, bombs: 4,
+      onGround: true, dead: false,
+      fireCd: 0, bombCd: 0, flipLatch: false,
+      kills: 0, serviceT: 0, stallT: 0,
+      ai: null,
+    };
+  }
+
+  // Onko kone selällään (ohjaamo alaspäin)? Nostovoima ja hallinta kärsivät.
+  // Koneen "ylös" = heading käännettynä 90° ohjaamon puolelle.
+  function inverted(p) {
+    const uy = p.flipped ? Math.cos(p.ang) : -Math.cos(p.ang);
+    return uy > 0.15; // ylävektori osoittaa alaspäin ruudulla (y kasvaa alas)
+  }
+
+  // ———————————————————————— Tehtävän luonti ————————————————————————
+  // opts: { missionId, seed?, autopilot? }
+  function createMission(opts) {
+    const def = MISSIONS.find((m) => m.id === opts.missionId) || MISSIONS[0];
+    const { terrain, structures } = makeTerrain(def);
+    const rng = mulberry32((((opts.seed == null ? def.seed : opts.seed) * 747796405) + 2891336453) >>> 0);
+    const rw = terrain.runways[0];
+    const px = rw.x0 + 140;
+    const player = makePlane(0, 0, true, px, rw.y - WHEEL_H, 1, 100);
+    const state = {
+      def, terrain, structures,
+      planes: [player],
+      bullets: [], bombs: [], shells: [], events: [],
+      t: 0, steps: 0, rng,
+      over: false, outcome: null,
+      lives: LIVES, respawnT: 0,
+      spawnT: 3.5, spawned: 0, nextId: 1,
+      autopilot: !!opts.autopilot,
+      stats: { kills: 0, bombsDropped: 0, shotsFired: 0, planesLost: 0 },
+    };
+    return state;
+  }
+
+  const targetsLeft = (state) => state.structures.filter((s) => s.target && s.hp > 0).length;
+  const targetsTotal = (state) => state.structures.filter((s) => s.target).length;
+  const playerOf = (state) => state.planes.find((p) => p.isPlayer);
+
+  // ———————————————————————— Vahinko ————————————————————————
+  function damagePlane(state, p, dmg, byId) {
+    if (p.dead) return;
+    p.hp -= dmg;
+    if (p.hp <= 0) {
+      p.dead = true;
+      p.throttle = 0;
+      state.events.push({ type: "kaatui", plane: p.id, x: p.x, y: p.y, by: byId });
+      const killer = byId != null ? state.planes.find((q) => q.id === byId) : null;
+      if (killer && !killer.dead && killer.side !== p.side) {
+        killer.kills++;
+        if (killer.isPlayer) state.stats.kills++;
+      }
+      if (p.isPlayer) {
+        state.stats.planesLost++;
+        state.lives--;
+        if (state.lives > 0) state.respawnT = RESPAWN_T;
+        else if (!state.over) { state.over = true; state.outcome = "tappio"; state.events.push({ type: "tappio" }); }
+      }
+    } else {
+      state.events.push({ type: "osuma", plane: p.id, x: p.x, y: p.y });
+    }
+  }
+
+  function damageStructure(state, s, dmg, byPlayer) {
+    if (s.hp <= 0) return;
+    s.hp -= dmg;
+    if (s.hp <= 0) {
+      s.hp = 0;
+      state.events.push({ type: "tuhottu", struct: s.type, x: s.x, y: s.y - s.h / 2, target: !!s.target });
+      if (s.target && targetsLeft(state) === 0 && !state.over) {
+        state.over = true; state.outcome = "voitto";
+        state.events.push({ type: "voitto" });
+      }
+      void byPlayer;
+    } else {
+      state.events.push({ type: "rakenneosuma", x: s.x, y: s.y - s.h / 2 });
+    }
+  }
+
+  function explode(state, x, y, r, dmg, byId) {
+    state.events.push({ type: "rajahdys", x, y, r });
+    for (const p of state.planes) {
+      if (p.dead) continue;
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < r + PLANE_R) damagePlane(state, p, dmg * clamp(1 - d / (r + PLANE_R), 0.25, 1), byId);
+    }
+    for (const s of state.structures) {
+      if (s.hp <= 0) continue;
+      const d = Math.hypot(s.x - x, (s.y - s.h / 2) - y);
+      if (d < r + Math.max(s.w, s.h) / 2) damageStructure(state, s, dmg * clamp(1 - d / (r + s.w), 0.3, 1), true);
+    }
+  }
+
+  // ———————————————————————— Lentofysiikka ————————————————————————
+  function stepPlane(state, p, input) {
+    const tr = state.terrain;
+    if (p.dead) {
+      // putoava hylky
+      if (!p.onGround) {
+        p.vy += G * 1.1 * DT;
+        p.vx *= Math.exp(-0.4 * DT);
+        p.ang += 1.4 * DT;
+        p.x += p.vx * DT; p.y += p.vy * DT;
+        if (p.y + WHEEL_H >= groundY(tr, p.x)) {
+          p.onGround = true;
+          state.events.push({ type: "maahansyoksy", x: p.x, y: p.y, plane: p.id });
+        }
+      }
+      return;
+    }
+    // Rullaus (ilmalento ympäri) — reunaliipaisu
+    if (input.flip && !p.flipLatch) {
+      p.flipLatch = true;
+      if (p.onGround) {
+        const sp = Math.abs(p.vx);
+        if (sp < 25) { p.flipped = !p.flipped; p.ang = p.flipped ? Math.PI : 0; }
+      } else p.flipped = !p.flipped;
+    } else if (!input.flip) p.flipLatch = false;
+
+    // Kaasu (polttoaineen loppuessa moottori sammuu)
+    if (p.fuel <= 0) p.throttle = Math.max(0, p.throttle - 1.5 * DT);
+    else p.throttle = clamp(p.throttle + (input.power || 0) * 0.9 * DT, 0, 1);
+    if (!p.onGround) p.fuel = Math.max(0, p.fuel - p.throttle * FUEL_RATE * DT);
+
+    if (p.onGround) {
+      const rw = onRunway(tr, p.x, null);
+      const facing = Math.cos(p.ang) >= 0 ? 1 : -1;
+      // Kiihdytys ja kitka maassa
+      p.vx += facing * THRUST * 0.8 * p.throttle * DT;
+      p.vx *= Math.exp(-(p.throttle > 0.05 ? 0.25 : 1.1) * DT);
+      if (Math.abs(p.vx) < 2 && p.throttle < 0.05) p.vx = 0;
+      p.vy = 0;
+      p.x += p.vx * DT;
+      p.y = groundY(tr, p.x) - WHEEL_H;
+      // Kiitoradalta rullaus nurmelle: kovaa → tuho, muuten rytkyttävä jarrutus
+      if (!onRunway(tr, p.x, null)) {
+        if (Math.abs(p.vx) > 140) {
+          damagePlane(state, p, 999, null);
+          state.events.push({ type: "maahansyoksy", x: p.x, y: p.y, plane: p.id });
+          return;
+        }
+        p.vx *= Math.exp(-2.0 * DT);
+      }
+      // Irtoaminen: riittävä vauhti + nokka ylös
+      const pitchUp = facing > 0 ? (input.pitch || 0) < 0 : (input.pitch || 0) > 0;
+      if (Math.abs(p.vx) > TAKEOFF_V && pitchUp) {
+        p.onGround = false;
+        p.vy = -70;
+        p.ang = facing > 0 ? -0.18 : Math.PI + 0.18;
+        state.events.push({ type: "noussut", plane: p.id });
+      }
+      // Huolto omalla kentällä paikallaan
+      if (rw && rw.side === p.side && Math.abs(p.vx) < 4 && p.throttle < 0.05) {
+        const before = p.fuel + p.ammo + p.hp + p.bombs;
+        p.hp = Math.min(p.maxHp, p.hp + SERVICE.hp * DT);
+        p.fuel = Math.min(100, p.fuel + SERVICE.fuel * DT);
+        p.ammo = Math.min(120, p.ammo + SERVICE.ammo * DT);
+        p.serviceT += DT;
+        if (p.bombs < 4 && p.serviceT >= SERVICE.bombEvery) { p.bombs++; p.serviceT = 0; }
+        const full = p.fuel >= 100 && p.ammo >= 120 && p.hp >= p.maxHp && p.bombs >= 4;
+        if (full && before < 100 + 120 + p.maxHp + 4) state.events.push({ type: "huollettu", plane: p.id });
+      } else p.serviceT = 0;
+    } else {
+      // ————— Ilmassa —————
+      const speed = Math.hypot(p.vx, p.vy);
+      const inv = inverted(p);
+      // Ohjausauktoriteetti kasvaa vauhdin myötä, sakkauksessa heikko
+      const auth = clamp((speed - 30) / (STALL - 30), 0.15, 1) * (inv ? 0.8 : 1);
+      p.ang += (input.pitch || 0) * TURN * auth * DT;
+      // Sakkaus: nokka valahtaa kohti vajoavaa nopeusvektoria
+      if (speed < STALL) {
+        p.stallT += DT;
+        const va = Math.atan2(p.vy + 60, p.vx);
+        p.ang += angDiff(va, p.ang) * clamp(0.25 + (STALL - speed) / 50, 0, 1) * 3.0 * DT;
+      } else p.stallT = 0;
+      // Työntö ja painovoima
+      p.vx += Math.cos(p.ang) * THRUST * p.throttle * DT;
+      p.vy += Math.sin(p.ang) * THRUST * p.throttle * DT + G * DT;
+      // Aerodynamiikka: nopeusvektori kääntyy nokan suuntaan (siivet kantavat)
+      const cl = Math.min(1, speed / 150) * (inv ? 0.72 : 1);
+      const va2 = Math.atan2(p.vy, p.vx);
+      const d = angDiff(p.ang, va2);
+      const rot = d * Math.min(1, ALIGN * cl * DT);
+      const cos = Math.cos(rot), sin = Math.sin(rot);
+      const nvx = p.vx * cos - p.vy * sin, nvy = p.vx * sin + p.vy * cos;
+      p.vx = nvx; p.vy = nvy;
+      // Vastus (+ sivuluisu kuluttaa)
+      const drag = DRAG * (1 + Math.abs(d) * 0.6) * (inv ? 1.1 : 1);
+      const k = Math.exp(-drag * DT);
+      p.vx *= k; p.vy *= k;
+      p.x += p.vx * DT; p.y += p.vy * DT;
+      // Maailman reunat: pehmeä käännytys takaisin
+      if (p.x < 30) { p.x = 30; p.vx = Math.abs(p.vx) * 0.5; }
+      if (p.x > tr.W - 30) { p.x = tr.W - 30; p.vx = -Math.abs(p.vx) * 0.5; }
+      if (p.y < 40) { p.y = 40; p.vy = Math.max(p.vy, 20); }
+      // Maakosketus
+      const gy = groundY(tr, p.x);
+      if (p.y + WHEEL_H >= gy) {
+        const rw = onRunway(tr, p.x, null);
+        const levelAng = Math.cos(p.ang) >= 0 ? 0 : Math.PI;
+        const gentle = rw && p.vy < LAND_VYMAX && Math.hypot(p.vx, p.vy) < LAND_VMAX
+          && Math.abs(angDiff(p.ang, levelAng)) < LAND_ANG && !inverted(p);
+        if (gentle) {
+          p.onGround = true;
+          p.y = gy - WHEEL_H;
+          p.vy = 0;
+          p.ang = levelAng;
+          p.flipped = levelAng !== 0;
+          state.events.push({ type: "laskeutui", plane: p.id, own: rw.side === p.side });
+        } else {
+          damagePlane(state, p, 999, null);
+          p.onGround = true;
+          p.y = gy - WHEEL_H;
+          state.events.push({ type: "maahansyoksy", x: p.x, y: p.y, plane: p.id });
+          return;
+        }
+      }
+    }
+    // Konekivääri
+    p.fireCd = Math.max(0, p.fireCd - DT);
+    if (input.fire && !p.onGround && p.ammo > 0 && p.fireCd <= 0) {
+      p.fireCd = 1 / GUN_ROF;
+      p.ammo--;
+      if (p.isPlayer) state.stats.shotsFired++;
+      const a = p.ang;
+      state.bullets.push({
+        x: p.x + Math.cos(a) * 20, y: p.y + Math.sin(a) * 20,
+        vx: Math.cos(a) * GUN_SPEED + p.vx, vy: Math.sin(a) * GUN_SPEED + p.vy,
+        ttl: GUN_TTL, owner: p.id, side: p.side, dmg: p.gunDmg,
+      });
+      state.events.push({ type: "laukaus", plane: p.id, x: p.x, y: p.y });
+    }
+    // Pommit
+    p.bombCd = Math.max(0, p.bombCd - DT);
+    if (input.bomb && !p.onGround && p.bombs > 0 && p.bombCd <= 0) {
+      p.bombCd = BOMB_CD;
+      p.bombs--;
+      if (p.isPlayer) state.stats.bombsDropped++;
+      state.bombs.push({ x: p.x, y: p.y + 14, vx: p.vx, vy: p.vy + 20, owner: p.id, ang: p.ang });
+      state.events.push({ type: "pommi", plane: p.id });
+    }
+  }
+
+  // ———————————————————————— AI ————————————————————————
+  function aiControl(state, p) {
+    const tr = state.terrain;
+    const ai = p.ai;
+    if (p.onGround) {
+      // Täysi kaasu ja nokka ylös kun vauhti riittää
+      const facing = Math.cos(p.ang) >= 0 ? 1 : -1;
+      return { pitch: Math.abs(p.vx) > TAKEOFF_V * 0.95 ? -facing : 0, power: 1, fire: false, bomb: false, flip: false };
+    }
+    const speed = Math.hypot(p.vx, p.vy);
+    // Kohde: vastapuolen elossa oleva kone, muuten partiopiste
+    let target = null, bestD = Infinity;
+    for (const q of state.planes) {
+      if (q.side === p.side || q.dead) continue;
+      const d = Math.hypot(q.x - p.x, q.y - p.y);
+      if (d < bestD) { bestD = d; target = q; }
+    }
+    let desired;
+    if (target && bestD < (ai.engageR || 2200)) {
+      // Ennakko kohti kohdetta
+      const lead = clamp(bestD / GUN_SPEED, 0, 1.1) * (ai.skill || 0.9);
+      desired = Math.atan2(target.y + target.vy * lead - p.y, target.x + target.vx * lead - p.x);
+    } else {
+      const wp = ai.patrol || { x: tr.W * 0.5, y: 520 };
+      desired = Math.atan2(wp.y - p.y, wp.x - p.x);
+      if (Math.hypot(wp.x - p.x, wp.y - p.y) < 220 && ai.patrolPts) {
+        ai.patrolIdx = ((ai.patrolIdx || 0) + 1) % ai.patrolPts.length;
+        ai.patrol = ai.patrolPts[ai.patrolIdx];
+      }
+    }
+    // Törmäyksen väistö: liian lähellä → irtautuminen ylös
+    if (target && bestD < 90) desired = Math.atan2(-0.9, Math.cos(p.ang) >= 0 ? 0.4 : -0.4);
+    // Sakkauksen esto: nokka loivasti alas ja kaasua
+    const power = 1;
+    if (speed < STALL + 25) desired = Math.atan2(0.45, Math.cos(p.ang) >= 0 ? 0.9 : -0.9);
+    // Katon esto
+    if (p.y < 140) desired = Math.atan2(0.5, Math.cos(p.ang) >= 0 ? 0.86 : -0.86);
+    // Maaston väistö voittaa kaiken: katso eteen ~0.9 s
+    const lookX = clamp(p.x + p.vx * 0.9, 20, tr.W - 20);
+    const clearance = groundY(tr, lookX) - (p.y + p.vy * 0.9);
+    if (clearance < 160 || groundY(tr, p.x) - p.y < 120) {
+      desired = Math.cos(p.ang) >= 0 ? -Math.PI / 3 : Math.PI + Math.PI / 3; // jyrkkä nousu
+    }
+    const pitch = clamp(angDiff(desired, p.ang) * 2.4, -1, 1);
+    // Tulitus kun kohde keilassa
+    let fire = false;
+    if (target && p.ammo > 0) {
+      const aim = Math.atan2(target.y - p.y, target.x - p.x);
+      if (bestD < (ai.fireR || 430) && Math.abs(angDiff(aim, p.ang)) < 0.14 + (ai.aimErr || 0.1)) {
+        fire = state.rng() < (ai.aggr || 0.6);
+      }
+    }
+    // Pysy oikein päin
+    const flip = inverted(p) && state.rng() < 0.03;
+    return { pitch, power, fire, bomb: false, flip };
+  }
+
+  function spawnEnemy(state) {
+    const def = state.def.enemy;
+    const rw = state.terrain.runways[1];
+    const p = makePlane(state.nextId++, 1, false, rw.x1 - 140, rw.y - WHEEL_H, -1, def.hp);
+    p.gunDmg = def.gunDmg || 5;
+    p.ai = {
+      skill: def.skill + (state.rng() - 0.5) * 0.08,
+      aimErr: def.aimErr, aggr: def.aggr,
+      fireR: def.fireR || 430, engageR: 2600,
+      patrolPts: [
+        { x: state.terrain.W * 0.62, y: 420 },
+        { x: state.terrain.W * 0.82, y: 320 },
+      ],
+      patrolIdx: 0,
+    };
+    p.ai.patrol = p.ai.patrolPts[0];
+    p.throttle = 0.4;
+    state.planes.push(p);
+    state.spawned++;
+    state.events.push({ type: "vihollinen", plane: p.id });
+    return p;
+  }
+
+  // Autopilotti (valikon taustanäytös): pelaajan kone partioi ja taistelee
+  function autopilotControl(state, p) {
+    if (!p.ai) {
+      p.ai = {
+        skill: 0.95, aimErr: 0.1, aggr: 0.7, fireR: 430, engageR: 900,
+        patrolPts: [
+          { x: state.terrain.W * 0.28, y: 420 },
+          { x: state.terrain.W * 0.52, y: 300 },
+          { x: state.terrain.W * 0.36, y: 520 },
+        ],
+        patrolIdx: 0,
+      };
+      p.ai.patrol = p.ai.patrolPts[0];
+    }
+    return aiControl(state, p);
+  }
+
+  // ———————————————————————— Askel ————————————————————————
+  // playerInput = { pitch:-1..1, power:-1|0|1, fire, bomb, flip } tai null
+  function step(state, playerInput) {
+    state.events = [];
+    const tr = state.terrain;
+    // Pelaajan uudelleensyntymä
+    if (state.respawnT > 0) {
+      state.respawnT -= DT;
+      if (state.respawnT <= 0) {
+        const rw = tr.runways[0];
+        const p = playerOf(state);
+        const np = makePlane(0, 0, true, rw.x0 + 140, rw.y - WHEEL_H, 1, 100);
+        np.kills = p ? p.kills : 0;
+        state.planes = state.planes.filter((q) => !q.isPlayer);
+        state.planes.push(np);
+        state.events.push({ type: "uusikone", lives: state.lives });
+      }
+    }
+    // Vihollisten syöttö niin kauan kuin halleja on pystyssä
+    const hangarAlive = state.structures.some((s) => s.type === "halli" && s.hp > 0);
+    const concurrent = state.planes.filter((q) => !q.isPlayer && !q.dead).length;
+    state.spawnT -= DT;
+    if (state.spawnT <= 0 && hangarAlive && concurrent < state.def.enemy.max && state.spawned < state.def.enemy.total && !state.over) {
+      spawnEnemy(state);
+      state.spawnT = state.def.enemy.spawnEvery;
+    }
+    // Koneet
+    for (const p of state.planes) {
+      let input;
+      if (p.isPlayer && !state.autopilot) input = playerInput || { pitch: 0, power: 0, fire: false, bomb: false, flip: false };
+      else if (p.isPlayer) input = autopilotControl(state, p);
+      else input = aiControl(state, p);
+      stepPlane(state, p, input);
+    }
+    // Kuolleet viholliskoneet siivotaan pudottuaan
+    state.planes = state.planes.filter((p) => p.isPlayer || !p.dead || !p.onGround || (p.deadT = (p.deadT || 0) + DT) < 4);
+    // Luodit
+    for (let i = state.bullets.length - 1; i >= 0; i--) {
+      const b = state.bullets[i];
+      b.x += b.vx * DT; b.y += b.vy * DT; b.ttl -= DT;
+      let dead = b.ttl <= 0;
+      if (!dead && b.y >= groundY(tr, b.x)) dead = true;
+      if (!dead) {
+        for (const p of state.planes) {
+          if (p.dead || p.side === b.side) continue;
+          const dx = p.x - b.x, dy = p.y - b.y;
+          if (dx * dx + dy * dy < PLANE_R * PLANE_R) {
+            dead = true;
+            damagePlane(state, p, b.dmg || GUN_DMG_PLANE, b.owner);
+            break;
+          }
+        }
+      }
+      if (!dead) {
+        for (const s of state.structures) {
+          if (s.hp <= 0 || s.side === b.side) continue;
+          if (b.x > s.x - s.w / 2 && b.x < s.x + s.w / 2 && b.y > s.y - s.h && b.y < s.y) {
+            dead = true;
+            damageStructure(state, s, GUN_DMG_STRUCT, b.side === 0);
+            break;
+          }
+        }
+      }
+      if (dead) state.bullets.splice(i, 1);
+    }
+    // Pommit
+    for (let i = state.bombs.length - 1; i >= 0; i--) {
+      const b = state.bombs[i];
+      b.vy += G * 1.05 * DT;
+      b.vx *= Math.exp(-0.12 * DT);
+      b.x += b.vx * DT; b.y += b.vy * DT;
+      b.ang = Math.atan2(b.vy, b.vx);
+      let boom = b.y >= groundY(tr, b.x);
+      if (!boom) {
+        for (const s of state.structures) {
+          if (s.hp <= 0) continue;
+          if (b.x > s.x - s.w / 2 && b.x < s.x + s.w / 2 && b.y > s.y - s.h && b.y < s.y) { boom = true; break; }
+        }
+      }
+      if (boom) {
+        state.bombs.splice(i, 1);
+        explode(state, b.x, Math.min(b.y, groundY(tr, b.x)), BOMB_R, BOMB_DMG, b.owner);
+      }
+    }
+    // It-tykit
+    const aaDef = state.def.aaDef;
+    for (const s of state.structures) {
+      if (s.type !== "it" || s.hp <= 0) continue;
+      s.cd -= DT;
+      // lähin vastapuolen kone kantamalla
+      let tp = null, bd = Infinity;
+      for (const p of state.planes) {
+        if (p.dead || p.side === s.side || p.onGround) continue;
+        const d = Math.hypot(p.x - s.x, p.y - (s.y - s.h));
+        if (d < aaDef.range && d < bd) { bd = d; tp = p; }
+      }
+      if (tp) s.aim = Math.atan2(tp.y - (s.y - s.h), tp.x - s.x);
+      if (tp && s.cd <= 0) {
+        s.cd = aaDef.reload * (0.85 + state.rng() * 0.3);
+        const tof = bd / aaDef.shellSpeed;
+        const err = (state.rng() - 0.5) * 2 * aaDef.aimErr;
+        const ax = tp.x + tp.vx * tof - s.x, ay = tp.y + tp.vy * tof - (s.y - s.h);
+        const a = Math.atan2(ay, ax) + err;
+        state.shells.push({
+          x: s.x, y: s.y - s.h,
+          vx: Math.cos(a) * aaDef.shellSpeed, vy: Math.sin(a) * aaDef.shellSpeed,
+          ttl: clamp(tof + err * 0.5, 0.5, 2.6), dmg: aaDef.dmg,
+        });
+        state.events.push({ type: "it-laukaus", x: s.x, y: s.y - s.h });
+      }
+    }
+    // It-kranaatit: räjähtävät lentoajan päässä tai lähietäisyydellä
+    for (let i = state.shells.length - 1; i >= 0; i--) {
+      const sh = state.shells[i];
+      sh.x += sh.vx * DT; sh.y += sh.vy * DT; sh.ttl -= DT;
+      let boom = sh.ttl <= 0 || sh.y >= groundY(tr, sh.x);
+      if (!boom) {
+        for (const p of state.planes) {
+          if (p.dead || p.side === 1 || p.onGround) continue;
+          if (Math.hypot(p.x - sh.x, p.y - sh.y) < 24) { boom = true; break; }
+        }
+      }
+      if (boom) {
+        state.shells.splice(i, 1);
+        state.events.push({ type: "flak", x: sh.x, y: sh.y });
+        for (const p of state.planes) {
+          if (p.dead || p.side === 1) continue;
+          const d = Math.hypot(p.x - sh.x, p.y - sh.y);
+          if (d < FLAK_R + PLANE_R) damagePlane(state, p, sh.dmg * clamp(1 - d / (FLAK_R + PLANE_R), 0.35, 1), null);
+        }
+      }
+    }
+    // Koneiden yhteentörmäykset (vastapuolet)
+    for (let i = 0; i < state.planes.length; i++) {
+      for (let j = i + 1; j < state.planes.length; j++) {
+        const a = state.planes[i], b = state.planes[j];
+        if (a.dead || b.dead || a.side === b.side || a.onGround || b.onGround) continue;
+        if (Math.hypot(a.x - b.x, a.y - b.y) < PLANE_R * 1.6) {
+          damagePlane(state, a, 999, b.id);
+          damagePlane(state, b, 999, a.id);
+          state.events.push({ type: "rajahdys", x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, r: 40 });
+        }
+      }
+    }
+    state.t += DT;
+    state.steps++;
+  }
+
+  // ———————————————————————— Tulos ja tiivistelmä ————————————————————————
+  function result(state) {
+    const p = playerOf(state);
+    return {
+      outcome: state.outcome, time: state.t,
+      kills: state.stats.kills,
+      bombsDropped: state.stats.bombsDropped,
+      shotsFired: state.stats.shotsFired,
+      planesLost: state.stats.planesLost,
+      livesLeft: state.lives,
+      targetsDestroyed: targetsTotal(state) - targetsLeft(state),
+      targetsTotal: targetsTotal(state),
+      playerAlive: !!(p && !p.dead),
+    };
+  }
+
+  function snapshot(state) {
+    return {
+      planes: state.planes.map((p) => ({
+        id: p.id, x: Math.round(p.x * 100) / 100, y: Math.round(p.y * 100) / 100,
+        a: Math.round(p.ang * 1000) / 1000, hp: Math.round(p.hp * 10) / 10,
+        f: Math.round(p.fuel * 10) / 10, am: p.ammo, bo: p.bombs,
+        g: p.onGround, d: p.dead,
+      })),
+      st: state.structures.map((s) => Math.round(s.hp)),
+      n: state.bullets.length + state.bombs.length + state.shells.length,
+      lives: state.lives, out: state.outcome,
+    };
+  }
+
+  const E = {
+    DT, TAU, G, STALL, TAKEOFF_V, PLANE_R, WHEEL_H, LIVES, RESPAWN_T,
+    LAND_VMAX, LAND_VYMAX, LAND_ANG, BOMB_R, FLAK_R,
+    mulberry32, clamp, angDiff,
+    MISSIONS, makeTerrain, groundY, onRunway,
+    createMission, step, stepPlane, aiControl, spawnEnemy,
+    damagePlane, damageStructure, explode, inverted,
+    targetsLeft, targetsTotal, playerOf, result, snapshot,
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = E;
+  else global.KolmitasoEngine = E;
+})(typeof window !== "undefined" ? window : globalThis);
+</script><script>"use strict";
+// Kolmitaso — käyttöliittymä: renderöinti, äänet, syötteet ja valikot.
+(function () {
+  const E = window.KolmitasoEngine;
+  const $ = (id) => document.getElementById(id);
+  const canvas = $("board");
+  const ctx = canvas.getContext("2d");
+  const VIEW_W = canvas.width, VIEW_H = canvas.height;
+
+  // ———————————————————————— Tallennus ————————————————————————
+  const SAVE_KEY = "kolmitaso-v1";
+  function loadSave() {
+    try {
+      const d = JSON.parse(localStorage.getItem(SAVE_KEY));
+      if (d && d.best) return d;
+    } catch (e) {}
+    return null;
+  }
+  const save = loadSave() || { best: {}, done: {} };
+  function persist() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {}
+  }
+
+  // ———————————————————————— Tila ————————————————————————
+  let mode = "menu";      // menu | mission | results
+  let state = null;
+  let attract = null;
+  let seedCounter = (Date.now() % 1e9) | 0;
+  let camX = 0, camY = 0, shake = 0;
+  let pendingResultT = 0, resultShown = false;
+  let particles = [], floaters = [];
+  let warnT = 0;
+  let testInput = null;   // smoke-testien ohjaus
+
+  // ———————————————————————— Äänet ————————————————————————
+  const S = (() => {
+    let ac = null, master = null, engOsc = null, engOsc2 = null, engGain = null, engFilter = null;
+    let enabled = true;
+    function ensure() {
+      if (ac || !enabled) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) { enabled = false; return; }
+      ac = new AC();
+      master = ac.createGain();
+      master.gain.value = 0.5;
+      master.connect(ac.destination);
+    }
+    function engine(on, throttle, speed) {
+      ensure();
+      if (!ac) return;
+      if (on && !engOsc) {
+        engOsc = ac.createOscillator(); engOsc.type = "sawtooth";
+        engOsc2 = ac.createOscillator(); engOsc2.type = "square";
+        engFilter = ac.createBiquadFilter(); engFilter.type = "lowpass"; engFilter.frequency.value = 420;
+        engGain = ac.createGain(); engGain.gain.value = 0;
+        engOsc.connect(engFilter); engOsc2.connect(engFilter);
+        engFilter.connect(engGain).connect(master);
+        engOsc.start(); engOsc2.start();
+      }
+      if (engOsc) {
+        const f = 42 + throttle * 46 + speed * 0.06;
+        engOsc.frequency.setTargetAtTime(f, ac.currentTime, 0.09);
+        engOsc2.frequency.setTargetAtTime(f * 0.502, ac.currentTime, 0.09);
+        engFilter.frequency.setTargetAtTime(240 + throttle * 420 + speed * 0.8, ac.currentTime, 0.1);
+        engGain.gain.setTargetAtTime(on && enabled ? 0.028 + throttle * 0.026 : 0, ac.currentTime, 0.1);
+      }
+    }
+    function blip(freq, dur, type, vol, slide) {
+      ensure();
+      if (!ac || !enabled) return;
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || "square";
+      o.frequency.value = freq;
+      if (slide) o.frequency.exponentialRampToValueAtTime(slide, ac.currentTime + dur);
+      g.gain.value = vol || 0.12;
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+      o.connect(g).connect(master);
+      o.start();
+      o.stop(ac.currentTime + dur + 0.02);
+    }
+    function noise(dur, freq, vol) {
+      ensure();
+      if (!ac || !enabled) return;
+      const n = Math.floor(ac.sampleRate * dur);
+      const buf = ac.createBuffer(1, n, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      const f = ac.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.value = freq;
+      const g = ac.createGain();
+      g.gain.value = vol;
+      src.connect(f).connect(g).connect(master);
+      src.start();
+    }
+    return {
+      fire: () => noise(0.06, 2600, 0.09),
+      hit: () => blip(620, 0.05, "square", 0.06),
+      flak: () => noise(0.12, 900, 0.10),
+      boom: (big) => { noise(big ? 0.7 : 0.4, big ? 260 : 380, big ? 0.34 : 0.22); blip(big ? 120 : 170, 0.5, "sine", 0.2, 40); },
+      bombDrop: () => blip(880, 0.5, "sine", 0.05, 220),
+      service: () => { blip(660, 0.1, "triangle", 0.1); setTimeout(() => blip(880, 0.14, "triangle", 0.1), 90); },
+      land: () => noise(0.16, 600, 0.08),
+      warn: () => blip(520, 0.16, "square", 0.07, 420),
+      spawn: () => blip(300, 0.2, "sawtooth", 0.05, 200),
+      win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => blip(f, 0.2, "triangle", 0.12), i * 120)),
+      lose: () => [392, 330, 262, 196].forEach((f, i) => setTimeout(() => blip(f, 0.25, "triangle", 0.11), i * 140)),
+      engine,
+      toggle() { enabled = !enabled; if (!enabled && engGain && ac) engGain.gain.setTargetAtTime(0, ac.currentTime, 0.05); return enabled; },
+      get enabled() { return enabled; },
+      ensure,
+    };
+  })();
+
+  // ———————————————————————— Koristeet (seedatut) ————————————————————————
+  // Puut, pensaat ja pilvet lasketaan kerran per tehtävä.
+  function makeDecor(st) {
+    const tr = st.terrain;
+    const rng = E.mulberry32(st.def.seed * 1013 + 7);
+    const trees = [];
+    for (let i = 0; i < tr.W / 34; i++) {
+      const x = rng() * tr.W;
+      if (E.onRunway(tr, x, null) || E.onRunway(tr, x - 40, null) || E.onRunway(tr, x + 40, null)) continue;
+      let nearStruct = false;
+      for (const s of st.structures) if (Math.abs(s.x - x) < s.w) nearStruct = true;
+      if (nearStruct) continue;
+      trees.push({
+        x, y: E.groundY(tr, x),
+        h: 26 + rng() * 34, w: 12 + rng() * 12,
+        kind: rng() < 0.72 ? "pine" : "bush",
+        tint: 0.82 + rng() * 0.36,
+      });
+    }
+    const clouds = [];
+    for (let i = 0; i < 13; i++) {
+      clouds.push({
+        x: rng() * tr.W * 1.2, y: 40 + rng() * 360,
+        r: 22 + rng() * 34, depth: 0.25 + rng() * 0.45,
+        puffs: 3 + Math.floor(rng() * 3), ps: rng() * 10,
+      });
+    }
+    const ridges = [];
+    for (let i = 0; i < 40; i++) ridges.push(rng());
+    return { trees, clouds, ridges };
+  }
+  let decor = null, attractDecor = null;
+
+  // ———————————————————————— Piirto ————————————————————————
+  function drawScene(st, dec, tNow, showHud) {
+    const th = st.def.theme;
+    const tr = st.terrain;
+    const p = E.playerOf(st);
+    // Kamera seuraa pelaajaa pienellä ennakolla
+    if (p && !p.dead) {
+      const facing = Math.cos(p.ang) >= 0 ? 1 : -1;
+      const tx = p.x + facing * 130 - VIEW_W / 2;
+      const ty = p.y - VIEW_H * 0.44;
+      camX += (tx - camX) * 0.08;
+      camY += (ty - camY) * 0.08;
+    }
+    camX = E.clamp(camX, 0, tr.W - VIEW_W);
+    camY = E.clamp(camY, -80, tr.H - VIEW_H);
+    let ox = camX, oy = camY;
+    if (shake > 0) {
+      ox += (Math.random() - 0.5) * shake;
+      oy += (Math.random() - 0.5) * shake;
+      shake = Math.max(0, shake - 0.9);
+    }
+
+    // Taivas
+    const sky = ctx.createLinearGradient(0, -oy * 0.3, 0, VIEW_H);
+    sky.addColorStop(0, th.skyTop);
+    sky.addColorStop(0.55, th.skyMid);
+    sky.addColorStop(1, th.skyLow);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    // Aurinko
+    const sunX = th.sunX * VIEW_W - ox * 0.04, sunY = th.sunY * VIEW_H - oy * 0.08;
+    const sg = ctx.createRadialGradient(sunX, sunY, 4, sunX, sunY, 120);
+    sg.addColorStop(0, th.sun);
+    sg.addColorStop(0.25, th.sun + "88");
+    sg.addColorStop(1, "transparent");
+    ctx.fillStyle = sg;
+    ctx.fillRect(sunX - 130, sunY - 130, 260, 260);
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 26, 0, 7);
+    ctx.fillStyle = th.sun;
+    ctx.fill();
+
+    // Kaukoharjanne (parallaksi, ankkuroitu horisonttiin)
+    const horizon = E.clamp(1050 - oy * 0.9, VIEW_H * 0.35, VIEW_H + 60);
+    ctx.fillStyle = th.far + "55";
+    ctx.beginPath();
+    ctx.moveTo(0, VIEW_H + 60);
+    for (let i = 0; i <= 40; i++) {
+      const rx = (i / 40) * VIEW_W;
+      const wx = (rx + ox * 0.3) * 0.01;
+      const r = dec.ridges[i % dec.ridges.length];
+      const y = horizon - 30 - r * 70 - Math.sin(wx + r * 9) * 26;
+      ctx.lineTo(rx, y);
+    }
+    ctx.lineTo(VIEW_W, VIEW_H + 60);
+    ctx.closePath();
+    ctx.fill();
+
+    // Pilvet (takakerros)
+    for (const c of dec.clouds) {
+      if (c.depth > 0.45) continue;
+      drawCloud(c, ox, oy, th, tNow);
+    }
+
+    ctx.save();
+    ctx.translate(-ox, -oy);
+
+    // Maasto
+    const x0 = Math.floor(ox / tr.step) * tr.step - tr.step;
+    const x1 = ox + VIEW_W + tr.step * 2;
+    ctx.beginPath();
+    ctx.moveTo(x0, tr.H + 50);
+    for (let x = x0; x <= x1; x += tr.step) ctx.lineTo(x, E.groundY(tr, x));
+    ctx.lineTo(x1, tr.H + 50);
+    ctx.closePath();
+    const gg = ctx.createLinearGradient(0, oy + VIEW_H * 0.3, 0, oy + VIEW_H + 100);
+    gg.addColorStop(0, th.hill);
+    gg.addColorStop(0.4, th.ground);
+    gg.addColorStop(1, th.dirt);
+    ctx.fillStyle = gg;
+    ctx.fill();
+    // Nurmen reunaviiva
+    ctx.beginPath();
+    for (let x = x0; x <= x1; x += tr.step) {
+      const y = E.groundY(tr, x);
+      if (x === x0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "#ffffff22";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Kiitoradat
+    for (const rw of tr.runways) {
+      ctx.fillStyle = "#3a3a34";
+      ctx.fillRect(rw.x0, rw.y - 4, rw.x1 - rw.x0, 8);
+      ctx.fillStyle = "#2e2e29";
+      ctx.fillRect(rw.x0, rw.y - 1, rw.x1 - rw.x0, 5);
+      ctx.fillStyle = "#e8e2ce";
+      for (let x = rw.x0 + 14; x < rw.x1 - 20; x += 44) ctx.fillRect(x, rw.y - 2, 20, 2);
+      // Tuulipussi omalle kentälle
+      if (rw.side === 0) {
+        const px2 = rw.x0 - 26;
+        ctx.strokeStyle = "#d8d2be";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(px2, rw.y); ctx.lineTo(px2, rw.y - 34); ctx.stroke();
+        ctx.fillStyle = "#e08434";
+        ctx.beginPath();
+        ctx.moveTo(px2, rw.y - 34);
+        ctx.lineTo(px2 + 22 + Math.sin(tNow * 2) * 3, rw.y - 30);
+        ctx.lineTo(px2, rw.y - 26);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // Puut
+    for (const t of dec.trees) {
+      if (t.x < ox - 60 || t.x > ox + VIEW_W + 60) continue;
+      drawTree(t, th);
+    }
+
+    // Rakennukset
+    for (const s of st.structures) {
+      if (s.x < ox - 160 || s.x > ox + VIEW_W + 160) continue;
+      drawStructure(s, tNow, th);
+    }
+
+    // Pommit
+    for (const b of st.bombs) {
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.ang);
+      ctx.fillStyle = "#2c2f33";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 7, 3, 0, 0, 7);
+      ctx.fill();
+      ctx.fillStyle = "#4a4f55";
+      ctx.fillRect(-8, -1.5, 3, 3);
+      ctx.restore();
+    }
+    // It-kranaatit
+    ctx.fillStyle = "#f4e9c8";
+    for (const sh of st.shells) {
+      ctx.beginPath();
+      ctx.arc(sh.x, sh.y, 2.4, 0, 7);
+      ctx.fill();
+    }
+    // Luodit (valojuovat)
+    ctx.lineWidth = 2;
+    for (const b of st.bullets) {
+      ctx.strokeStyle = b.side === 0 ? "#ffe9b0" : "#ffb9a0";
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(b.x - b.vx * 0.02, b.y - b.vy * 0.02);
+      ctx.stroke();
+    }
+
+    // Koneet
+    for (const q of st.planes) drawPlane(q, tNow);
+
+    // Hiukkaset
+    for (const pa of particles) {
+      ctx.globalAlpha = E.clamp(pa.life / pa.life0, 0, 1) * (pa.alpha || 1);
+      ctx.fillStyle = pa.color;
+      ctx.beginPath();
+      ctx.arc(pa.x, pa.y, pa.r * (pa.grow ? (2 - pa.life / pa.life0) : 1), 0, 7);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // Leijuvat tekstit
+    ctx.textAlign = "center";
+    ctx.font = "600 15px Barlow, sans-serif";
+    for (const f of floaters) {
+      ctx.globalAlpha = E.clamp(f.life / 1.4, 0, 1);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, f.x, f.y);
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // Pilvet (etukerros)
+    for (const c of dec.clouds) {
+      if (c.depth <= 0.45) continue;
+      drawCloud(c, ox, oy, th, tNow);
+    }
+
+    if (showHud) drawHud(st, tNow);
+  }
+
+  function drawCloud(c, ox, oy, th, tNow) {
+    const drift = tNow * (4 + c.depth * 8);
+    const span = VIEW_W + 400;
+    const wx = ((((c.x - ox * c.depth + drift) % span) + span) % span) - 200;
+    const wy = c.y - oy * c.depth * 0.6;
+    ctx.globalAlpha = 0.2 + c.depth * 0.3;
+    ctx.fillStyle = th.cloud;
+    for (let i = 0; i < c.puffs; i++) {
+      const a = c.ps + i * 2.1;
+      ctx.beginPath();
+      ctx.arc(wx + Math.cos(a) * c.r * 0.55, wy + Math.sin(a) * c.r * 0.2, c.r * (0.5 + ((i * 37 + c.ps * 13) % 10) / 22), 0, 7);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawTree(t, th) {
+    ctx.fillStyle = "#3a2c1e";
+    ctx.fillRect(t.x - 1.6, t.y - t.h * 0.4, 3.2, t.h * 0.4);
+    const shade = (hex, f) => {
+      const n = parseInt(hex.slice(1), 16);
+      const r = E.clamp(((n >> 16) & 255) * f, 0, 255) | 0;
+      const g = E.clamp(((n >> 8) & 255) * f, 0, 255) | 0;
+      const b = E.clamp((n & 255) * f, 0, 255) | 0;
+      return `rgb(${r},${g},${b})`;
+    };
+    ctx.fillStyle = shade(th.hill, t.tint);
+    if (t.kind === "pine") {
+      for (let k = 0; k < 3; k++) {
+        const w = t.w * (1 - k * 0.24), yy = t.y - t.h * 0.34 - k * t.h * 0.22;
+        ctx.beginPath();
+        ctx.moveTo(t.x - w / 2, yy);
+        ctx.lineTo(t.x + w / 2, yy);
+        ctx.lineTo(t.x, yy - t.h * 0.34);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else {
+      ctx.beginPath();
+      ctx.arc(t.x, t.y - t.h * 0.5, t.w * 0.75, 0, 7);
+      ctx.arc(t.x - t.w * 0.45, t.y - t.h * 0.34, t.w * 0.5, 0, 7);
+      ctx.arc(t.x + t.w * 0.45, t.y - t.h * 0.34, t.w * 0.5, 0, 7);
+      ctx.fill();
+    }
+  }
+
+  function drawStructure(s, tNow, th) {
+    const dead = s.hp <= 0;
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    if (s.type === "halli") {
+      if (dead) {
+        ctx.fillStyle = "#33302a";
+        ctx.beginPath();
+        ctx.moveTo(-s.w / 2, 0);
+        ctx.lineTo(-s.w * 0.3, -12);
+        ctx.lineTo(-s.w * 0.05, -4);
+        ctx.lineTo(s.w * 0.2, -14);
+        ctx.lineTo(s.w / 2, 0);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.fillStyle = "#5c5548";
+        ctx.beginPath();
+        ctx.moveTo(-s.w / 2, 0);
+        ctx.lineTo(-s.w / 2, -s.h * 0.55);
+        ctx.quadraticCurveTo(0, -s.h * 1.5, s.w / 2, -s.h * 0.55);
+        ctx.lineTo(s.w / 2, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#494337";
+        ctx.fillRect(-s.w * 0.18, -s.h * 0.72, s.w * 0.36, s.h * 0.72);
+        ctx.strokeStyle = "#3a352c";
+        ctx.lineWidth = 2;
+        for (let k = -2; k <= 2; k++) {
+          ctx.beginPath();
+          ctx.moveTo(k * s.w * 0.16, -s.h * 0.6 - Math.abs(k) * -2);
+          ctx.lineTo(k * s.w * 0.16, 0);
+          ctx.stroke();
+        }
+        // vihollislippu
+        ctx.strokeStyle = "#d8d2be";
+        ctx.beginPath(); ctx.moveTo(s.w * 0.42, -s.h * 0.55); ctx.lineTo(s.w * 0.42, -s.h * 1.25); ctx.stroke();
+        ctx.fillStyle = "#c03a30";
+        ctx.fillRect(s.w * 0.42, -s.h * 1.25, 16, 9);
+      }
+    } else if (s.type === "varikko") {
+      if (dead) {
+        ctx.fillStyle = "#38332b";
+        ctx.beginPath();
+        ctx.moveTo(-s.w / 2, 0); ctx.lineTo(-s.w * 0.15, -8); ctx.lineTo(s.w * 0.3, -3); ctx.lineTo(s.w / 2, 0);
+        ctx.closePath(); ctx.fill();
+      } else {
+        ctx.fillStyle = "#6e5f42";
+        ctx.beginPath();
+        ctx.moveTo(-s.w / 2, 0);
+        ctx.lineTo(0, -s.h);
+        ctx.lineTo(s.w / 2, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#57492f";
+        ctx.beginPath();
+        ctx.moveTo(-s.w * 0.12, 0);
+        ctx.lineTo(0, -s.h * 0.6);
+        ctx.lineTo(s.w * 0.12, 0);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (s.type === "it") {
+      // jalusta
+      ctx.fillStyle = dead ? "#3a362e" : "#4c463a";
+      ctx.fillRect(-s.w / 2, -s.h * 0.4, s.w, s.h * 0.4);
+      ctx.beginPath();
+      ctx.arc(0, -s.h * 0.4, s.w * 0.32, Math.PI, 0);
+      ctx.fill();
+      if (!dead) {
+        // piippu tähtää
+        ctx.strokeStyle = "#2e2b24";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, -s.h * 0.5);
+        ctx.lineTo(Math.cos(s.aim || -1.2) * 24, -s.h * 0.5 + Math.sin(s.aim || -1.2) * 24);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = "#2b2822";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, -s.h * 0.45);
+        ctx.lineTo(10, -s.h * 0.1);
+        ctx.stroke();
+      }
+    }
+    // savua raunioista
+    if (dead && Math.random() < 0.12) {
+      particles.push({
+        x: s.x + (Math.random() - 0.5) * s.w * 0.5, y: s.y - 6,
+        vx: (Math.random() - 0.5) * 6, vy: -14 - Math.random() * 10,
+        r: 4 + Math.random() * 5, life: 1.6, life0: 1.6, color: "#55534d", alpha: 0.5, grow: true,
+      });
+    }
+    ctx.restore();
+    void tNow; void th;
+  }
+
+  function drawPlane(p, tNow) {
+    if (p.dead && p.onGround) return; // hylky poistuu
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.ang);
+    ctx.scale(1.25, p.flipped ? -1.25 : 1.25);
+    const own = p.side === 0;
+    const body = own ? "#7a7f58" : "#8a4a42";
+    const bodyHi = own ? "#9aa070" : "#a86054";
+    const wing = own ? "#8f956a" : "#9c554b";
+    // savuvana vaurioista
+    if (!p.dead && p.hp < p.maxHp * 0.45 && Math.random() < 0.5) {
+      particles.push({
+        x: p.x - Math.cos(p.ang) * 16, y: p.y - Math.sin(p.ang) * 16,
+        vx: -Math.cos(p.ang) * 20, vy: -Math.sin(p.ang) * 20 - 8,
+        r: 3 + Math.random() * 3, life: 0.9, life0: 0.9,
+        color: p.hp < p.maxHp * 0.22 ? "#3a3a3a" : "#6c6c66", alpha: 0.6, grow: true,
+      });
+    }
+    if (p.dead) {
+      // palava hylky
+      particles.push({
+        x: p.x, y: p.y, vx: (Math.random() - 0.5) * 30, vy: -20,
+        r: 3 + Math.random() * 4, life: 0.7, life0: 0.7,
+        color: Math.random() < 0.5 ? "#e88434" : "#4a4a4a", alpha: 0.8, grow: true,
+      });
+    }
+    // runko
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.moveTo(17, 0);
+    ctx.quadraticCurveTo(10, -4.5, -6, -3.6);
+    ctx.lineTo(-16, -1.8);
+    ctx.lineTo(-16, 1.8);
+    ctx.lineTo(-6, 3.6);
+    ctx.quadraticCurveTo(10, 4.5, 17, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = bodyHi;
+    ctx.fillRect(-6, -3.4, 14, 2.2);
+    // sivuperäsin + korkeusperäsin
+    ctx.fillStyle = wing;
+    ctx.beginPath();
+    ctx.moveTo(-13, -1);
+    ctx.lineTo(-19, -8);
+    ctx.lineTo(-16.5, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillRect(-19, -0.6, 7, 1.6);
+    // kolme siipitasoa tukineen
+    ctx.fillStyle = wing;
+    ctx.fillRect(-4, -9.5, 13, 2.1);
+    ctx.fillRect(-5.5, -3.2, 15, 2.1);
+    ctx.fillRect(-4, 3.2, 12, 2.1);
+    ctx.strokeStyle = "#3f3a2c";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-1, -8); ctx.lineTo(-2, 4.6);
+    ctx.moveTo(6.5, -8); ctx.lineTo(5.5, 4.6);
+    ctx.stroke();
+    // ohjaamo
+    ctx.fillStyle = "#2c2a22";
+    ctx.beginPath();
+    ctx.arc(1.5, -4.4, 2.2, Math.PI, 0);
+    ctx.fill();
+    // kokardi
+    ctx.beginPath();
+    ctx.arc(-9, 0.2, 3, 0, 7);
+    ctx.fillStyle = own ? "#e8e2ce" : "#e8e2ce";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(-9, 0.2, 1.7, 0, 7);
+    ctx.fillStyle = own ? "#3e6fae" : "#c03a30";
+    ctx.fill();
+    // laskuteline
+    ctx.strokeStyle = "#3f3a2c";
+    ctx.beginPath();
+    ctx.moveTo(4, 4.4); ctx.lineTo(6, 9.5);
+    ctx.moveTo(9, 3.4); ctx.lineTo(6.5, 9.5);
+    ctx.stroke();
+    ctx.fillStyle = "#22201b";
+    ctx.beginPath(); ctx.arc(6.2, 10.4, 2.6, 0, 7); ctx.fill();
+    // potkuri
+    if (!p.dead && p.throttle > 0.03) {
+      ctx.fillStyle = "#d8d2be55";
+      const ph = 8 + Math.sin(tNow * 60 + p.id) * 3;
+      ctx.fillRect(17.5, -ph, 2.2, ph * 2);
+    } else {
+      ctx.fillStyle = "#4a443a";
+      ctx.fillRect(17.5, -6, 2.2, 12);
+    }
+    ctx.restore();
+  }
+
+  // ———————————————————————— HUD ————————————————————————
+  function drawHud(st, tNow) {
+    const p = E.playerOf(st);
+    if (!p) return;
+    const H = 66, Y = VIEW_H - H;
+    ctx.fillStyle = "#0d111abf";
+    ctx.fillRect(0, Y, VIEW_W, H);
+    ctx.strokeStyle = "#ffffff1e";
+    ctx.beginPath(); ctx.moveTo(0, Y); ctx.lineTo(VIEW_W, Y); ctx.stroke();
+
+    const bar = (x, label, val, max, color, warn) => {
+      ctx.font = "700 10px Barlow, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#94a0ac";
+      ctx.fillText(label, x, Y + 16);
+      ctx.fillStyle = "#ffffff16";
+      ctx.fillRect(x, Y + 22, 110, 9);
+      const f = E.clamp(val / max, 0, 1);
+      ctx.fillStyle = warn && f < 0.25 && Math.sin(tNow * 8) > 0 ? "#e5484d" : color;
+      ctx.fillRect(x, Y + 22, 110 * f, 9);
+    };
+    bar(16, "KAASU", p.throttle, 1, "#e8a44c");
+    bar(142, "POLTTOAINE", p.fuel, 100, "#74c69d", true);
+    bar(268, "KUNTO", p.hp, p.maxHp, "#7fb4e0", true);
+    // Ammukset ja pommit
+    ctx.fillStyle = "#94a0ac";
+    ctx.fillText("AMMUKSET", 394, Y + 16);
+    ctx.fillStyle = p.ammo === 0 ? "#e5484d" : "#ece5d3";
+    ctx.font = "700 15px Barlow, sans-serif";
+    ctx.fillText(String(p.ammo), 394, Y + 33);
+    ctx.font = "700 10px Barlow, sans-serif";
+    ctx.fillStyle = "#94a0ac";
+    ctx.fillText("POMMIT", 470, Y + 16);
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = i < p.bombs ? "#ece5d3" : "#ffffff1c";
+      ctx.beginPath();
+      ctx.ellipse(476 + i * 15, Y + 27, 5, 3.4, 0.5, 0, 7);
+      ctx.fill();
+    }
+    // Koneet jäljellä
+    ctx.fillStyle = "#94a0ac";
+    ctx.fillText("KONEET", 396, Y + 48);
+    for (let i = 0; i < E.LIVES; i++) {
+      ctx.fillStyle = i < st.lives ? "#e8a44c" : "#ffffff1c";
+      ctx.beginPath();
+      ctx.moveTo(452 + i * 18, Y + 46);
+      ctx.lineTo(452 + i * 18 + 11, Y + 46);
+      ctx.lineTo(452 + i * 18 + 5.5, Y + 41);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // Mittarit oikealle
+    const speed = Math.hypot(p.vx, p.vy);
+    const alt = Math.max(0, Math.round((E.groundY(st.terrain, p.x) - p.y - E.WHEEL_H) / 3));
+    ctx.textAlign = "right";
+    ctx.font = "700 10px Barlow, sans-serif";
+    ctx.fillStyle = "#94a0ac";
+    ctx.fillText("NOPEUS", VIEW_W - 96, Y + 16);
+    ctx.fillText("KORKEUS", VIEW_W - 16, Y + 16);
+    ctx.font = "700 17px Barlow, sans-serif";
+    ctx.fillStyle = speed < E.STALL * 1.15 && !p.onGround ? (Math.sin(tNow * 9) > 0 ? "#e5484d" : "#ece5d3") : "#ece5d3";
+    ctx.fillText(String(Math.round(speed)), VIEW_W - 96, Y + 35);
+    ctx.fillStyle = "#ece5d3";
+    ctx.fillText(String(alt) + " m", VIEW_W - 16, Y + 35);
+    // Sakkausvaroitus
+    if (!p.onGround && !p.dead && speed < E.STALL * 1.1) {
+      ctx.textAlign = "center";
+      ctx.font = "700 13px Barlow, sans-serif";
+      ctx.fillStyle = Math.sin(tNow * 9) > 0 ? "#e5484d" : "#e5484d66";
+      ctx.fillText("SAKKAUS!", VIEW_W / 2, Y - 12);
+    }
+    // Tutka: maailman poikkileikkaus
+    const RX = VIEW_W - 226, RY = Y + 42, RW = 210, RH = 14;
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#ffffff10";
+    ctx.fillRect(RX, RY, RW, RH);
+    ctx.strokeStyle = "#ffffff22";
+    ctx.strokeRect(RX + 0.5, RY + 0.5, RW - 1, RH - 1);
+    const mx = (wx) => RX + (wx / st.terrain.W) * RW;
+    for (const rw of st.terrain.runways) {
+      ctx.fillStyle = rw.side === 0 ? "#74c69d88" : "#e5484d55";
+      ctx.fillRect(mx(rw.x0), RY + RH - 4, mx(rw.x1) - mx(rw.x0), 3);
+    }
+    for (const s of st.structures) {
+      if (!s.target) continue;
+      ctx.fillStyle = s.hp > 0 ? "#e5484d" : "#4a4a44";
+      ctx.fillRect(mx(s.x) - 1.5, RY + RH - 7, 3, 5);
+    }
+    for (const q of st.planes) {
+      if (q.dead) continue;
+      ctx.fillStyle = q.isPlayer ? "#ffffff" : "#ff9c6a";
+      ctx.fillRect(mx(q.x) - 1.5, RY + 3, 3, 3);
+    }
+    // huoltoviesti
+    if (p.onGround && !p.dead) {
+      const rw = E.onRunway(st.terrain, p.x, 0);
+      if (rw && Math.abs(p.vx) < 4 && (p.fuel < 100 || p.ammo < 120 || p.hp < p.maxHp || p.bombs < 4)) {
+        ctx.textAlign = "center";
+        ctx.font = "700 13px Barlow, sans-serif";
+        ctx.fillStyle = "#74c69d";
+        ctx.fillText("HUOLTO KÄYNNISSÄ…", VIEW_W / 2, Y - 12);
+      }
+    }
+  }
+
+  // ———————————————————————— Tapahtumat ————————————————————————
+  function burst(x, y, n, colors, speed, life) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * 7, v = speed * (0.3 + Math.random());
+      particles.push({
+        x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30,
+        r: 2 + Math.random() * 4, life: life * (0.5 + Math.random() * 0.8), life0: life,
+        color: colors[(Math.random() * colors.length) | 0],
+      });
+    }
+  }
+  function handleEvents(st, quiet) {
+    for (const ev of st.events) {
+      switch (ev.type) {
+        case "laukaus":
+          if (!quiet && ev.plane === 0) S.fire();
+          break;
+        case "osuma":
+          if (!quiet) S.hit();
+          burst(ev.x, ev.y, 3, ["#ffe9b0", "#e8a44c"], 60, 0.4);
+          break;
+        case "rakenneosuma":
+          burst(ev.x, ev.y, 3, ["#c9c2ae", "#8a8474"], 50, 0.4);
+          break;
+        case "pommi":
+          if (!quiet && ev.plane === 0) S.bombDrop();
+          break;
+        case "rajahdys":
+          if (!quiet) S.boom(ev.r > 60);
+          burst(ev.x, ev.y, 26, ["#e88434", "#f4c684", "#4a4a4a", "#8a8474"], 160, 1.0);
+          particles.push({ x: ev.x, y: ev.y, vx: 0, vy: 0, r: ev.r * 0.5, life: 0.3, life0: 0.3, color: "#f4e9c8", alpha: 0.7, grow: true });
+          shake = Math.max(shake, 9);
+          break;
+        case "flak":
+          if (!quiet) S.flak();
+          burst(ev.x, ev.y, 8, ["#55534d", "#7a776e", "#3a3a38"], 50, 0.8);
+          break;
+        case "it-laukaus":
+          burst(ev.x, ev.y, 2, ["#f4e9c8"], 30, 0.2);
+          break;
+        case "kaatui":
+          if (!quiet) S.boom(true);
+          burst(ev.x, ev.y, 30, ["#e88434", "#f4c684", "#3a3a3a"], 180, 1.1);
+          shake = Math.max(shake, 12);
+          if (!quiet && ev.by === 0) addFloater(ev.x, ev.y - 24, "Pudotus!", "#e8a44c");
+          break;
+        case "maahansyoksy":
+          shake = Math.max(shake, 8);
+          break;
+        case "noussut":
+          break;
+        case "laskeutui":
+          if (!quiet && ev.plane === 0) { S.land(); if (ev.own) toast("Laskeuduit — pysähdy, niin mekaanikot hoitavat loput"); }
+          break;
+        case "huollettu":
+          if (!quiet) { S.service(); toast("Kone huollettu — täydet tankit ja pommit!"); }
+          break;
+        case "vihollinen":
+          if (!quiet) S.spawn();
+          break;
+        case "tuhottu":
+          if (!quiet) {
+            const names = { halli: "Halli", varikko: "Varikko", it: "It-tykki" };
+            addFloater(ev.x, ev.y - 20, (names[ev.struct] || "Maali") + " tuhottu!", "#f4c684");
+            const left = E.targetsLeft(st);
+            if (left > 0) toast(`${names[ev.struct] || "Maali"} tuhottu — ${left} maalia jäljellä`);
+          }
+          break;
+        case "uusikone":
+          if (!quiet) toast(`Uusi kone valmiina — ${ev.lives} jäljellä`);
+          break;
+        case "voitto":
+          if (!quiet) { S.win(); pendingResultT = 2.2; }
+          break;
+        case "tappio":
+          if (!quiet) { S.lose(); pendingResultT = 2.2; }
+          break;
+      }
+    }
+  }
+  function addFloater(x, y, text, color) {
+    floaters.push({ x, y, text, color, life: 1.6 });
+  }
+
+  function stepParticles(dt) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const pa = particles[i];
+      pa.x += pa.vx * dt; pa.y += pa.vy * dt;
+      pa.vy += (pa.grow ? -14 : 60) * dt;
+      pa.life -= dt;
+      if (pa.life <= 0) particles.splice(i, 1);
+    }
+    if (particles.length > 500) particles.splice(0, particles.length - 500);
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      const f = floaters[i];
+      f.y -= 26 * dt;
+      f.life -= dt;
+      if (f.life <= 0) floaters.splice(i, 1);
+    }
+  }
+
+  // ———————————————————————— Syötteet ————————————————————————
+  const keys = {};
+  const touch = { ccw: false, cw: false, up: false, down: false, fire: false };
+  let bombTap = false, flipTap = false;
+  window.addEventListener("keydown", (e) => {
+    if (e.repeat) { if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) e.preventDefault(); return; }
+    keys[e.key.toLowerCase()] = true;
+    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(e.key.toLowerCase())) e.preventDefault();
+    if (e.key === " ") keys.space = true;
+    if (e.key.toLowerCase() === "f") toggleFullscreen();
+    if (e.key === "Escape" && mode === "mission") abortMission();
+    S.ensure();
+  });
+  window.addEventListener("keyup", (e) => {
+    keys[e.key.toLowerCase()] = false;
+    if (e.key === " ") keys.space = false;
+  });
+  function bindHold(id, prop) {
+    const el = $(id);
+    const on = (e) => { e.preventDefault(); touch[prop] = true; S.ensure(); };
+    const off = (e) => { e.preventDefault(); touch[prop] = false; };
+    el.addEventListener("pointerdown", on);
+    el.addEventListener("pointerup", off);
+    el.addEventListener("pointercancel", off);
+    el.addEventListener("pointerleave", off);
+  }
+  bindHold("tCcw", "ccw");
+  bindHold("tCw", "cw");
+  bindHold("tPowUp", "up");
+  bindHold("tPowDown", "down");
+  bindHold("tFire", "fire");
+  $("tBomb").addEventListener("pointerdown", (e) => { e.preventDefault(); bombTap = true; S.ensure(); });
+  $("tFlip").addEventListener("pointerdown", (e) => { e.preventDefault(); flipTap = true; S.ensure(); });
+
+  function readInput() {
+    if (testInput) return testInput;
+    let pitch = 0, power = 0;
+    if (keys.arrowleft || keys.a || touch.ccw) pitch -= 1;
+    if (keys.arrowright || keys.d || touch.cw) pitch += 1;
+    if (keys.arrowup || keys.w || touch.up) power += 1;
+    if (keys.arrowdown || keys.s || touch.down) power -= 1;
+    const input = {
+      pitch, power,
+      fire: !!(keys.space || touch.fire),
+      bomb: !!(keys.b || bombTap),
+      flip: !!(keys.x || flipTap),
+    };
+    bombTap = false; flipTap = false;
+    return input;
+  }
+
+  // ———————————————————————— Pelinohjaus ————————————————————————
+  function startMission(missionId) {
+    state = E.createMission({ missionId, seed: seedCounter++ });
+    decor = makeDecor(state);
+    particles = []; floaters = [];
+    mode = "mission";
+    resultShown = false;
+    pendingResultT = 0;
+    const p = E.playerOf(state);
+    camX = E.clamp(p.x - VIEW_W / 2, 0, state.terrain.W - VIEW_W);
+    camY = E.clamp(p.y - VIEW_H * 0.5, 0, state.terrain.H - VIEW_H);
+    hideOverlay();
+    updateSide(true);
+    toast("Täysi kaasu (↑) ja vedä nokka ylös (←) — tuhoa punaiset maalit");
+    S.ensure();
+  }
+  function startAttract() {
+    attract = E.createMission({ missionId: "laakso", seed: (seedCounter++ % 7) + 3, autopilot: true });
+    attractDecor = makeDecor(attract);
+    const p = E.playerOf(attract);
+    p.onGround = false;
+    p.x = attract.terrain.W * 0.35; p.y = 380;
+    p.vx = 220; p.vy = 0; p.throttle = 1;
+    camX = p.x - VIEW_W / 2;
+    camY = p.y - VIEW_H * 0.5;
+  }
+  function toMenu() {
+    mode = "menu";
+    state = null;
+    startAttract();
+    decorateMissions();
+    $("menuSection").style.display = "";
+    $("resultsSection").style.display = "none";
+    $("overlay").classList.add("show");
+    updateSide(true);
+  }
+  function abortMission() {
+    if (mode !== "mission") return;
+    toMenu();
+  }
+  function hideOverlay() {
+    $("overlay").classList.remove("show");
+  }
+  function fmtTime(t) {
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    return m + ":" + String(s).padStart(2, "0");
+  }
+  function showResults() {
+    if (resultShown || !state) return;
+    resultShown = true;
+    const res = E.result(state);
+    const win = res.outcome === "voitto";
+    mode = "results";
+    const title = $("resTitle");
+    title.textContent = win ? "Tehtävä suoritettu!" : "Tehtävä epäonnistui";
+    title.className = "res-title " + (win ? "win" : "out");
+    $("resSub").textContent = win
+      ? "Vihollisen tukikohta on raunioina."
+      : "Kaikki koneet menetetty — lentue vetäytyy.";
+    const rows = [];
+    rows.push(["Aika", fmtTime(res.time)]);
+    rows.push(["Maalit tuhottu", res.targetsDestroyed + " / " + res.targetsTotal]);
+    rows.push(["Pudotukset", String(res.kills)]);
+    rows.push(["Pommeja pudotettu", String(res.bombsDropped)]);
+    rows.push(["Koneita menetetty", String(res.planesLost)]);
+    let bestNote = "";
+    if (win) {
+      const id = state.def.id;
+      const prev = save.best[id];
+      if (prev == null || res.time < prev) {
+        save.best[id] = Math.round(res.time * 10) / 10;
+        bestNote = prev == null ? "Ensimmäinen läpäisy!" : "Uusi ennätys!";
+      }
+      save.done[id] = true;
+      persist();
+    }
+    $("resRows").innerHTML =
+      rows.map(([k, v]) => `<div class="r"><span>${k}</span><b>${v}</b></div>`).join("") +
+      (bestNote ? `<div class="r hl"><span>${bestNote}</span><b>${fmtTime(res.time)}</b></div>` : "");
+    // Seuraava tehtävä -nappi
+    const idx = E.MISSIONS.findIndex((m) => m.id === state.def.id);
+    const next = win && idx >= 0 && idx < E.MISSIONS.length - 1 ? E.MISSIONS[idx + 1] : null;
+    $("btnNext").style.display = next ? "" : "none";
+    if (next) $("btnNext").onclick = () => startMission(next.id);
+    $("menuSection").style.display = "none";
+    $("resultsSection").style.display = "";
+    $("overlay").classList.add("show");
+  }
+
+  // ———————————————————————— Sivupaneeli ————————————————————————
+  let sideTimer = 0;
+  function updateSide(force) {
+    const st = mode === "mission" || mode === "results" ? state : null;
+    const chip = $("missionChip");
+    if (st) {
+      chip.innerHTML = `<b>${st.def.name}</b><br>${st.def.sub}`;
+    } else {
+      chip.innerHTML = "Valitse tehtävä valikosta.";
+    }
+    const list = $("targetList");
+    if (!st) {
+      list.innerHTML = `<div class="row"><span class="ic">✈</span><span class="nm">Ei tehtävää käynnissä</span></div>`;
+      return;
+    }
+    const icons = { halli: "▛", varikko: "▲", it: "☗" };
+    const names = { halli: "Halli", varikko: "Varikko", it: "It-tykki" };
+    const rows = [];
+    let n = { halli: 0, varikko: 0, it: 0 };
+    for (const s of st.structures) {
+      if (!s.target) continue;
+      n[s.type]++;
+      const down = s.hp <= 0;
+      rows.push(
+        `<div class="row${down ? " down" : ""}"><span class="ic">${icons[s.type] || "■"}</span>` +
+        `<span class="nm">${names[s.type] || s.type} ${n[s.type]}</span>` +
+        (down ? `<span class="st">tuhottu</span>` :
+          `<span class="bar"><i style="width:${Math.round((s.hp / s.maxHp) * 100)}%"></i></span>`) +
+        `</div>`
+      );
+    }
+    list.innerHTML = rows.join("");
+    void force;
+  }
+
+  // ———————————————————————— Koko ruutu ja toast ————————————————————————
+  function toggleFullscreen() {
+    const el = document.querySelector(".board-frame");
+    if (!document.fullscreenElement) el.requestFullscreen && el.requestFullscreen();
+    else document.exitFullscreen && document.exitFullscreen();
+  }
+  let toastTimer = null;
+  function toast(msg) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+  }
+
+  // ———————————————————————— Valikko ————————————————————————
+  function decorateMissions() {
+    const picker = $("missionPicker");
+    picker.innerHTML = "";
+    const tierNames = { helppo: "Helppo", keski: "Keskitaso", vaikea: "Vaikea" };
+    E.MISSIONS.forEach((m) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.dataset.mission = m.id;
+      const best = save.best[m.id];
+      b.innerHTML =
+        `<span class="m-name">${m.name}<small>${m.sub}</small>` +
+        `<small class="m-best">${best != null ? "paras aika: " + fmtTime(best) : ""}</small></span>` +
+        `<span class="m-tier t-${m.tier}">${tierNames[m.tier] || m.tier}</span>`;
+      b.addEventListener("click", () => startMission(m.id));
+      picker.appendChild(b);
+    });
+  }
+
+  // ———————————————————————— Pääsilmukka ————————————————————————
+  let last = 0, acc = 0;
+  function frame(ts) {
+    requestAnimationFrame(frame);
+    const t = ts / 1000;
+    const dt = Math.min(0.1, t - last || 0.016);
+    last = t;
+    acc += dt;
+    if (mode === "mission" || mode === "results") {
+      const input = readInput();
+      let steps = 0;
+      while (acc >= E.DT && steps < 4) {
+        E.step(state, input);
+        handleEvents(state, false);
+        acc -= E.DT;
+        steps++;
+      }
+      if (acc >= E.DT) acc = 0;
+      const p = E.playerOf(state);
+      S.engine(mode === "mission" && p && !p.dead, p ? p.throttle : 0, p ? Math.hypot(p.vx, p.vy) : 0);
+      // varoituspiippaus
+      if (p && !p.dead && mode === "mission") {
+        if ((p.fuel < 22 && p.fuel > 0) || p.hp < 28) {
+          warnT -= dt;
+          if (warnT <= 0) { warnT = 1.6; S.warn(); if (p.fuel < 22) toast("Polttoaine vähissä — laskeudu omalle kentälle!"); }
+        }
+      }
+      if (pendingResultT > 0) {
+        pendingResultT -= dt;
+        if (pendingResultT <= 0) showResults();
+      }
+      stepParticles(dt);
+      drawScene(state, decor, t, true);
+    } else {
+      if (!attract) startAttract();
+      let steps = 0;
+      while (acc >= E.DT && steps < 4) {
+        E.step(attract, null);
+        handleEvents(attract, true);
+        acc -= E.DT;
+        steps++;
+      }
+      if (acc >= E.DT) acc = 0;
+      if (attract.over || attract.t > 120) {
+        particles = []; floaters = [];
+        startAttract();
+      }
+      stepParticles(dt);
+      drawScene(attract, attractDecor, t, false);
+      S.engine(false, 0, 0);
+    }
+    sideTimer -= dt;
+    if (sideTimer <= 0) {
+      sideTimer = 0.3;
+      updateSide(false);
+    }
+  }
+
+  // ———————————————————————— Kytkennät ————————————————————————
+  $("btnAgain").addEventListener("click", () => startMission(state ? state.def.id : E.MISSIONS[0].id));
+  $("btnResMenu").addEventListener("click", toMenu);
+  $("btnAbort").addEventListener("click", abortMission);
+  $("btnMenuOpen").addEventListener("click", () => { if (mode === "mission") abortMission(); else toMenu(); });
+  $("btnFullscreen").addEventListener("click", toggleFullscreen);
+  $("btnFsCorner").addEventListener("click", toggleFullscreen);
+  $("btnSound").addEventListener("click", () => {
+    const on = S.toggle();
+    $("btnSound").textContent = on ? "Ääni: päällä" : "Ääni: pois";
+    $("btnSound").setAttribute("aria-pressed", String(on));
+  });
+
+  // Smoke-testien käyttöliittymä
+  window.KolmitasoUI = {
+    get mode() { return mode; },
+    get state() { return state; },
+    get attract() { return attract; },
+    save,
+    startMission, toMenu,
+    setTestInput(v) { testInput = v; },
+  };
+
+  toMenu();
+  requestAnimationFrame(frame);
+})();
+</script></body></html>
