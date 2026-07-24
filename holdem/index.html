@@ -1849,6 +1849,69 @@ function handStrengthPreflop(hole) {
 
 var CAT = [0.15, 0.35, 0.5, 0.62, 0.72, 0.8, 0.88, 0.94, 0.98, 1];
 
+var SUITS = ["s", "h", "d", "c"];
+
+function compareVec(a, b) {
+  var len = Math.max(a.length, b.length);
+  for (var i = 0; i < len; i++) {
+    var av = a[i] || 0;
+    var bv = b[i] || 0;
+    if (av !== bv) return av - bv;
+  }
+  return 0;
+}
+
+/**
+ * Monte Carlo -equity: todennäköisyys voittaa showdown aktiivisia vastustajia
+ * vastaan, kun loput kortit jaetaan satunnaisesti. Deterministinen view.rng:llä.
+ * Palauttaa [0,1]; satunnaiskäden equity ≈ 1/(vastustajat+1).
+ */
+function estimateEquity(view, opts) {
+  opts = opts || {};
+  var iters = opts.iterations || 160;
+  var rng = view.rng || Math.random;
+  var evalHand = view.evaluateHand;
+  if (typeof evalHand !== "function" || !view.hole || view.hole.length < 2) {
+    return handStrength(view.hole, view.board, evalHand);
+  }
+  var board = view.board || [];
+  var opps = (view.opponents || []).filter(function (o) {
+    return !o.folded;
+  }).length || 1;
+
+  var known = {};
+  view.hole.concat(board).forEach(function (c) { known[c.rank + c.suit] = true; });
+  var deck = [];
+  for (var si = 0; si < SUITS.length; si++) {
+    for (var r = 2; r <= 14; r++) {
+      if (!known[r + SUITS[si]]) deck.push({ rank: r, suit: SUITS[si] });
+    }
+  }
+
+  var need = 5 - board.length;
+  var draw = need + opps * 2;
+  var score = 0;
+  for (var it = 0; it < iters; it++) {
+    // osittainen Fisher-Yates: nostetaan draw korttia pakan alkuun
+    for (var i = 0; i < draw; i++) {
+      var j = i + ((rng() * (deck.length - i)) | 0);
+      var t = deck[i]; deck[i] = deck[j]; deck[j] = t;
+    }
+    var fullBoard = board.concat(deck.slice(0, need));
+    var mine = evalHand(view.hole.concat(fullBoard)).vector;
+    var beaten = false;
+    var tied = 0;
+    for (var o = 0; o < opps; o++) {
+      var hole = [deck[need + o * 2], deck[need + o * 2 + 1]];
+      var c = compareVec(evalHand(hole.concat(fullBoard)).vector, mine);
+      if (c > 0) { beaten = true; break; }
+      if (c === 0) tied++;
+    }
+    if (!beaten) score += 1 / (1 + tied);
+  }
+  return score / iters;
+}
+
 function handStrength(hole, board, evaluateHand) {
   if (!board || board.length === 0) return handStrengthPreflop(hole);
   if (typeof evaluateHand !== "function") {
@@ -1906,6 +1969,7 @@ function avoidLimp(view, t, strength, raiseThreshold) {
 }
 
 module.exports = {
+  estimateEquity: estimateEquity,
   handStrengthPreflop: handStrengthPreflop,
   handStrength: handStrength,
   byType: byType,
@@ -2096,9 +2160,10 @@ globalThis.__HoldemBotFiles.hard =
     if (req.indexOf("botRegistry") >= 0) return globalThis.HoldemRegistry;
     throw new Error("bundle require: " + req);
   };
-  // hardBot.js — oletusvastustaja ("vaikea"). Julkisia Pluribus-tyylivihjeitä (ei limppiä, donk),
-// ei MCCFR/blueprint-hakua (lähdekoodia ei julkaistu; selainpeliin liian raskas).
-// Lähde: https://en.wikipedia.org/wiki/Pluribus_(poker_bot)
+  // hardBot.js — oletusvastustaja ("vaikea"). Monte Carlo -equity (botUtil.estimateEquity)
+// verrattuna pot oddseihin; skaalautuu vastustajamäärään. Pluribus-tyylivihjeet säilyvät:
+// ei limppiä (raise tai fold), donk/avauspanoksia myös keskivahvalla, satunnaisia bluffeja.
+// Ei MCCFR/blueprint-hakua. Lähde: https://en.wikipedia.org/wiki/Pluribus_(poker_bot)
 "use strict";
 
 var U = require("../botUtil.js");
@@ -2108,45 +2173,61 @@ module.exports = {
 
   act: function (view) {
     var t = U.byType(view.legal);
-    var strength = U.handStrength(view.hole, view.board, view.evaluateHand);
-    strength = Math.min(1, strength * 1.2);
     var pot = view.pot || 1;
     var toCall = view.toCall || 0;
     var potOdds = toCall / (pot + toCall);
     var rng = view.rng || Math.random;
+
+    var opps = (view.opponents || []).filter(function (o) {
+      return !o.folded;
+    }).length || 1;
+    var avg = 1 / (opps + 1); // satunnaiskäden equity tätä pöytää vastaan
+
+    var eq = U.estimateEquity(view, {
+      iterations: view.street === "preflop" ? 120 : 160,
+    });
     var roll = rng();
 
-    // Pluribus: vältä limppiä (call BB ilman korotusta) → raise tai fold
-    var antiLimp = U.avoidLimp(view, t, strength, 0.30);
-    if (antiLimp) return antiLimp;
+    var strong = eq > Math.min(0.72, avg * 1.45);
+    var decent = eq > avg * 1.15;
 
-    // Bluffi / donk-painotus: avaa panos useammin myös keskivahvalla
+    // Pluribus: vältä limppiä (call BB ilman korotusta) → raise tai fold
+    if (U.isLimpSpot(view) && t.call) {
+      if (t.raise && decent) {
+        return {
+          type: "raise",
+          amount: U.clampBet(t.raise, Math.floor(t.raise.min + pot * (0.5 + eq * 0.5))),
+        };
+      }
+      if (t.fold) return { type: "fold" };
+    }
+
+    // Avauspanos / donk: panosta vahvalla, keskivahvalla usein, joskus bluffina
     if (U.canOpenBet(view, t)) {
-      var donkChance = strength > 0.45 ? 0.7 : strength > 0.32 ? 0.45 : 0.1;
-      if (roll < donkChance) {
+      var betChance = strong ? 0.85 : decent ? 0.5 : 0.12;
+      if (roll < betChance) {
         return {
           type: "bet",
-          amount: U.clampBet(t.bet, Math.floor(pot * (0.5 + strength * 0.4))),
+          amount: U.clampBet(t.bet, Math.floor(pot * (0.45 + eq * 0.45))),
         };
       }
       return { type: "check" };
     }
 
-    if (strength < potOdds - 0.1 && strength < 0.35 && t.fold) {
-      return { type: "fold" };
-    }
-
-    if (strength > 0.62 && t.raise && roll < 0.78) {
+    // Panosta vastaan: value-raise vahvalla
+    if (strong && t.raise && roll < 0.8) {
       return {
         type: "raise",
-        amount: U.clampBet(
-          t.raise,
-          Math.floor(toCall + pot * (0.55 + strength * 0.45))
-        ),
+        amount: U.clampBet(t.raise, Math.floor(toCall + pot * (0.55 + eq * 0.45))),
       };
     }
 
-    if (t.call) return { type: "call", amount: t.call.amount };
+    // Maksa kun equity riittää pot oddseihin (pieni implied odds -marginaali)
+    if (t.call && eq > potOdds - 0.03) {
+      return { type: "call", amount: t.call.amount };
+    }
+
+    if (t.fold) return { type: "fold" };
     return U.fallbackAct(view);
   },
 };

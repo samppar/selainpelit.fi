@@ -21,6 +21,69 @@ function handStrengthPreflop(hole) {
 
 var CAT = [0.15, 0.35, 0.5, 0.62, 0.72, 0.8, 0.88, 0.94, 0.98, 1];
 
+var SUITS = ["s", "h", "d", "c"];
+
+function compareVec(a, b) {
+  var len = Math.max(a.length, b.length);
+  for (var i = 0; i < len; i++) {
+    var av = a[i] || 0;
+    var bv = b[i] || 0;
+    if (av !== bv) return av - bv;
+  }
+  return 0;
+}
+
+/**
+ * Monte Carlo -equity: todennäköisyys voittaa showdown aktiivisia vastustajia
+ * vastaan, kun loput kortit jaetaan satunnaisesti. Deterministinen view.rng:llä.
+ * Palauttaa [0,1]; satunnaiskäden equity ≈ 1/(vastustajat+1).
+ */
+function estimateEquity(view, opts) {
+  opts = opts || {};
+  var iters = opts.iterations || 160;
+  var rng = view.rng || Math.random;
+  var evalHand = view.evaluateHand;
+  if (typeof evalHand !== "function" || !view.hole || view.hole.length < 2) {
+    return handStrength(view.hole, view.board, evalHand);
+  }
+  var board = view.board || [];
+  var opps = (view.opponents || []).filter(function (o) {
+    return !o.folded;
+  }).length || 1;
+
+  var known = {};
+  view.hole.concat(board).forEach(function (c) { known[c.rank + c.suit] = true; });
+  var deck = [];
+  for (var si = 0; si < SUITS.length; si++) {
+    for (var r = 2; r <= 14; r++) {
+      if (!known[r + SUITS[si]]) deck.push({ rank: r, suit: SUITS[si] });
+    }
+  }
+
+  var need = 5 - board.length;
+  var draw = need + opps * 2;
+  var score = 0;
+  for (var it = 0; it < iters; it++) {
+    // osittainen Fisher-Yates: nostetaan draw korttia pakan alkuun
+    for (var i = 0; i < draw; i++) {
+      var j = i + ((rng() * (deck.length - i)) | 0);
+      var t = deck[i]; deck[i] = deck[j]; deck[j] = t;
+    }
+    var fullBoard = board.concat(deck.slice(0, need));
+    var mine = evalHand(view.hole.concat(fullBoard)).vector;
+    var beaten = false;
+    var tied = 0;
+    for (var o = 0; o < opps; o++) {
+      var hole = [deck[need + o * 2], deck[need + o * 2 + 1]];
+      var c = compareVec(evalHand(hole.concat(fullBoard)).vector, mine);
+      if (c > 0) { beaten = true; break; }
+      if (c === 0) tied++;
+    }
+    if (!beaten) score += 1 / (1 + tied);
+  }
+  return score / iters;
+}
+
 function handStrength(hole, board, evaluateHand) {
   if (!board || board.length === 0) return handStrengthPreflop(hole);
   if (typeof evaluateHand !== "function") {
@@ -78,6 +141,7 @@ function avoidLimp(view, t, strength, raiseThreshold) {
 }
 
 module.exports = {
+  estimateEquity: estimateEquity,
   handStrengthPreflop: handStrengthPreflop,
   handStrength: handStrength,
   byType: byType,
