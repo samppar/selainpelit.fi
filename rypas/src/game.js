@@ -49,7 +49,11 @@
   }
 
   // Viimeksi valitut asetukset — esitäytetään uuteen peliin
-  var lastOpts = { opps: 1, rackSize: E.RACK_SIZE, openMin: E.INITIAL_MELD, difficulty: "normaali" };
+  var lastOpts = { opps: 1, rackSize: E.RACK_SIZE, openMin: E.INITIAL_MELD, matchTarget: E.MATCH_TARGET, difficulty: "normaali" };
+
+  function fmtTarget(v) {
+    return +v > 0 ? v + " p" : "Yksi erä";
+  }
 
   function startScreen() {
     var oppOpts = [1, 2, 3].map(function (n) {
@@ -58,7 +62,7 @@
     }).join("");
     openOverlay(
       "<h2>Rypäs</h2>" +
-      "<p class=\"lead\">Muodosta numerorypäitä, tyhjennä telineesi ja kerää ottelupisteitä — ensimmäinen " + E.MATCH_TARGET + " pisteeseen voittaa.</p>" +
+      "<p class=\"lead\">Muodosta numerorypäitä, tyhjennä telineesi ja kerää ottelupisteitä — ensimmäinen tavoitteeseen voittaa.</p>" +
       "<p>Ryhmä = sama numero, eri värit (3–4). Jono = sama väri, peräkkäiset (≥3).</p>" +
       "<div class=\"field-label\">Vastustajia</div>" +
       "<div class=\"diff\">" + oppOpts + "</div>" +
@@ -66,6 +70,8 @@
       "<input type=\"range\" class=\"slider\" id=\"rackSlider\" min=\"" + E.RACK_SIZE_MIN + "\" max=\"" + E.RACK_SIZE_MAX + "\" step=\"1\" value=\"" + lastOpts.rackSize + "\">" +
       "<div class=\"field-label\">Avausraja: <span class=\"slider-val\" id=\"openVal\">" + lastOpts.openMin + "</span> p</div>" +
       "<input type=\"range\" class=\"slider\" id=\"openSlider\" min=\"" + E.OPEN_MIN_MIN + "\" max=\"" + E.OPEN_MIN_MAX + "\" step=\"5\" value=\"" + lastOpts.openMin + "\">" +
+      "<div class=\"field-label\">Ottelun pituus: <span class=\"slider-val\" id=\"targetVal\">" + fmtTarget(lastOpts.matchTarget) + "</span></div>" +
+      "<input type=\"range\" class=\"slider\" id=\"targetSlider\" min=\"0\" max=\"" + E.MATCH_TARGET_MAX + "\" step=\"50\" value=\"" + lastOpts.matchTarget + "\">" +
       "<div class=\"field-label\">Vaikeus</div>" +
       "<div class=\"diff\">" +
       "<label><input type=\"radio\" name=\"diff\" value=\"helppo\"" + (lastOpts.difficulty === "helppo" ? " checked" : "") + "> Helppo</label>" +
@@ -78,6 +84,7 @@
     );
     el("rackSlider").oninput = function () { el("rackVal").textContent = this.value; };
     el("openSlider").oninput = function () { el("openVal").textContent = this.value; };
+    el("targetSlider").oninput = function () { el("targetVal").textContent = fmtTarget(this.value); };
     el("ovStart").onclick = function () {
       var d = document.querySelector("input[name=diff]:checked");
       var o = document.querySelector("input[name=opps]:checked");
@@ -85,12 +92,14 @@
         opps: o ? +o.value : 1,
         rackSize: +el("rackSlider").value,
         openMin: +el("openSlider").value,
+        matchTarget: +el("targetSlider").value,
         difficulty: d ? d.value : "normaali",
       };
       newGame({
         difficulty: lastOpts.difficulty,
         rackSize: lastOpts.rackSize,
         openMin: lastOpts.openMin,
+        matchTarget: lastOpts.matchTarget,
         playerCount: lastOpts.opps + 1,
       });
     };
@@ -114,7 +123,7 @@
     openOverlay(
       "<h2>Säännöt</h2>" +
       "<ul>" +
-      "<li><strong>Ottelu:</strong> pelataan eriä, kunnes joku saavuttaa " + E.MATCH_TARGET + " pistettä.</li>" +
+      "<li><strong>Ottelu:</strong> pelataan eriä, kunnes joku saavuttaa ottelutavoitteen (valittavissa; \"Yksi erä\" = pikapeli).</li>" +
       "<li><strong>Erä:</strong> tyhjennä telineesi ensimmäisenä — saat vastustajien jäljellä olevat pisteet (heille miinus).</li>" +
       "<li><strong>Aloitus:</strong> valitse vastustajien määrä (1–3), aloituspalat (5–20) ja avausraja (0–50 p) liukusäätimillä.</li>" +
       "<li><strong>Ryhmä:</strong> sama numero, eri värit, 3–4 palaa.</li>" +
@@ -169,7 +178,9 @@
       : "Sinun vuorosi — valitse paloja ja muodosta rypäs.");
     toast(G.round > 1
       ? "Erä " + G.round + " — tyhjennä telineesi!"
-      : "Ottelu " + G.matchTarget + " pisteeseen — tyhjennä telineesi!");
+      : G.matchTarget > 0
+        ? "Ottelu " + G.matchTarget + " pisteeseen — tyhjennä telineesi!"
+        : "Pikapeli: yksi erä — tyhjennä telineesi!");
   }
 
   // Agentti-/smoke-testaus: window.RypasUI.newGame({ seed: 3 })
@@ -309,8 +320,10 @@
 
   function renderGoal() {
     var g = el("goal");
-    var matchLine = "<strong>Ottelu " + G.matchTarget + " p</strong> · Erä " + G.round +
-      " · " + G.matchScores[0] + "–" + G.matchScores[1];
+    var matchLine = (G.matchTarget > 0
+      ? "<strong>Ottelu " + G.matchTarget + " p</strong> · Erä " + G.round
+      : "<strong>Pikapeli</strong> · yksi erä") +
+      " · " + G.matchScores.join("–");
     if (G.over) {
       g.innerHTML = matchLine + (G.matchOver ? " · <strong>Ottelu ohi</strong>" : " · <strong>Erä ohi</strong>");
       return;
@@ -674,14 +687,17 @@
     else roundMsg = "Erä päättyi tasapeliin (pussi / telineet).";
 
     var scoreLine = "Erä: " + G.scores.map(fmtDelta).join(" / ") +
-      " · Ottelu: <strong>" + G.matchScores.join("–") + "</strong> / " + G.matchTarget;
+      " · Ottelu: <strong>" + G.matchScores.join("–") + "</strong>" +
+      (G.matchTarget > 0 ? " / " + G.matchTarget : "");
 
     if (G.matchOver) {
       var title = G.matchWinner === 0 ? "Otteluvoitto!" : G.matchWinner != null ? "Otteluhäviö" : "Ottelutasapeli";
       var lead = G.matchWinner === 0
-        ? "Saavutit " + G.matchTarget + " pistettä."
+        ? (G.matchTarget > 0 ? "Saavutit " + G.matchTarget + " pistettä." : "Voitit pikapelin.")
         : G.matchWinner != null
-          ? NAMES[G.matchWinner] + " ehti " + G.matchTarget + " pisteeseen."
+          ? (G.matchTarget > 0
+            ? NAMES[G.matchWinner] + " ehti " + G.matchTarget + " pisteeseen."
+            : NAMES[G.matchWinner] + " voitti pikapelin.")
           : "Kärjessä sama pistemäärä.";
       openOverlay(
         "<h2>" + title + "</h2>" +

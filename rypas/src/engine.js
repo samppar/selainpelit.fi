@@ -18,7 +18,8 @@
   var JOKER_PENALTY = 30;
   var PLAYER_COUNT = 2; // oletus
   var PLAYER_COUNT_CHOICES = [2, 3, 4];
-  var MATCH_TARGET = 200; // ottelu useammalla erällä
+  var MATCH_TARGET = 200; // ottelu useammalla erällä; 0 = yksi erä (pikapeli)
+  var MATCH_TARGET_MAX = 500;
 
   function clampRackSize(n) {
     var v = n | 0;
@@ -38,6 +39,14 @@
 
   function openMinOf(state) {
     return state.openMin != null ? state.openMin : INITIAL_MELD;
+  }
+
+  function clampMatchTarget(n) {
+    if (n == null || isNaN(+n)) return MATCH_TARGET;
+    var v = +n | 0;
+    if (v < 0) return 0;
+    if (v > MATCH_TARGET_MAX) return MATCH_TARGET_MAX;
+    return v;
   }
 
   function clampPlayerCount(n) {
@@ -403,7 +412,7 @@
       scores: scores, // tämän erän pisteet
       settled: false,
       matchScores: matchScores,
-      matchTarget: opts.matchTarget != null ? opts.matchTarget : MATCH_TARGET,
+      matchTarget: clampMatchTarget(opts.matchTarget != null ? opts.matchTarget : MATCH_TARGET),
       matchOver: false,
       matchWinner: null,
       round: opts.round != null ? opts.round : 1,
@@ -422,10 +431,10 @@
     state.settled = true;
     var n = playerCountOf(state);
     var t = state.matchTarget;
-    var reached = false;
+    var reached = t <= 0; // pikapeli: yksi erä ratkaisee
     for (var p = 0; p < n; p++) {
       state.matchScores[p] += state.scores[p];
-      if (state.matchScores[p] >= t) reached = true;
+      if (t > 0 && state.matchScores[p] >= t) reached = true;
     }
     if (reached) {
       state.matchOver = true;
@@ -792,6 +801,8 @@
     PLAYER_COUNT_CHOICES: PLAYER_COUNT_CHOICES,
     clampPlayerCount: clampPlayerCount,
     MATCH_TARGET: MATCH_TARGET,
+    MATCH_TARGET_MAX: MATCH_TARGET_MAX,
+    clampMatchTarget: clampMatchTarget,
     makeRNG: makeRNG,
     shuffle: shuffle,
     tile: tile,

@@ -244,6 +244,22 @@ E.applyPlay(om, [om.racks[0].slice()], []);
 const omNext = E.nextRound(om);
 ok(omNext && omNext.openMin === 15, "openMin 15 säilyy seuraavaan erään");
 
+// Ottelutavoite säädettävissä + pikapeli (yksi erä)
+ok(E.clampMatchTarget(999) === 500, "matchTarget klampataan 500:aan");
+ok(E.clampMatchTarget(-10) === 0, "negatiivinen matchTarget → 0");
+ok(E.clampMatchTarget(undefined) === 200, "matchTarget oletus 200");
+ok(E.newGame({ seed: 1, matchTarget: 350 }).matchTarget === 350, "matchTarget 350 asettuu");
+
+const quick = E.newGame({ seed: 21, matchTarget: 0 });
+quick.racks[0] = [E.tile("K", 10, false), E.tile("S", 10, false), E.tile("P", 10, false)];
+quick.racks[1] = [E.tile("O", 4, false)];
+quick.board = [];
+quick.hasMelded = [false, false];
+quick.turn = 0;
+E.applyPlay(quick, [quick.racks[0].slice()], []);
+ok(quick.matchOver && quick.matchWinner === 0, "pikapeli: yksi erä päättää ottelun");
+ok(E.nextRound(quick) === null, "pikapelissä ei seuraavaa erää");
+
 // Useampi pelaaja
 const G3 = E.newGame({ seed: 5, playerCount: 3 });
 ok(G3.racks.length === 3 && G3.playerCount === 3, "3 pelaajaa → 3 telinettä");
