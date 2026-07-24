@@ -573,8 +573,46 @@ button.mini:hover:not(:disabled) {
   100% { }
 }
 
-/* Raahaus — telineen järjestely */
-.rack .tile.clickable { touch-action: none; }
+/* Raahaus — teline, työalue ja pöydän rypäät */
+.rack .tile.clickable,
+.pool .tile.clickable,
+.tile.grab { touch-action: none; }
+.tile.grab { cursor: grab; }
+.tile.grab:active { cursor: grabbing; }
+
+/* Uuden rypään pudotusalue */
+.newset-zone {
+  border: 1.5px dashed rgba(230, 182, 84, 0.4);
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(230, 182, 84, 0.75);
+  letter-spacing: 0.03em;
+  transition: background 0.15s, border-color 0.15s;
+}
+.newset-zone.drop-hint {
+  background: rgba(230, 182, 84, 0.15);
+  border-color: var(--brass);
+  color: var(--brass-hi);
+  outline: none;
+}
+
+/* Pudotuskohteen vihje raahatessa */
+.drop-hint {
+  outline: 2px dashed var(--select);
+  outline-offset: 2px;
+}
+
+/* Vajaa / rikkinäinen rypäs kesken järjestelyn */
+.set.invalid {
+  border-color: rgba(255, 120, 118, 0.6);
+  background: rgba(150, 35, 32, 0.28);
+}
+.set.invalid:hover {
+  border-color: rgba(255, 141, 141, 0.8);
+}
 .tile.ghost {
   position: fixed;
   z-index: 100;

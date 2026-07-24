@@ -584,8 +584,46 @@ button.mini:hover:not(:disabled) {
   100% { }
 }
 
-/* Raahaus — telineen järjestely */
-.rack .tile.clickable { touch-action: none; }
+/* Raahaus — teline, työalue ja pöydän rypäät */
+.rack .tile.clickable,
+.pool .tile.clickable,
+.tile.grab { touch-action: none; }
+.tile.grab { cursor: grab; }
+.tile.grab:active { cursor: grabbing; }
+
+/* Uuden rypään pudotusalue */
+.newset-zone {
+  border: 1.5px dashed rgba(230, 182, 84, 0.4);
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(230, 182, 84, 0.75);
+  letter-spacing: 0.03em;
+  transition: background 0.15s, border-color 0.15s;
+}
+.newset-zone.drop-hint {
+  background: rgba(230, 182, 84, 0.15);
+  border-color: var(--brass);
+  color: var(--brass-hi);
+  outline: none;
+}
+
+/* Pudotuskohteen vihje raahatessa */
+.drop-hint {
+  outline: 2px dashed var(--select);
+  outline-offset: 2px;
+}
+
+/* Vajaa / rikkinäinen rypäs kesken järjestelyn */
+.set.invalid {
+  border-color: rgba(255, 120, 118, 0.6);
+  background: rgba(150, 35, 32, 0.28);
+}
+.set.invalid:hover {
+  border-color: rgba(255, 141, 141, 0.8);
+}
 .tile.ghost {
   position: fixed;
   z-index: 100;
@@ -1197,6 +1235,15 @@ input[type="range"].slider::-moz-range-thumb {
     var newAll = flatBoard(newBoard).concat(newRack);
     if (!sameMultiset(oldAll, newAll)) {
       return { ok: false, error: "Palojen määrä ei täsmää (ei saa lisätä/poistaa paloja)" };
+    }
+
+    // Telineeseen ei saa ottaa pöydän paloja
+    var oldRackIds = {};
+    oldRack.forEach(function (t) { oldRackIds[t.id] = true; });
+    for (var nr = 0; nr < newRack.length; nr++) {
+      if (!oldRackIds[newRack[nr].id]) {
+        return { ok: false, error: "Pöydän paloja ei voi ottaa telineeseen" };
+      }
     }
 
     var played = scorePlayedFromRack(oldRack, newRack);
@@ -1891,6 +1938,7 @@ input[type="range"].slider::-moz-range-thumb {
       "<li><strong>Jokerit</strong> korvaavat minkä tahansa palan. Kädessä jokerin sakko on 30.</li>" +
       "<li><strong>Avaus:</strong> ensimmäisellä siirrolla vähintään avausrajan verran pisteitä omista paloista (pöytää ei saa vielä järjestellä).</li>" +
       "<li>Avauksen jälkeen voit purkaa ja järjestellä pöydän rypäitä, kunhan vuoron lopussa kaikki rypäät kelpaavat ja olet pelannut vähintään yhden uuden palan.</li>" +
+      "<li><strong>Raahaa</strong> paloja telineestä pöydälle, rypäästä toiseen tai tyhjään kohtaan (uusi rypäs). Vajaa rypäs näkyy punaisena. Jos vuoron lopussa pöytä ei kelpaa, laatat palautuvat paikoilleen.</li>" +
       "<li>Jos et pelaa, <strong>nosta</strong> yksi pala.</li>" +
       "</ul>" +
       "<div class=\"ov-actions\">" +
@@ -2099,6 +2147,7 @@ input[type="range"].slider::-moz-range-thumb {
     var host = el("table");
     host.innerHTML = "";
     host.className = "table";
+    var human = G.turn === 0 && !G.over && !busy;
     if (!workBoard.length) {
       host.classList.add("empty-hint");
       host.textContent = "Pöytä tyhjä — muodosta ensimmäinen rypäs telineestä.";
@@ -2107,8 +2156,17 @@ input[type="range"].slider::-moz-range-thumb {
     workBoard.forEach(function (set, idx) {
       var row = document.createElement("div");
       row.className = "set" + (selSet === idx ? " selected" : "") +
-        (flashSets[setSig(set)] ? " flash" : "");
-      set.forEach(function (t) { row.appendChild(tileEl(t, false)); });
+        (flashSets[setSig(set)] ? " flash" : "") +
+        (human && !E.isValidSet(set) ? " invalid" : "");
+      var draggable = human && (G.hasMelded[0] || isNewSet(idx));
+      set.forEach(function (t) {
+        var d = tileEl(t, false);
+        if (draggable) {
+          d.classList.add("grab");
+          attachDrag(d, t, { type: "set", idx: idx });
+        }
+        row.appendChild(d);
+      });
       var actions = document.createElement("div");
       actions.className = "set-actions";
       var canBreak = G.hasMelded[0] || isNewSet(idx);
@@ -2128,6 +2186,13 @@ input[type="range"].slider::-moz-range-thumb {
       };
       host.appendChild(row);
     });
+    if (human) {
+      var zone = document.createElement("div");
+      zone.className = "newset-zone";
+      zone.id = "newsetZone";
+      zone.textContent = "＋ Uusi rypäs — pudota pala tähän";
+      host.appendChild(zone);
+    }
   }
 
   function isNewSet(idx) {
@@ -2149,7 +2214,7 @@ input[type="range"].slider::-moz-range-thumb {
   }
 
   function onSetClick(idx) {
-    if (busy || G.turn !== 0 || G.over) return;
+    if (busy || G.turn !== 0 || G.over || dragSuppressClick) return;
     var tiles = selectedTiles();
     if (tiles.length) {
       if (!G.hasMelded[0] && !isNewSet(idx)) {
@@ -2185,7 +2250,11 @@ input[type="range"].slider::-moz-range-thumb {
     var host = el("pool");
     host.innerHTML = "";
     host.dataset.empty = "Työalue tyhjä";
-    pool.forEach(function (t) { host.appendChild(tileEl(t, G.turn === 0 && !busy)); });
+    pool.forEach(function (t) {
+      var d = tileEl(t, G.turn === 0 && !busy);
+      attachDrag(d, t, { type: "pool" });
+      host.appendChild(d);
+    });
   }
 
   function renderRack() {
@@ -2196,7 +2265,7 @@ input[type="range"].slider::-moz-range-thumb {
     workRack.forEach(function (t) {
       var d = tileEl(t, G.turn === 0 && !G.over && !busy);
       if (t.id === justDrawn) d.classList.add("drawn");
-      attachRackDrag(d, t);
+      attachDrag(d, t, { type: "rack" });
       host.appendChild(d);
     });
   }
@@ -2236,13 +2305,138 @@ input[type="range"].slider::-moz-range-thumb {
 
   var dragSuppressClick = false;
 
-  function attachRackDrag(d, t) {
+  function findIndexById(arr, id) {
+    for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return i;
+    return -1;
+  }
+
+  /** Mihin pudotettiin: rypäs / pöydän tausta / teline / työalue. */
+  function dropTarget(x, y, dragEl) {
+    var zone = el("newsetZone");
+    if (zone) {
+      var zr = zone.getBoundingClientRect();
+      if (x >= zr.left && x <= zr.right && y >= zr.top && y <= zr.bottom) return { type: "table" };
+    }
+    var rows = el("table").querySelectorAll(".set");
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i].getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+        // paikka rypään sisällä x:n mukaan
+        var ins = 0;
+        Array.prototype.forEach.call(rows[i].querySelectorAll(".tile"), function (k) {
+          if (k === dragEl) return;
+          var kr = k.getBoundingClientRect();
+          if (x > kr.left + kr.width / 2) ins++;
+        });
+        return { type: "set", idx: i, ins: ins };
+      }
+    }
+    var tr = el("table").getBoundingClientRect();
+    if (x >= tr.left && x <= tr.right && y >= tr.top && y <= tr.bottom) return { type: "table" };
+    var rr = el("rack").getBoundingClientRect();
+    if (x >= rr.left && x <= rr.right && y >= rr.top && y <= rr.bottom) return { type: "rack" };
+    if (!el("poolWrap").classList.contains("hidden")) {
+      var pr = el("pool").getBoundingClientRect();
+      if (x >= pr.left && x <= pr.right && y >= pr.top && y <= pr.bottom) return { type: "pool" };
+    }
+    return null;
+  }
+
+  function dropTargetEl(dst) {
+    if (!dst) return null;
+    if (dst.type === "set") return el("table").querySelectorAll(".set")[dst.idx] || null;
+    if (dst.type === "table") return el("newsetZone") || el("table");
+    if (dst.type === "rack") return el("rack");
+    if (dst.type === "pool") return el("pool");
+    return null;
+  }
+
+  function reorderRack(t, x, y, dragEl) {
+    var host = el("rack");
+    var insert = 0;
+    Array.prototype.forEach.call(host.children, function (k) {
+      if (k === dragEl) return;
+      var r = k.getBoundingClientRect();
+      if (y > r.bottom) insert++;
+      else if (y >= r.top - 4 && x > r.left + r.width / 2) insert++;
+    });
+    var from = findIndexById(workRack, t.id);
+    if (from < 0) return;
+    var moved = workRack.splice(from, 1)[0];
+    if (from < insert) insert--;
+    if (insert < 0) insert = 0;
+    if (insert > workRack.length) insert = workRack.length;
+    workRack.splice(insert, 0, moved);
+    applyRackOrder();
+    render();
+  }
+
+  /** Siirrä pala raahaamalla lähteestä kohteeseen. */
+  function moveTile(t, src, dst, x, y, dragEl) {
+    if (src.type === "rack" && dst.type === "rack") {
+      reorderRack(t, x, y, dragEl);
+      return;
+    }
+    if (src.type === "set" && dst.type === "set" && src.idx === dst.idx) {
+      render();
+      return;
+    }
+    if (!G.hasMelded[0] && dst.type === "set" && !isNewSet(dst.idx)) {
+      setStatus("Ennen avausta et voi lisätä pöydän vanhoihin rypäisiin.", "warn");
+      toast("Tee ensin oma avaus (≥" + G.openMin + " p)");
+      render();
+      return;
+    }
+    if (dst.type === "rack" && src.type !== "rack") {
+      var own = snap.rack.some(function (r) { return r.id === t.id; });
+      if (!own) {
+        setStatus("Pöydän paloja ei voi ottaa telineeseen — vie ne työalueelle.", "warn");
+        toast("Vie pöydän palat työalueelle");
+        render();
+        return;
+      }
+    }
+    // Kohderypäs talteen ennen lähteen poistoa (indeksit voivat siirtyä)
+    var dstSet = dst.type === "set" ? workBoard[dst.idx] : null;
+    var moved = null;
+    if (src.type === "rack") {
+      moved = workRack.splice(findIndexById(workRack, t.id), 1)[0];
+    } else if (src.type === "pool") {
+      moved = pool.splice(findIndexById(pool, t.id), 1)[0];
+    } else {
+      var sSet = workBoard[src.idx];
+      moved = sSet.splice(findIndexById(sSet, t.id), 1)[0];
+      if (!sSet.length) workBoard.splice(workBoard.indexOf(sSet), 1);
+    }
+    if (!moved) { render(); return; }
+    if (dst.type === "set") {
+      dstSet.splice(Math.min(dst.ins, dstSet.length), 0, moved);
+    } else if (dst.type === "table") {
+      workBoard.push([moved]);
+    } else if (dst.type === "rack") {
+      workRack.push(moved);
+    } else {
+      pool.push(moved);
+    }
+    delete sel[t.id];
+    selSet = null;
+    applyRackOrder();
+    render();
+  }
+
+  function attachDrag(d, t, src) {
     d.onpointerdown = function (ev) {
       if (busy || G.turn !== 0 || G.over) return;
       if (ev.button != null && ev.button !== 0) return;
       var startX = ev.clientX, startY = ev.clientY;
-      var dragging = false, ghost = null;
-      var host = el("rack");
+      var dragging = false, ghost = null, hintEl = null;
+      function setHint(e) {
+        var next = dropTargetEl(dropTarget(e.clientX, e.clientY, d));
+        if (next === hintEl) return;
+        if (hintEl) hintEl.classList.remove("drop-hint");
+        hintEl = next;
+        if (hintEl) hintEl.classList.add("drop-hint");
+      }
       function move(e) {
         if (!dragging && Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY) > 10) {
           dragging = true;
@@ -2255,6 +2449,7 @@ input[type="range"].slider::-moz-range-thumb {
         if (dragging) {
           ghost.style.left = e.clientX + "px";
           ghost.style.top = e.clientY + "px";
+          setHint(e);
           e.preventDefault();
         }
       }
@@ -2263,31 +2458,14 @@ input[type="range"].slider::-moz-range-thumb {
         window.removeEventListener("pointerup", up);
         window.removeEventListener("pointercancel", up);
         if (ghost) ghost.remove();
+        if (hintEl) hintEl.classList.remove("drop-hint");
         d.classList.remove("drag-src");
         if (!dragging) return; // pelkkä klikkaus — valinta hoituu onclickissä
         dragSuppressClick = true;
         setTimeout(function () { dragSuppressClick = false; }, 0);
-        // Kohdepaikka: montako palaa jää raahatun edelle
-        var x = e.clientX, y = e.clientY;
-        var insert = 0;
-        Array.prototype.forEach.call(host.children, function (k, i) {
-          if (k === d) return;
-          var r = k.getBoundingClientRect();
-          var cy = r.top + r.height / 2;
-          var cx = r.left + r.width / 2;
-          if (y > r.bottom) insert = i + 1;
-          else if (y >= r.top - 4 && x > cx) insert = i + 1;
-        });
-        var from = -1;
-        workRack.forEach(function (w, i) { if (w.id === t.id) from = i; });
-        if (from < 0) return;
-        var moved = workRack.splice(from, 1)[0];
-        if (from < insert) insert--;
-        if (insert < 0) insert = 0;
-        if (insert > workRack.length) insert = workRack.length;
-        workRack.splice(insert, 0, moved);
-        applyRackOrder();
-        render();
+        var dst = dropTarget(e.clientX, e.clientY, d);
+        if (!dst) { render(); return; }
+        moveTile(t, src, dst, e.clientX, e.clientY, d);
       }
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up);
@@ -2334,10 +2512,21 @@ input[type="range"].slider::-moz-range-thumb {
     render();
   }
 
+  /** Epäkelpo vuoro: palauta laatat vuoron alkutilanteeseen. */
+  function revertTurn(msg) {
+    workBoard = E.cloneBoard(snap.board);
+    workRack = snap.rack.map(E.cloneTile);
+    pool = [];
+    sel = {};
+    selSet = null;
+    setStatus(msg + " Laatat palautettiin paikoilleen.", "warn");
+    toast(msg);
+    render();
+  }
+
   function confirmTurn() {
     if (pool.length) {
-      setStatus("Työalueella on vielä paloja — muodosta niistä rypäät tai pura takaisin.", "warn");
-      toast("Tyhjennä työalue ensin");
+      revertTurn("Työalueelle jäi paloja.");
       return;
     }
     var res = E.validatePlay(
@@ -2346,8 +2535,7 @@ input[type="range"].slider::-moz-range-thumb {
       workRack
     );
     if (!res.ok) {
-      setStatus(res.error, "warn");
-      toast(res.error);
+      revertTurn(res.error + ".");
       return;
     }
     // Synkaa G:n rack[0] snapista ennen applya
@@ -2355,7 +2543,7 @@ input[type="range"].slider::-moz-range-thumb {
     G.racks[0] = snap.rack.map(E.cloneTile);
     var applied = E.applyPlay(G, workBoard, workRack);
     if (!applied.ok) {
-      setStatus(applied.error, "warn");
+      revertTurn(applied.error + ".");
       return;
     }
     justDrawn = null;

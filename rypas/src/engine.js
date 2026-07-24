@@ -276,6 +276,15 @@
       return { ok: false, error: "Palojen määrä ei täsmää (ei saa lisätä/poistaa paloja)" };
     }
 
+    // Telineeseen ei saa ottaa pöydän paloja
+    var oldRackIds = {};
+    oldRack.forEach(function (t) { oldRackIds[t.id] = true; });
+    for (var nr = 0; nr < newRack.length; nr++) {
+      if (!oldRackIds[newRack[nr].id]) {
+        return { ok: false, error: "Pöydän paloja ei voi ottaa telineeseen" };
+      }
+    }
+
     var played = scorePlayedFromRack(oldRack, newRack);
     if (played.tiles.length === 0) {
       return { ok: false, error: "Pelaa vähintään yksi pala telineestä, tai nosta" };

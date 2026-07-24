@@ -244,6 +244,28 @@ E.applyPlay(om, [om.racks[0].slice()], []);
 const omNext = E.nextRound(om);
 ok(omNext && omNext.openMin === 15, "openMin 15 säilyy seuraavaan erään");
 
+// Pöydän paloja ei saa siirtää telineeseen (avattukaan pelaaja)
+E.resetIds();
+const boardSet = [
+  E.tile("K", 5, false), E.tile("S", 5, false), E.tile("P", 5, false),
+];
+const myRun = [
+  E.tile("O", 7, false), E.tile("O", 8, false), E.tile("O", 9, false),
+];
+const stealState = {
+  board: [boardSet],
+  racks: [myRun.slice(), []],
+  turn: 0,
+  hasMelded: [true, false],
+};
+// Pelaa oman jonon, mutta vie pöydän 5-ryhmän palan telineeseen
+const steal = E.validatePlay(
+  stealState,
+  [boardSet.slice(0, 2).concat([myRun[0]]), myRun.slice(1)],
+  [boardSet[2]]
+);
+ok(!steal.ok, "pöydän palaa ei saa ottaa telineeseen: " + (steal.error || ""));
+
 // Ottelutavoite säädettävissä + pikapeli (yksi erä)
 ok(E.clampMatchTarget(999) === 500, "matchTarget klampataan 500:aan");
 ok(E.clampMatchTarget(-10) === 0, "negatiivinen matchTarget → 0");
