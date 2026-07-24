@@ -7,6 +7,13 @@
   var NAMES = ["Sinä", "Tietokone"];
   var AI_DELAY = 650;
 
+  function makeNames(playerCount) {
+    if (playerCount <= 2) return ["Sinä", "Tietokone"];
+    var names = ["Sinä"];
+    for (var i = 1; i < playerCount; i++) names.push("Kone " + i);
+    return names;
+  }
+
   var G = null;
   var snap = null; // vuoron alku
   var workBoard = null;
@@ -47,6 +54,12 @@
       "<h2>Rypäs</h2>" +
       "<p class=\"lead\">Muodosta numerorypäitä, tyhjennä telineesi ja kerää ottelupisteitä — ensimmäinen " + E.MATCH_TARGET + " pisteeseen voittaa.</p>" +
       "<p>Ryhmä = sama numero, eri värit (3–4). Jono = sama väri, peräkkäiset (≥3). Avaus ≥30 pistettä.</p>" +
+      "<div class=\"field-label\">Vastustajia</div>" +
+      "<div class=\"diff\">" +
+      "<label><input type=\"radio\" name=\"opps\" value=\"1\" checked> 1</label>" +
+      "<label><input type=\"radio\" name=\"opps\" value=\"2\"> 2</label>" +
+      "<label><input type=\"radio\" name=\"opps\" value=\"3\"> 3</label>" +
+      "</div>" +
       "<div class=\"field-label\">Aloituspalat telineeseen</div>" +
       "<div class=\"diff\">" + rackOpts + "</div>" +
       "<div class=\"field-label\">Vaikeus</div>" +
@@ -62,9 +75,11 @@
     el("ovStart").onclick = function () {
       var d = document.querySelector("input[name=diff]:checked");
       var r = document.querySelector("input[name=rack]:checked");
+      var o = document.querySelector("input[name=opps]:checked");
       newGame({
         difficulty: d ? d.value : "normaali",
         rackSize: r ? +r.value : E.RACK_SIZE,
+        playerCount: (o ? +o.value : 1) + 1,
       });
     };
     el("ovRules").onclick = showRules;
@@ -75,8 +90,8 @@
       "<h2>Säännöt</h2>" +
       "<ul>" +
       "<li><strong>Ottelu:</strong> pelataan eriä, kunnes joku saavuttaa " + E.MATCH_TARGET + " pistettä.</li>" +
-      "<li><strong>Erä:</strong> tyhjennä telineesi ensimmäisenä — saat vastustajan jäljellä olevat pisteet (hänelle miinus).</li>" +
-      "<li><strong>Aloitus:</strong> valitse montako palaa kumpikin saa telineeseen (7, 10 tai 14).</li>" +
+      "<li><strong>Erä:</strong> tyhjennä telineesi ensimmäisenä — saat vastustajien jäljellä olevat pisteet (heille miinus).</li>" +
+      "<li><strong>Aloitus:</strong> valitse vastustajien määrä (1–3) ja montako palaa kukin saa telineeseen (7, 10 tai 14).</li>" +
       "<li><strong>Ryhmä:</strong> sama numero, eri värit, 3–4 palaa.</li>" +
       "<li><strong>Jono:</strong> sama väri, peräkkäiset numerot, vähintään 3.</li>" +
       "<li><strong>Jokerit</strong> korvaavat minkä tahansa palan. Kädessä jokerin sakko on 30.</li>" +
@@ -94,8 +109,30 @@
     };
   }
 
+  function buildHud() {
+    var hud = el("hud");
+    hud.innerHTML = "";
+    for (var p = 0; p < G.playerCount; p++) {
+      var box = document.createElement("div");
+      box.className = "pscore";
+      box.id = "hudP" + p;
+      box.innerHTML =
+        '<div class="nm"><span id="s' + p + 'name"></span><span>ottelu</span></div>' +
+        '<div class="pt" id="m' + p + '">0</div>' +
+        '<div class="lm"><span id="s' + p + '">0</span> palaa · <span id="last' + p + '"></span></div>';
+      hud.appendChild(box);
+    }
+    var bag = document.createElement("div");
+    bag.className = "bagbox";
+    bag.innerHTML = '<div class="nm">Pussi</div><div class="pt" id="bag">0</div>';
+    hud.appendChild(bag);
+    hud.className = "hud p" + G.playerCount;
+  }
+
   function newGame(opts) {
     G = E.newGame(opts || {});
+    NAMES = makeNames(G.playerCount);
+    buildHud();
     busy = false;
     el("game").classList.remove("hidden");
     closeOverlay();
@@ -184,7 +221,7 @@
   }
 
   function renderHud() {
-    for (var p = 0; p < 2; p++) {
+    for (var p = 0; p < G.playerCount; p++) {
       var hud = el("hudP" + p);
       hud.className = "pscore" + (G.turn === p && !G.over ? " turn" : "");
       el("s" + p + "name").textContent = NAMES[p];
@@ -362,7 +399,7 @@
       return;
     }
     var res = E.validatePlay(
-      { board: snap.board, racks: [snap.rack, G.racks[1]], turn: 0, hasMelded: G.hasMelded },
+      { board: snap.board, racks: [snap.rack].concat(G.racks.slice(1)), turn: 0, hasMelded: G.hasMelded },
       workBoard,
       workRack
     );
@@ -408,16 +445,22 @@
 
   function runAI() {
     if (G.over) { busy = false; endGame(); return; }
-    var before = G.racks[1].length;
+    var p = G.turn;
+    var before = G.racks[p].length;
     var res = E.aiTurn(G);
-    busy = false;
-    if (res && res.drew) toast("Tietokone nosti");
-    else if (res && res.played) toast("Tietokone pelasi " + res.played.length + " palaa");
+    if (res && res.drew) toast(NAMES[p] + " nosti");
+    else if (res && res.played) toast(NAMES[p] + " pelasi " + res.played.length + " palaa");
     else if (res && res.ok && !res.drew) {
-      var after = G.racks[1].length;
-      if (after < before) toast("Tietokone pelasi " + (before - after) + " palaa");
+      var after = G.racks[p].length;
+      if (after < before) toast(NAMES[p] + " pelasi " + (before - after) + " palaa");
     }
-    if (G.over) { endGame(); return; }
+    if (G.over) { busy = false; endGame(); return; }
+    if (G.turn !== 0) {
+      render();
+      setTimeout(runAI, AI_DELAY);
+      return;
+    }
+    busy = false;
     beginHumanTurn();
     setStatus("Sinun vuorosi.");
   }
@@ -431,19 +474,19 @@
     render();
     var roundMsg;
     if (G.winner === 0) roundMsg = "Tyhjensit telineesi — voitit erän.";
-    else if (G.winner === 1) roundMsg = "Tietokone tyhjensi telineensä.";
+    else if (G.winner != null) roundMsg = NAMES[G.winner] + " tyhjensi telineensä.";
     else roundMsg = "Erä päättyi tasapeliin (pussi / telineet).";
 
-    var scoreLine = "Erä: " + fmtDelta(G.scores[0]) + " / " + fmtDelta(G.scores[1]) +
-      " · Ottelu: <strong>" + G.matchScores[0] + "–" + G.matchScores[1] + "</strong> / " + G.matchTarget;
+    var scoreLine = "Erä: " + G.scores.map(fmtDelta).join(" / ") +
+      " · Ottelu: <strong>" + G.matchScores.join("–") + "</strong> / " + G.matchTarget;
 
     if (G.matchOver) {
-      var title = G.matchWinner === 0 ? "Otteluvoititto!" : G.matchWinner === 1 ? "Otteluhäviö" : "Ottelutasapeli";
+      var title = G.matchWinner === 0 ? "Otteluvoitto!" : G.matchWinner != null ? "Otteluhäviö" : "Ottelutasapeli";
       var lead = G.matchWinner === 0
         ? "Saavutit " + G.matchTarget + " pistettä."
-        : G.matchWinner === 1
-          ? "Tietokone ehti " + G.matchTarget + " pisteeseen."
-          : "Molemmilla sama pistemäärä.";
+        : G.matchWinner != null
+          ? NAMES[G.matchWinner] + " ehti " + G.matchTarget + " pisteeseen."
+          : "Kärjessä sama pistemäärä.";
       openOverlay(
         "<h2>" + title + "</h2>" +
         "<p class=\"lead\">" + lead + "</p>" +

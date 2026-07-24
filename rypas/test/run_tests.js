@@ -207,5 +207,41 @@ ok(openOk.ok, "avaus omilla paloilla kun pöytä ei tyhjä: " + (openOk.error ||
 const openTouch = E.validatePlay(stBoard, [openTiles], [keep].concat(existing));
 ok(!openTouch.ok, "avauksessa ei saa ottaa pöydän paloja telineeseen");
 
+// Useampi pelaaja
+const G3 = E.newGame({ seed: 5, playerCount: 3 });
+ok(G3.racks.length === 3 && G3.playerCount === 3, "3 pelaajaa → 3 telinettä");
+ok(G3.bag.length === 106 - 3 * 14, "pussi 3 pelaajan jaon jälkeen, oli " + G3.bag.length);
+ok(G3.hasMelded.length === 3 && G3.scores.length === 3 && G3.matchScores.length === 3, "tilataulukot 3 pelaajalle");
+E.drawOne(G3);
+ok(G3.turn === 1, "vuoro 0→1");
+E.drawOne(G3);
+ok(G3.turn === 2, "vuoro 1→2");
+E.drawOne(G3);
+ok(G3.turn === 0, "vuoro 2→0 (kierto)");
+ok(E.clampPlayerCount(7) === 2, "virheellinen playerCount → oletus 2");
+
+// 3 pelaajan voitto: voittaja saa molempien häviäjien pisteet
+const w3 = E.newGame({ seed: 8, playerCount: 3 });
+w3.racks[0] = [E.tile("K", 10, false), E.tile("S", 10, false), E.tile("P", 10, false)];
+w3.racks[1] = [E.tile("O", 5, false)];
+w3.racks[2] = [E.tile("O", 7, false), E.tile("K", 3, false)];
+w3.board = [];
+w3.hasMelded = [false, false, false];
+w3.turn = 0;
+E.applyPlay(w3, [w3.racks[0].slice()], []);
+ok(w3.over && w3.winner === 0, "3p: pelaaja 0 voitti");
+ok(w3.scores[0] === 15 && w3.scores[1] === -5 && w3.scores[2] === -10,
+  "3p: pisteet 15/-5/-10, oli " + w3.scores.join("/"));
+
+// 4 pelaajan peli loppuun useilla siemenillä
+let ends4 = 0;
+for (let s = 1; s <= 10; s++) {
+  const g4 = E.newGame({ seed: s * 131, playerCount: 4 });
+  E.playToEnd(g4, 1200);
+  if (g4.over) ends4++;
+  if (!E.validateBoard(g4.board).ok) ok(false, "4p lauta rikki seed " + s);
+}
+ok(ends4 === 10, "10/10 nelinpeliä päättyy, oli " + ends4);
+
 console.log("\n" + pass + " ok, " + fail + " fail");
 process.exit(fail ? 1 : 0);

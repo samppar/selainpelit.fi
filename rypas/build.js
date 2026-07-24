@@ -38,22 +38,7 @@ ${css}
   </header>
 
   <div id="game" class="hidden">
-    <div class="hud">
-      <div class="pscore" id="hudP0">
-        <div class="nm"><span id="s0name">Sinä</span><span>ottelu</span></div>
-        <div class="pt" id="m0">0</div>
-        <div class="lm"><span id="s0">0</span> palaa · <span id="last0"></span></div>
-      </div>
-      <div class="pscore" id="hudP1">
-        <div class="nm"><span id="s1name">Tietokone</span><span>ottelu</span></div>
-        <div class="pt" id="m1">0</div>
-        <div class="lm"><span id="s1">0</span> palaa · <span id="last1"></span></div>
-      </div>
-      <div class="bagbox">
-        <div class="nm">Pussi</div>
-        <div class="pt" id="bag">0</div>
-      </div>
-    </div>
+    <div class="hud" id="hud"></div>
 
     <div class="goal" id="goal"></div>
     <div class="status" id="status"></div>

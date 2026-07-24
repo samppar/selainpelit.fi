@@ -12,13 +12,24 @@
   var RACK_SIZE_CHOICES = [7, 10, 14];
   var INITIAL_MELD = 30;
   var JOKER_PENALTY = 30;
-  var PLAYER_COUNT = 2;
+  var PLAYER_COUNT = 2; // oletus
+  var PLAYER_COUNT_CHOICES = [2, 3, 4];
   var MATCH_TARGET = 200; // ottelu useammalla erällä
 
   function clampRackSize(n) {
     var v = n | 0;
     if (RACK_SIZE_CHOICES.indexOf(v) >= 0) return v;
     return RACK_SIZE;
+  }
+
+  function clampPlayerCount(n) {
+    var v = n | 0;
+    if (PLAYER_COUNT_CHOICES.indexOf(v) >= 0) return v;
+    return PLAYER_COUNT;
+  }
+
+  function playerCountOf(state) {
+    return state.playerCount || state.racks.length;
   }
 
   function makeRNG(seed) {
@@ -346,30 +357,38 @@
   function newGame(opts) {
     opts = opts || {};
     var rackSize = clampRackSize(opts.rackSize != null ? opts.rackSize : RACK_SIZE);
+    var playerCount = clampPlayerCount(opts.playerCount != null ? opts.playerCount : PLAYER_COUNT);
     var seed = opts.seed != null ? opts.seed : ((Math.random() * 1e9) | 0);
     var rng = makeRNG(seed);
     var bag = buildBag(rng);
     var racks = [];
-    for (var p = 0; p < PLAYER_COUNT; p++) {
+    var hasMelded = [];
+    var scores = [];
+    var lastAction = [];
+    for (var p = 0; p < playerCount; p++) {
       racks.push(bag.splice(bag.length - rackSize, rackSize));
+      hasMelded.push(false);
+      scores.push(0);
+      lastAction.push(null);
     }
-    var matchScores = opts.matchScores ? opts.matchScores.slice() : [0, 0];
+    var matchScores = opts.matchScores ? opts.matchScores.slice() : scores.slice();
     return {
       bag: bag,
       board: [],
       racks: racks,
+      playerCount: playerCount,
       turn: 0,
-      hasMelded: [false, false],
+      hasMelded: hasMelded,
       over: false,
       winner: null,
-      scores: [0, 0], // tämän erän pisteet
+      scores: scores, // tämän erän pisteet
       settled: false,
       matchScores: matchScores,
       matchTarget: opts.matchTarget != null ? opts.matchTarget : MATCH_TARGET,
       matchOver: false,
       matchWinner: null,
       round: opts.round != null ? opts.round : 1,
-      lastAction: [null, null],
+      lastAction: lastAction,
       rng: rng,
       seed: seed,
       difficulty: opts.difficulty || "normaali",
@@ -381,14 +400,21 @@
   function settleRound(state) {
     if (!state.over || state.settled) return state;
     state.settled = true;
-    state.matchScores[0] += state.scores[0];
-    state.matchScores[1] += state.scores[1];
+    var n = playerCountOf(state);
     var t = state.matchTarget;
-    if (state.matchScores[0] >= t || state.matchScores[1] >= t) {
+    var reached = false;
+    for (var p = 0; p < n; p++) {
+      state.matchScores[p] += state.scores[p];
+      if (state.matchScores[p] >= t) reached = true;
+    }
+    if (reached) {
       state.matchOver = true;
-      if (state.matchScores[0] > state.matchScores[1]) state.matchWinner = 0;
-      else if (state.matchScores[1] > state.matchScores[0]) state.matchWinner = 1;
-      else state.matchWinner = null;
+      var best = -Infinity, winner = null, tie = false;
+      for (var q = 0; q < n; q++) {
+        if (state.matchScores[q] > best) { best = state.matchScores[q]; winner = q; tie = false; }
+        else if (state.matchScores[q] === best) tie = true;
+      }
+      state.matchWinner = tie ? null : winner;
     }
     return state;
   }
@@ -403,6 +429,7 @@
       seed: nextSeed,
       difficulty: state.difficulty,
       rackSize: state.rackSize,
+      playerCount: playerCountOf(state),
       matchScores: state.matchScores.slice(),
       matchTarget: state.matchTarget,
       round: (state.round || 1) + 1,
@@ -414,13 +441,13 @@
     if (!state.bag.length) {
       // Pussi tyhjä: ohita (ei nostoa)
       state.lastAction[state.turn] = { type: "pass", reason: "pussi tyhjä" };
-      state.turn = (state.turn + 1) % PLAYER_COUNT;
+      state.turn = (state.turn + 1) % playerCountOf(state);
       return { ok: true, drew: null, passed: true };
     }
     var t = state.bag.pop();
     state.racks[state.turn].push(t);
     state.lastAction[state.turn] = { type: "draw", tile: cloneTile(t) };
-    state.turn = (state.turn + 1) % PLAYER_COUNT;
+    state.turn = (state.turn + 1) % playerCountOf(state);
     return { ok: true, drew: t };
   }
 
@@ -440,14 +467,17 @@
     if (res.won) {
       state.over = true;
       state.winner = p;
-      // Häviäjän telineen pisteet voittajalle
-      var other = 1 - p;
-      var pen = scoreTiles(state.racks[other]);
-      state.scores[p] += pen;
-      state.scores[other] -= pen;
+      // Häviäjien telineiden pisteet voittajalle
+      var n = playerCountOf(state);
+      for (var other = 0; other < n; other++) {
+        if (other === p) continue;
+        var pen = scoreTiles(state.racks[other]);
+        state.scores[p] += pen;
+        state.scores[other] -= pen;
+      }
       settleRound(state);
     } else {
-      state.turn = (state.turn + 1) % PLAYER_COUNT;
+      state.turn = (state.turn + 1) % playerCountOf(state);
     }
     return res;
   }
@@ -687,23 +717,34 @@
       turns++;
       // Umpikuja: molemmat vain nostavat ja pussi tyhjä
       if (!state.bag.length) {
+        var n = playerCountOf(state);
         var idle = 0;
         // anna vielä muutama vuoro
-        while (!state.over && idle < PLAYER_COUNT * 2 && turns < maxTurns) {
+        while (!state.over && idle < n * 2 && turns < maxTurns) {
           var before = state.racks[state.turn].length;
           aiTurn(state);
           turns++;
-          if (state.racks[(state.turn + PLAYER_COUNT - 1) % PLAYER_COUNT].length >= before) idle++;
+          if (state.racks[(state.turn + n - 1) % n].length >= before) idle++;
           else idle = 0;
         }
         if (!state.over) {
-          // Pisteytä telineet: vähemmän häviää vähemmän
-          var s0 = scoreTiles(state.racks[0]);
-          var s1 = scoreTiles(state.racks[1]);
+          // Pisteytä telineet: pienin telinesumma voittaa, saa muiden pisteet
+          var sums = state.racks.map(scoreTiles);
+          var best = Infinity, winner = null, tie = false;
+          for (var p = 0; p < n; p++) {
+            if (sums[p] < best) { best = sums[p]; winner = p; tie = false; }
+            else if (sums[p] === best) tie = true;
+          }
           state.over = true;
-          if (s0 < s1) { state.winner = 0; state.scores[0] += s1; state.scores[1] -= s1; }
-          else if (s1 < s0) { state.winner = 1; state.scores[1] += s0; state.scores[0] -= s0; }
-          else state.winner = null; // tasapeli
+          if (tie) state.winner = null; // tasapeli
+          else {
+            state.winner = winner;
+            for (var q = 0; q < n; q++) {
+              if (q === winner) continue;
+              state.scores[winner] += sums[q];
+              state.scores[q] -= sums[q];
+            }
+          }
         }
         break;
       }
@@ -721,6 +762,8 @@
     INITIAL_MELD: INITIAL_MELD,
     JOKER_PENALTY: JOKER_PENALTY,
     PLAYER_COUNT: PLAYER_COUNT,
+    PLAYER_COUNT_CHOICES: PLAYER_COUNT_CHOICES,
+    clampPlayerCount: clampPlayerCount,
     MATCH_TARGET: MATCH_TARGET,
     makeRNG: makeRNG,
     shuffle: shuffle,

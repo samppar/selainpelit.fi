@@ -9,44 +9,45 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* Rypäs — hienostunut klassinen laattapeli */
+/* Rypäs — yönsininen pelisali: huopapöytä, norsunluulaatat, pähkinäteline, messinki */
 :root {
-  color-scheme: light;
-  --ink: #152033;
-  --ink-soft: #3d4d63;
-  --muted: #6b7c90;
-  --linen: #e8eef5;
-  --linen-2: #d5e0ec;
-  --glass: rgba(255, 255, 255, 0.72);
-  --glass-edge: rgba(255, 255, 255, 0.9);
+  color-scheme: dark;
+  --night: #0a1228;
+  --night-2: #0e1a38;
+  --night-3: #122349;
+  --ink: #eef2fb;
+  --ink-soft: #b9c6e2;
+  --muted: #7e8fb4;
 
-  --sapphire: #1e5f9a;
-  --sapphire-deep: #144876;
-  --sapphire-ink: #0d3558;
-  --velvet: #1a6bb0;
-  --velvet-2: #155a96;
-  --velvet-3: #0f4574;
-  --velvet-hi: #3d8fd4;
+  --felt: #16386e;
+  --felt-hi: #235093;
+  --felt-deep: #0d2650;
+  --felt-edge: #2f5f9f;
 
-  --rack: #2470b8;
-  --rack-mid: #1c5f9e;
-  --rack-deep: #134a7d;
-  --rack-shine: rgba(255, 255, 255, 0.28);
+  --brass: #e6b654;
+  --brass-hi: #f7d98c;
+  --brass-deep: #a97b26;
+  --brass-ink: #6e4c12;
 
-  --tile: #fbf7f0;
-  --tile-2: #f0e9dc;
-  --tile-rim: #cfc3ae;
-  --tile-ink-k: #1a1a1a;
-  --tile-ink-s: #0b67b5;
-  --tile-ink-p: #c81e28;
-  --tile-ink-o: #c9a000;
+  --wood: #9a6a38;
+  --wood-hi: #b98a4e;
+  --wood-mid: #815426;
+  --wood-deep: #5f3a17;
 
-  --select: #f0c14b;
-  --select-glow: rgba(240, 193, 75, 0.55);
-  --warn: #c41e26;
-  --ok: #1b8a5a;
-  --shadow: rgba(13, 40, 70, 0.22);
-  --shadow-deep: rgba(8, 28, 52, 0.38);
+  --tile: #faf5e9;
+  --tile-2: #ecdfc8;
+  --tile-rim: #c8b48e;
+  --tile-ink-k: #262a31;
+  --tile-ink-s: #1e6cc0;
+  --tile-ink-p: #c93230;
+  --tile-ink-o: #de9b1c;
+
+  --select: #ffd679;
+  --select-glow: rgba(255, 214, 121, 0.55);
+  --warn: #ff8d8d;
+  --ok: #6fdca8;
+  --shadow: rgba(2, 8, 22, 0.45);
+  --shadow-deep: rgba(1, 5, 16, 0.65);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -55,10 +56,10 @@ body {
   font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(ellipse 90% 55% at 50% -15%, #b8d4ee 0%, transparent 58%),
-    radial-gradient(ellipse 50% 40% at 0% 100%, rgba(30, 95, 154, 0.12), transparent 50%),
-    radial-gradient(ellipse 45% 35% at 100% 80%, rgba(240, 193, 75, 0.08), transparent 45%),
-    linear-gradient(165deg, #eef3f8 0%, var(--linen) 42%, var(--linen-2) 100%);
+    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(47, 95, 159, 0.4) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 45% at 100% 100%, rgba(230, 182, 84, 0.07), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 0% 85%, rgba(30, 108, 192, 0.12), transparent 50%),
+    linear-gradient(170deg, var(--night-2) 0%, var(--night) 55%, #070d1d 100%);
   min-height: 100dvh;
   display: flex;
   justify-content: center;
@@ -66,10 +67,25 @@ body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
+/* hienovarainen tähtipölyrae */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: 3px 7px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.25) 60%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.25) 60%, transparent);
+  z-index: 0;
+}
 
 .wrap {
   width: 100%;
   max-width: 680px;
+  position: relative;
+  z-index: 1;
   animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes rise {
@@ -91,16 +107,20 @@ header {
   font-size: clamp(40px, 9vw, 56px);
   line-height: 0.85;
   letter-spacing: -0.035em;
-  color: var(--sapphire-ink);
+  background: linear-gradient(172deg, var(--brass-hi) 8%, var(--brass) 46%, var(--brass-deep) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(230, 182, 84, 0.25));
 }
 .brand .tag {
   font-size: 11px;
   font-weight: 700;
-  color: var(--sapphire);
+  color: var(--muted);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   margin-top: 8px;
-  opacity: 0.85;
 }
 .hbtns { display: flex; gap: 8px; flex-shrink: 0; padding-bottom: 4px; }
 
@@ -108,91 +128,96 @@ button {
   font: inherit;
   cursor: pointer;
   border-radius: 12px;
-  border: 1px solid rgba(30, 95, 154, 0.14);
-  background: var(--glass);
+  border: 1px solid rgba(122, 156, 220, 0.22);
+  background: linear-gradient(180deg, rgba(38, 58, 105, 0.85), rgba(22, 37, 72, 0.85));
   color: var(--ink);
   padding: 10px 15px;
   font-size: 13.5px;
   font-weight: 700;
   backdrop-filter: blur(8px);
   box-shadow:
-    0 1px 0 var(--glass-edge) inset,
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
     0 2px 8px var(--shadow);
-  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.15s, background 0.15s, opacity 0.15s;
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.15s, background 0.15s, opacity 0.15s, border-color 0.15s;
 }
 button:hover:not(:disabled) {
-  background: #fff;
+  border-color: rgba(150, 184, 245, 0.45);
   transform: translateY(-1px);
-  box-shadow: 0 1px 0 #fff inset, 0 6px 14px var(--shadow);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 6px 14px var(--shadow);
 }
 button:active:not(:disabled) { transform: translateY(0); }
 button:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
   box-shadow: none;
 }
 button.ghost {
   background: transparent;
-  border: 1.5px solid rgba(30, 95, 154, 0.28);
+  border: 1.5px solid rgba(122, 156, 220, 0.35);
   box-shadow: none;
   border-radius: 999px;
   padding: 7px 14px;
   font-size: 12.5px;
-  color: var(--sapphire-deep);
+  color: var(--ink-soft);
 }
 button.ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: var(--sapphire);
+  background: rgba(122, 156, 220, 0.12);
+  border-color: rgba(150, 184, 245, 0.6);
   box-shadow: none;
   transform: none;
 }
 button.go {
-  background: linear-gradient(180deg, #3d8fd4 0%, var(--sapphire) 55%, var(--sapphire-deep) 100%);
+  background: linear-gradient(180deg, var(--brass-hi) 0%, var(--brass) 45%, var(--brass-deep) 100%);
   border-color: transparent;
-  color: #fff;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+  color: #2b1d04;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 3px 0 var(--sapphire-ink),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 3px 0 var(--brass-ink),
+    0 8px 20px rgba(230, 182, 84, 0.22),
     0 6px 16px var(--shadow-deep);
 }
 button.go:hover:not(:disabled) {
-  color: #fff;
-  filter: brightness(1.05);
+  color: #2b1d04;
+  filter: brightness(1.06);
 }
 button.danger:hover:not(:disabled) {
   color: var(--warn);
-  border-color: rgba(196, 30, 38, 0.35);
+  border-color: rgba(255, 141, 141, 0.45);
 }
 
 .hidden { display: none !important; }
 
-/* HUD — lasinen palkki */
+/* HUD — tumma lasipalkki */
 .hud {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
   gap: 0;
   margin-bottom: 12px;
-  background: var(--glass);
+  background: linear-gradient(180deg, rgba(28, 45, 86, 0.75), rgba(16, 28, 58, 0.75));
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(122, 156, 220, 0.22);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px var(--shadow);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 8px 24px var(--shadow);
 }
+.hud.p3 { grid-template-columns: repeat(3, 1fr) auto; }
+.hud.p4 { grid-template-columns: repeat(4, 1fr) auto; }
 .pscore {
   padding: 10px 14px;
   transition: background 0.25s;
+  min-width: 0;
 }
 .pscore + .pscore,
 .bagbox {
-  border-left: 1px solid rgba(30, 95, 154, 0.1);
+  border-left: 1px solid rgba(122, 156, 220, 0.15);
 }
 .pscore.turn {
-  background: linear-gradient(180deg, rgba(61, 143, 212, 0.14), rgba(61, 143, 212, 0.05));
+  background: linear-gradient(180deg, rgba(230, 182, 84, 0.16), rgba(230, 182, 84, 0.04));
+  box-shadow: 0 2px 0 var(--brass) inset;
 }
-.pscore.turn .nm { color: var(--sapphire); }
-.pscore.turn .pt { color: var(--sapphire-deep); }
+.pscore.turn .nm { color: var(--brass); }
+.pscore.turn .pt { color: var(--brass-hi); }
 .pscore .nm {
   font-size: 10px;
   font-weight: 700;
@@ -203,6 +228,7 @@ button.danger:hover:not(:disabled) {
   justify-content: space-between;
   gap: 8px;
 }
+.pscore .nm span + span { opacity: 0.55; }
 .pscore .pt {
   font-family: "Fraunces", Georgia, serif;
   font-weight: 700;
@@ -228,7 +254,7 @@ button.danger:hover:not(:disabled) {
   flex-direction: column;
   justify-content: center;
   min-width: 74px;
-  background: rgba(30, 95, 154, 0.04);
+  background: rgba(230, 182, 84, 0.06);
 }
 .bagbox .nm {
   font-size: 10px;
@@ -241,7 +267,7 @@ button.danger:hover:not(:disabled) {
   font-family: "Fraunces", Georgia, serif;
   font-weight: 700;
   font-size: 24px;
-  color: var(--sapphire-deep);
+  color: var(--brass);
 }
 
 .goal {
@@ -253,7 +279,7 @@ button.danger:hover:not(:disabled) {
 }
 .goal strong { color: var(--ink); font-weight: 750; }
 .goal .meld-ok { color: var(--ok); font-weight: 700; }
-.goal .meld-need { color: var(--tile-ink-o); font-weight: 700; }
+.goal .meld-need { color: var(--brass); font-weight: 700; }
 
 .status {
   font-size: 13.5px;
@@ -271,18 +297,18 @@ button.danger:hover:not(:disabled) {
   font-weight: 750;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--sapphire-deep);
+  color: var(--brass);
   margin-bottom: 8px;
-  opacity: 0.75;
+  opacity: 0.8;
 }
 
-/* Pöytä — safiirinen sametti */
+/* Pöytä — syvä sininen huopa */
 .table {
   position: relative;
   background:
-    radial-gradient(ellipse 85% 60% at 50% 15%, rgba(255, 255, 255, 0.2), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 80% 90%, rgba(15, 69, 116, 0.45), transparent 50%),
-    linear-gradient(160deg, var(--velvet-hi) 0%, var(--velvet) 28%, var(--velvet-2) 70%, var(--velvet-3) 100%);
+    radial-gradient(ellipse 90% 70% at 50% 8%, rgba(255, 255, 255, 0.11), transparent 55%),
+    radial-gradient(ellipse 120% 90% at 50% 110%, var(--felt-deep) 0%, transparent 60%),
+    linear-gradient(165deg, var(--felt-hi) 0%, var(--felt) 45%, var(--felt-deep) 100%);
   border-radius: 20px;
   padding: 16px 14px;
   min-height: 176px;
@@ -290,30 +316,42 @@ button.danger:hover:not(:disabled) {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--felt-edge);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 -1px 0 rgba(0, 40, 80, 0.2) inset,
-    0 16px 40px -8px var(--shadow-deep),
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 -14px 40px rgba(4, 14, 36, 0.5) inset,
+    0 20px 50px -10px var(--shadow-deep),
     0 4px 12px var(--shadow);
 }
+/* huovan kudos */
 .table::before {
   content: "";
   position: absolute;
-  inset: 8px;
+  inset: 0;
+  border-radius: 20px;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.03) 0 1px, transparent 1px 3px);
+}
+/* messinkilanka reunassa */
+.table::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
   border-radius: 14px;
   pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 2px 12px rgba(0, 30, 60, 0.15);
+  border: 1px solid rgba(230, 182, 84, 0.22);
 }
 .table.empty-hint {
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(222, 234, 255, 0.85);
   font-size: 14px;
   font-weight: 650;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding: 40px 22px;
-  text-shadow: 0 1px 3px rgba(0, 40, 80, 0.3);
+  text-shadow: 0 1px 4px rgba(0, 10, 30, 0.5);
   letter-spacing: 0.01em;
 }
 
@@ -325,7 +363,7 @@ button.danger:hover:not(:disabled) {
   padding: 7px 8px;
   border-radius: 12px;
   border: 1.5px solid transparent;
-  background: rgba(8, 35, 65, 0.22);
+  background: rgba(5, 18, 44, 0.35);
   cursor: pointer;
   transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
   animation: setIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -337,65 +375,78 @@ button.danger:hover:not(:disabled) {
   to { opacity: 1; transform: none; }
 }
 .set:hover {
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(8, 35, 65, 0.3);
+  border-color: rgba(230, 182, 84, 0.4);
+  background: rgba(5, 18, 44, 0.5);
 }
 .set.selected {
   border-color: var(--select);
-  box-shadow: 0 0 0 2px var(--select-glow);
+  box-shadow: 0 0 0 2px var(--select-glow), 0 0 18px rgba(255, 214, 121, 0.2);
 }
 .set .set-actions { margin-left: auto; display: flex; gap: 4px; }
 .set .set-actions button {
   padding: 4px 10px;
   font-size: 11px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--sapphire-deep);
+  background: rgba(230, 182, 84, 0.92);
+  color: #2b1d04;
   border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   backdrop-filter: none;
 }
 .set .set-actions button:hover:not(:disabled) {
-  background: #fff;
-  color: var(--sapphire-ink);
+  background: var(--brass-hi);
+  color: #2b1d04;
 }
 
-/* Palat — kiillotettu luu */
+/* Laatat — norsunluu, kaiverretut Fraunces-numerot, värisinetti */
 .tile {
   width: 42px;
   height: 56px;
-  border-radius: 7px;
+  border-radius: 8px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, transparent 42%),
+    radial-gradient(ellipse 90% 45% at 50% 0%, rgba(255, 255, 255, 0.9), transparent 60%),
     linear-gradient(180deg, var(--tile) 0%, var(--tile-2) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-  font-weight: 800;
+  gap: 5px;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
   line-height: 1;
   border: 1px solid var(--tile-rim);
   box-shadow:
     0 1.5px 0 rgba(255, 255, 255, 0.95) inset,
-    0 -1px 0 rgba(180, 160, 130, 0.25) inset,
-    0 2px 0 #d8cdba,
-    0 4px 8px rgba(30, 30, 40, 0.18);
+    0 -2px 3px rgba(160, 135, 95, 0.28) inset,
+    0 2px 0 #b09a72,
+    0 5px 10px rgba(2, 8, 22, 0.5);
   user-select: none;
   position: relative;
   flex-shrink: 0;
   transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s;
 }
 .tile .v {
-  font-size: 24px;
+  font-size: 25px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .tile .c {
   position: absolute;
   width: 1px; height: 1px;
   overflow: hidden; clip: rect(0 0 0 0);
+}
+/* värisinetti — pieni vinoneliö numeron alla */
+.tile::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 1.5px;
+  transform: rotate(45deg);
+  background: currentColor;
+  opacity: 0.85;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .tile.K { color: var(--tile-ink-k); }
 .tile.S { color: var(--tile-ink-s); }
@@ -403,26 +454,30 @@ button.danger:hover:not(:disabled) {
 .tile.O { color: var(--tile-ink-o); }
 .tile.joker {
   background:
-    linear-gradient(145deg, #fff 0%, transparent 40%),
-    linear-gradient(180deg, #fff9ec, #f5e0b0);
-  border-color: #e0b84a;
+    radial-gradient(ellipse 90% 45% at 50% 0%, rgba(255, 255, 255, 0.95), transparent 60%),
+    linear-gradient(180deg, #fff8e6, #f3ddab);
+  border-color: #d8ac4e;
   color: var(--tile-ink-k);
 }
+.tile.joker::after {
+  background: conic-gradient(var(--tile-ink-p), var(--tile-ink-o), var(--tile-ink-s), var(--tile-ink-p));
+}
 .tile.joker .v {
-  font-size: 22px;
+  font-size: 23px;
   background: linear-gradient(105deg, var(--tile-ink-p) 0%, var(--tile-ink-o) 45%, var(--tile-ink-s) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+  text-shadow: none;
 }
 .tile.selected {
   transform: translateY(-10px) scale(1.06);
   box-shadow:
     0 0 0 2.5px var(--select),
-    0 0 16px var(--select-glow),
+    0 0 20px var(--select-glow),
     0 1.5px 0 #fff inset,
-    0 12px 20px var(--shadow-deep);
+    0 14px 24px var(--shadow-deep);
   z-index: 3;
 }
 .tile.clickable { cursor: pointer; }
@@ -430,31 +485,33 @@ button.danger:hover:not(:disabled) {
   transform: translateY(-4px);
   box-shadow:
     0 1.5px 0 #fff inset,
-    0 2px 0 #d8cdba,
-    0 8px 14px rgba(30, 30, 40, 0.22);
+    0 2px 0 #b09a72,
+    0 9px 16px rgba(2, 8, 22, 0.55);
 }
 
 .section { margin-bottom: 12px; }
 .section-h { margin-bottom: 7px; }
 
-/* Teline — veistetty kobolttimuovi */
+/* Teline — lämmin pähkinäpuu */
 .pool, .rack {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
   min-height: 78px;
   padding: 16px 14px 14px;
-  border-radius: 16px 16px 22px 22px;
+  border-radius: 14px 14px 20px 20px;
   background:
-    linear-gradient(180deg, var(--rack-shine) 0%, transparent 32%),
-    linear-gradient(185deg, var(--rack) 0%, var(--rack-mid) 48%, var(--rack-deep) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+    linear-gradient(180deg, rgba(255, 240, 210, 0.25) 0%, transparent 26%),
+    repeating-linear-gradient(92deg, rgba(60, 32, 8, 0.1) 0 2px, transparent 2px 7px, rgba(255, 220, 170, 0.05) 7px 9px, transparent 9px 26px),
+    linear-gradient(180deg, var(--wood-hi) 0%, var(--wood) 30%, var(--wood-mid) 70%, var(--wood-deep) 100%);
+  border: 1px solid rgba(255, 216, 160, 0.35);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 -3px 8px rgba(8, 40, 80, 0.35) inset,
-    0 10px 24px var(--shadow-deep);
+    0 1px 0 rgba(255, 235, 200, 0.4) inset,
+    0 -4px 10px rgba(40, 20, 4, 0.45) inset,
+    0 12px 28px var(--shadow-deep);
   position: relative;
 }
+/* telineen ura */
 .pool::after, .rack::after {
   content: "";
   position: absolute;
@@ -463,26 +520,30 @@ button.danger:hover:not(:disabled) {
   top: 10px;
   height: 3px;
   border-radius: 2px;
-  background: rgba(0, 40, 80, 0.18);
+  background: rgba(45, 24, 6, 0.4);
+  box-shadow: 0 1px 0 rgba(255, 225, 180, 0.25);
   pointer-events: none;
 }
 .pool {
   border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 216, 160, 0.5);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 30%),
-    linear-gradient(185deg, #2d7bc0, #16548f);
+    linear-gradient(180deg, rgba(255, 240, 210, 0.14) 0%, transparent 26%),
+    repeating-linear-gradient(92deg, rgba(60, 32, 8, 0.08) 0 2px, transparent 2px 7px, transparent 9px 26px),
+    linear-gradient(180deg, #8a6234, #59401e);
 }
 .pool:empty::after, .rack:empty::after {
   content: attr(data-empty);
   position: static;
   height: auto;
   background: none;
-  color: rgba(255, 255, 255, 0.7);
+  box-shadow: none;
+  color: rgba(255, 238, 214, 0.75);
   font-size: 13px;
   font-weight: 650;
   align-self: center;
   letter-spacing: 0.01em;
+  text-shadow: 0 1px 2px rgba(40, 20, 4, 0.5);
 }
 
 .ctrls {
@@ -503,9 +564,9 @@ button.danger:hover:not(:disabled) {
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%) translateY(14px);
-  background: var(--sapphire-ink);
-  color: #f5f8fc;
-  border: 1.5px solid var(--select);
+  background: linear-gradient(180deg, #1a2c56, #101d3c);
+  color: var(--ink);
+  border: 1.5px solid var(--brass);
   padding: 12px 20px;
   border-radius: 14px;
   font-size: 14px;
@@ -516,7 +577,7 @@ button.danger:hover:not(:disabled) {
   z-index: 50;
   max-width: min(90vw, 400px);
   text-align: center;
-  box-shadow: 0 14px 36px var(--shadow-deep);
+  box-shadow: 0 0 24px rgba(230, 182, 84, 0.15), 0 14px 36px var(--shadow-deep);
 }
 .toast.show {
   opacity: 1;
@@ -526,7 +587,7 @@ button.danger:hover:not(:disabled) {
 .ov {
   position: fixed;
   inset: 0;
-  background: rgba(13, 40, 70, 0.48);
+  background: rgba(4, 9, 22, 0.66);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -541,17 +602,17 @@ button.danger:hover:not(:disabled) {
 }
 .ov-card {
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(61, 143, 212, 0.12), transparent 55%),
-    linear-gradient(165deg, #ffffff 0%, #eef4fa 100%);
+    radial-gradient(ellipse 85% 55% at 50% 0%, rgba(230, 182, 84, 0.1), transparent 55%),
+    linear-gradient(168deg, #1b2c55 0%, #101c3a 100%);
   border-radius: 22px;
   padding: 28px 24px;
   width: min(100%, 400px);
   max-height: min(88dvh, 640px);
   overflow: auto;
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(230, 182, 84, 0.3);
   box-shadow:
-    0 0 0 1px rgba(30, 95, 154, 0.12),
-    0 28px 60px -16px var(--shadow-deep);
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 28px 60px -16px rgba(0, 0, 0, 0.8);
   animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .ov-card h2 {
@@ -559,7 +620,11 @@ button.danger:hover:not(:disabled) {
   font-weight: 700;
   font-size: 34px;
   letter-spacing: -0.03em;
-  color: var(--sapphire-ink);
+  background: linear-gradient(172deg, var(--brass-hi) 8%, var(--brass) 55%, var(--brass-deep) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 8px;
 }
 .ov-card p, .ov-card li {
@@ -570,6 +635,7 @@ button.danger:hover:not(:disabled) {
 }
 .ov-card ul { padding-left: 1.15em; margin: 12px 0 16px; }
 .ov-card li { margin-bottom: 7px; }
+.ov-card li::marker { color: var(--brass); }
 .ov-card .lead {
   color: var(--ink);
   font-size: 15.5px;
@@ -585,9 +651,9 @@ button.danger:hover:not(:disabled) {
   font-weight: 750;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--sapphire-deep);
+  color: var(--brass);
   margin: 14px 0 6px;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 .diff {
   display: flex;
@@ -601,27 +667,51 @@ button.danger:hover:not(:disabled) {
   justify-content: center;
   gap: 6px;
   padding: 12px 8px;
-  border: 1.5px solid rgba(30, 95, 154, 0.2);
+  border: 1.5px solid rgba(122, 156, 220, 0.3);
   border-radius: 12px;
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(122, 156, 220, 0.08);
+  color: var(--ink-soft);
   transition: 0.15s;
 }
-.diff input { accent-color: var(--sapphire); }
+.diff input { accent-color: var(--brass); }
 .diff label:has(input:checked) {
-  border-color: var(--sapphire);
-  background: rgba(30, 95, 154, 0.1);
-  color: var(--sapphire-deep);
-  box-shadow: 0 0 0 3px rgba(30, 95, 154, 0.12);
+  border-color: var(--brass);
+  background: rgba(230, 182, 84, 0.14);
+  color: var(--brass-hi);
+  box-shadow: 0 0 0 3px rgba(230, 182, 84, 0.15);
+}
+
+@media (max-width: 560px) {
+  .hud.p3, .hud.p4 { grid-template-columns: 1fr 1fr; }
+  .hud.p3 .pscore, .hud.p4 .pscore { border-left: 0; }
+  .hud.p3 .pscore:nth-child(even), .hud.p4 .pscore:nth-child(even) {
+    border-left: 1px solid rgba(122, 156, 220, 0.15);
+  }
+  .hud.p3 .pscore:nth-child(n+3), .hud.p4 .pscore:nth-child(n+3),
+  .hud.p3 .bagbox, .hud.p4 .bagbox {
+    border-top: 1px solid rgba(122, 156, 220, 0.15);
+  }
+  .hud.p3 .bagbox, .hud.p4 .bagbox {
+    grid-column: 1 / -1;
+    border-left: 0;
+    flex-direction: row;
+    gap: 10px;
+    align-items: baseline;
+    padding: 7px 14px;
+  }
+  .hud.p3 .bagbox .pt, .hud.p4 .bagbox .pt { font-size: 18px; }
 }
 
 @media (max-width: 480px) {
-  .tile { width: 35px; height: 48px; }
-  .tile .v { font-size: 20px; }
+  .tile { width: 35px; height: 48px; gap: 3px; }
+  .tile .v { font-size: 21px; }
+  .tile::after { width: 6px; height: 6px; }
   .ctrls button { min-width: 0; font-size: 12.5px; padding: 11px 8px; }
   .brand h1 { font-size: clamp(34px, 11vw, 48px); }
+  .pscore .pt { font-size: 24px; }
 }
 
 </style>
@@ -640,22 +730,7 @@ button.danger:hover:not(:disabled) {
   </header>
 
   <div id="game" class="hidden">
-    <div class="hud">
-      <div class="pscore" id="hudP0">
-        <div class="nm"><span id="s0name">Sinä</span><span>ottelu</span></div>
-        <div class="pt" id="m0">0</div>
-        <div class="lm"><span id="s0">0</span> palaa · <span id="last0"></span></div>
-      </div>
-      <div class="pscore" id="hudP1">
-        <div class="nm"><span id="s1name">Tietokone</span><span>ottelu</span></div>
-        <div class="pt" id="m1">0</div>
-        <div class="lm"><span id="s1">0</span> palaa · <span id="last1"></span></div>
-      </div>
-      <div class="bagbox">
-        <div class="nm">Pussi</div>
-        <div class="pt" id="bag">0</div>
-      </div>
-    </div>
+    <div class="hud" id="hud"></div>
 
     <div class="goal" id="goal"></div>
     <div class="status" id="status"></div>
@@ -706,13 +781,24 @@ button.danger:hover:not(:disabled) {
   var RACK_SIZE_CHOICES = [7, 10, 14];
   var INITIAL_MELD = 30;
   var JOKER_PENALTY = 30;
-  var PLAYER_COUNT = 2;
+  var PLAYER_COUNT = 2; // oletus
+  var PLAYER_COUNT_CHOICES = [2, 3, 4];
   var MATCH_TARGET = 200; // ottelu useammalla erällä
 
   function clampRackSize(n) {
     var v = n | 0;
     if (RACK_SIZE_CHOICES.indexOf(v) >= 0) return v;
     return RACK_SIZE;
+  }
+
+  function clampPlayerCount(n) {
+    var v = n | 0;
+    if (PLAYER_COUNT_CHOICES.indexOf(v) >= 0) return v;
+    return PLAYER_COUNT;
+  }
+
+  function playerCountOf(state) {
+    return state.playerCount || state.racks.length;
   }
 
   function makeRNG(seed) {
@@ -1040,30 +1126,38 @@ button.danger:hover:not(:disabled) {
   function newGame(opts) {
     opts = opts || {};
     var rackSize = clampRackSize(opts.rackSize != null ? opts.rackSize : RACK_SIZE);
+    var playerCount = clampPlayerCount(opts.playerCount != null ? opts.playerCount : PLAYER_COUNT);
     var seed = opts.seed != null ? opts.seed : ((Math.random() * 1e9) | 0);
     var rng = makeRNG(seed);
     var bag = buildBag(rng);
     var racks = [];
-    for (var p = 0; p < PLAYER_COUNT; p++) {
+    var hasMelded = [];
+    var scores = [];
+    var lastAction = [];
+    for (var p = 0; p < playerCount; p++) {
       racks.push(bag.splice(bag.length - rackSize, rackSize));
+      hasMelded.push(false);
+      scores.push(0);
+      lastAction.push(null);
     }
-    var matchScores = opts.matchScores ? opts.matchScores.slice() : [0, 0];
+    var matchScores = opts.matchScores ? opts.matchScores.slice() : scores.slice();
     return {
       bag: bag,
       board: [],
       racks: racks,
+      playerCount: playerCount,
       turn: 0,
-      hasMelded: [false, false],
+      hasMelded: hasMelded,
       over: false,
       winner: null,
-      scores: [0, 0], // tämän erän pisteet
+      scores: scores, // tämän erän pisteet
       settled: false,
       matchScores: matchScores,
       matchTarget: opts.matchTarget != null ? opts.matchTarget : MATCH_TARGET,
       matchOver: false,
       matchWinner: null,
       round: opts.round != null ? opts.round : 1,
-      lastAction: [null, null],
+      lastAction: lastAction,
       rng: rng,
       seed: seed,
       difficulty: opts.difficulty || "normaali",
@@ -1075,14 +1169,21 @@ button.danger:hover:not(:disabled) {
   function settleRound(state) {
     if (!state.over || state.settled) return state;
     state.settled = true;
-    state.matchScores[0] += state.scores[0];
-    state.matchScores[1] += state.scores[1];
+    var n = playerCountOf(state);
     var t = state.matchTarget;
-    if (state.matchScores[0] >= t || state.matchScores[1] >= t) {
+    var reached = false;
+    for (var p = 0; p < n; p++) {
+      state.matchScores[p] += state.scores[p];
+      if (state.matchScores[p] >= t) reached = true;
+    }
+    if (reached) {
       state.matchOver = true;
-      if (state.matchScores[0] > state.matchScores[1]) state.matchWinner = 0;
-      else if (state.matchScores[1] > state.matchScores[0]) state.matchWinner = 1;
-      else state.matchWinner = null;
+      var best = -Infinity, winner = null, tie = false;
+      for (var q = 0; q < n; q++) {
+        if (state.matchScores[q] > best) { best = state.matchScores[q]; winner = q; tie = false; }
+        else if (state.matchScores[q] === best) tie = true;
+      }
+      state.matchWinner = tie ? null : winner;
     }
     return state;
   }
@@ -1097,6 +1198,7 @@ button.danger:hover:not(:disabled) {
       seed: nextSeed,
       difficulty: state.difficulty,
       rackSize: state.rackSize,
+      playerCount: playerCountOf(state),
       matchScores: state.matchScores.slice(),
       matchTarget: state.matchTarget,
       round: (state.round || 1) + 1,
@@ -1108,13 +1210,13 @@ button.danger:hover:not(:disabled) {
     if (!state.bag.length) {
       // Pussi tyhjä: ohita (ei nostoa)
       state.lastAction[state.turn] = { type: "pass", reason: "pussi tyhjä" };
-      state.turn = (state.turn + 1) % PLAYER_COUNT;
+      state.turn = (state.turn + 1) % playerCountOf(state);
       return { ok: true, drew: null, passed: true };
     }
     var t = state.bag.pop();
     state.racks[state.turn].push(t);
     state.lastAction[state.turn] = { type: "draw", tile: cloneTile(t) };
-    state.turn = (state.turn + 1) % PLAYER_COUNT;
+    state.turn = (state.turn + 1) % playerCountOf(state);
     return { ok: true, drew: t };
   }
 
@@ -1134,14 +1236,17 @@ button.danger:hover:not(:disabled) {
     if (res.won) {
       state.over = true;
       state.winner = p;
-      // Häviäjän telineen pisteet voittajalle
-      var other = 1 - p;
-      var pen = scoreTiles(state.racks[other]);
-      state.scores[p] += pen;
-      state.scores[other] -= pen;
+      // Häviäjien telineiden pisteet voittajalle
+      var n = playerCountOf(state);
+      for (var other = 0; other < n; other++) {
+        if (other === p) continue;
+        var pen = scoreTiles(state.racks[other]);
+        state.scores[p] += pen;
+        state.scores[other] -= pen;
+      }
       settleRound(state);
     } else {
-      state.turn = (state.turn + 1) % PLAYER_COUNT;
+      state.turn = (state.turn + 1) % playerCountOf(state);
     }
     return res;
   }
@@ -1381,23 +1486,34 @@ button.danger:hover:not(:disabled) {
       turns++;
       // Umpikuja: molemmat vain nostavat ja pussi tyhjä
       if (!state.bag.length) {
+        var n = playerCountOf(state);
         var idle = 0;
         // anna vielä muutama vuoro
-        while (!state.over && idle < PLAYER_COUNT * 2 && turns < maxTurns) {
+        while (!state.over && idle < n * 2 && turns < maxTurns) {
           var before = state.racks[state.turn].length;
           aiTurn(state);
           turns++;
-          if (state.racks[(state.turn + PLAYER_COUNT - 1) % PLAYER_COUNT].length >= before) idle++;
+          if (state.racks[(state.turn + n - 1) % n].length >= before) idle++;
           else idle = 0;
         }
         if (!state.over) {
-          // Pisteytä telineet: vähemmän häviää vähemmän
-          var s0 = scoreTiles(state.racks[0]);
-          var s1 = scoreTiles(state.racks[1]);
+          // Pisteytä telineet: pienin telinesumma voittaa, saa muiden pisteet
+          var sums = state.racks.map(scoreTiles);
+          var best = Infinity, winner = null, tie = false;
+          for (var p = 0; p < n; p++) {
+            if (sums[p] < best) { best = sums[p]; winner = p; tie = false; }
+            else if (sums[p] === best) tie = true;
+          }
           state.over = true;
-          if (s0 < s1) { state.winner = 0; state.scores[0] += s1; state.scores[1] -= s1; }
-          else if (s1 < s0) { state.winner = 1; state.scores[1] += s0; state.scores[0] -= s0; }
-          else state.winner = null; // tasapeli
+          if (tie) state.winner = null; // tasapeli
+          else {
+            state.winner = winner;
+            for (var q = 0; q < n; q++) {
+              if (q === winner) continue;
+              state.scores[winner] += sums[q];
+              state.scores[q] -= sums[q];
+            }
+          }
         }
         break;
       }
@@ -1415,6 +1531,8 @@ button.danger:hover:not(:disabled) {
     INITIAL_MELD: INITIAL_MELD,
     JOKER_PENALTY: JOKER_PENALTY,
     PLAYER_COUNT: PLAYER_COUNT,
+    PLAYER_COUNT_CHOICES: PLAYER_COUNT_CHOICES,
+    clampPlayerCount: clampPlayerCount,
     MATCH_TARGET: MATCH_TARGET,
     makeRNG: makeRNG,
     shuffle: shuffle,
@@ -1457,6 +1575,13 @@ button.danger:hover:not(:disabled) {
   var NAMES = ["Sinä", "Tietokone"];
   var AI_DELAY = 650;
 
+  function makeNames(playerCount) {
+    if (playerCount <= 2) return ["Sinä", "Tietokone"];
+    var names = ["Sinä"];
+    for (var i = 1; i < playerCount; i++) names.push("Kone " + i);
+    return names;
+  }
+
   var G = null;
   var snap = null; // vuoron alku
   var workBoard = null;
@@ -1497,6 +1622,12 @@ button.danger:hover:not(:disabled) {
       "<h2>Rypäs</h2>" +
       "<p class=\"lead\">Muodosta numerorypäitä, tyhjennä telineesi ja kerää ottelupisteitä — ensimmäinen " + E.MATCH_TARGET + " pisteeseen voittaa.</p>" +
       "<p>Ryhmä = sama numero, eri värit (3–4). Jono = sama väri, peräkkäiset (≥3). Avaus ≥30 pistettä.</p>" +
+      "<div class=\"field-label\">Vastustajia</div>" +
+      "<div class=\"diff\">" +
+      "<label><input type=\"radio\" name=\"opps\" value=\"1\" checked> 1</label>" +
+      "<label><input type=\"radio\" name=\"opps\" value=\"2\"> 2</label>" +
+      "<label><input type=\"radio\" name=\"opps\" value=\"3\"> 3</label>" +
+      "</div>" +
       "<div class=\"field-label\">Aloituspalat telineeseen</div>" +
       "<div class=\"diff\">" + rackOpts + "</div>" +
       "<div class=\"field-label\">Vaikeus</div>" +
@@ -1512,9 +1643,11 @@ button.danger:hover:not(:disabled) {
     el("ovStart").onclick = function () {
       var d = document.querySelector("input[name=diff]:checked");
       var r = document.querySelector("input[name=rack]:checked");
+      var o = document.querySelector("input[name=opps]:checked");
       newGame({
         difficulty: d ? d.value : "normaali",
         rackSize: r ? +r.value : E.RACK_SIZE,
+        playerCount: (o ? +o.value : 1) + 1,
       });
     };
     el("ovRules").onclick = showRules;
@@ -1525,8 +1658,8 @@ button.danger:hover:not(:disabled) {
       "<h2>Säännöt</h2>" +
       "<ul>" +
       "<li><strong>Ottelu:</strong> pelataan eriä, kunnes joku saavuttaa " + E.MATCH_TARGET + " pistettä.</li>" +
-      "<li><strong>Erä:</strong> tyhjennä telineesi ensimmäisenä — saat vastustajan jäljellä olevat pisteet (hänelle miinus).</li>" +
-      "<li><strong>Aloitus:</strong> valitse montako palaa kumpikin saa telineeseen (7, 10 tai 14).</li>" +
+      "<li><strong>Erä:</strong> tyhjennä telineesi ensimmäisenä — saat vastustajien jäljellä olevat pisteet (heille miinus).</li>" +
+      "<li><strong>Aloitus:</strong> valitse vastustajien määrä (1–3) ja montako palaa kukin saa telineeseen (7, 10 tai 14).</li>" +
       "<li><strong>Ryhmä:</strong> sama numero, eri värit, 3–4 palaa.</li>" +
       "<li><strong>Jono:</strong> sama väri, peräkkäiset numerot, vähintään 3.</li>" +
       "<li><strong>Jokerit</strong> korvaavat minkä tahansa palan. Kädessä jokerin sakko on 30.</li>" +
@@ -1544,8 +1677,30 @@ button.danger:hover:not(:disabled) {
     };
   }
 
+  function buildHud() {
+    var hud = el("hud");
+    hud.innerHTML = "";
+    for (var p = 0; p < G.playerCount; p++) {
+      var box = document.createElement("div");
+      box.className = "pscore";
+      box.id = "hudP" + p;
+      box.innerHTML =
+        '<div class="nm"><span id="s' + p + 'name"></span><span>ottelu</span></div>' +
+        '<div class="pt" id="m' + p + '">0</div>' +
+        '<div class="lm"><span id="s' + p + '">0</span> palaa · <span id="last' + p + '"></span></div>';
+      hud.appendChild(box);
+    }
+    var bag = document.createElement("div");
+    bag.className = "bagbox";
+    bag.innerHTML = '<div class="nm">Pussi</div><div class="pt" id="bag">0</div>';
+    hud.appendChild(bag);
+    hud.className = "hud p" + G.playerCount;
+  }
+
   function newGame(opts) {
     G = E.newGame(opts || {});
+    NAMES = makeNames(G.playerCount);
+    buildHud();
     busy = false;
     el("game").classList.remove("hidden");
     closeOverlay();
@@ -1634,7 +1789,7 @@ button.danger:hover:not(:disabled) {
   }
 
   function renderHud() {
-    for (var p = 0; p < 2; p++) {
+    for (var p = 0; p < G.playerCount; p++) {
       var hud = el("hudP" + p);
       hud.className = "pscore" + (G.turn === p && !G.over ? " turn" : "");
       el("s" + p + "name").textContent = NAMES[p];
@@ -1812,7 +1967,7 @@ button.danger:hover:not(:disabled) {
       return;
     }
     var res = E.validatePlay(
-      { board: snap.board, racks: [snap.rack, G.racks[1]], turn: 0, hasMelded: G.hasMelded },
+      { board: snap.board, racks: [snap.rack].concat(G.racks.slice(1)), turn: 0, hasMelded: G.hasMelded },
       workBoard,
       workRack
     );
@@ -1858,16 +2013,22 @@ button.danger:hover:not(:disabled) {
 
   function runAI() {
     if (G.over) { busy = false; endGame(); return; }
-    var before = G.racks[1].length;
+    var p = G.turn;
+    var before = G.racks[p].length;
     var res = E.aiTurn(G);
-    busy = false;
-    if (res && res.drew) toast("Tietokone nosti");
-    else if (res && res.played) toast("Tietokone pelasi " + res.played.length + " palaa");
+    if (res && res.drew) toast(NAMES[p] + " nosti");
+    else if (res && res.played) toast(NAMES[p] + " pelasi " + res.played.length + " palaa");
     else if (res && res.ok && !res.drew) {
-      var after = G.racks[1].length;
-      if (after < before) toast("Tietokone pelasi " + (before - after) + " palaa");
+      var after = G.racks[p].length;
+      if (after < before) toast(NAMES[p] + " pelasi " + (before - after) + " palaa");
     }
-    if (G.over) { endGame(); return; }
+    if (G.over) { busy = false; endGame(); return; }
+    if (G.turn !== 0) {
+      render();
+      setTimeout(runAI, AI_DELAY);
+      return;
+    }
+    busy = false;
     beginHumanTurn();
     setStatus("Sinun vuorosi.");
   }
@@ -1881,19 +2042,19 @@ button.danger:hover:not(:disabled) {
     render();
     var roundMsg;
     if (G.winner === 0) roundMsg = "Tyhjensit telineesi — voitit erän.";
-    else if (G.winner === 1) roundMsg = "Tietokone tyhjensi telineensä.";
+    else if (G.winner != null) roundMsg = NAMES[G.winner] + " tyhjensi telineensä.";
     else roundMsg = "Erä päättyi tasapeliin (pussi / telineet).";
 
-    var scoreLine = "Erä: " + fmtDelta(G.scores[0]) + " / " + fmtDelta(G.scores[1]) +
-      " · Ottelu: <strong>" + G.matchScores[0] + "–" + G.matchScores[1] + "</strong> / " + G.matchTarget;
+    var scoreLine = "Erä: " + G.scores.map(fmtDelta).join(" / ") +
+      " · Ottelu: <strong>" + G.matchScores.join("–") + "</strong> / " + G.matchTarget;
 
     if (G.matchOver) {
-      var title = G.matchWinner === 0 ? "Otteluvoititto!" : G.matchWinner === 1 ? "Otteluhäviö" : "Ottelutasapeli";
+      var title = G.matchWinner === 0 ? "Otteluvoitto!" : G.matchWinner != null ? "Otteluhäviö" : "Ottelutasapeli";
       var lead = G.matchWinner === 0
         ? "Saavutit " + G.matchTarget + " pistettä."
-        : G.matchWinner === 1
-          ? "Tietokone ehti " + G.matchTarget + " pisteeseen."
-          : "Molemmilla sama pistemäärä.";
+        : G.matchWinner != null
+          ? NAMES[G.matchWinner] + " ehti " + G.matchTarget + " pisteeseen."
+          : "Kärjessä sama pistemäärä.";
       openOverlay(
         "<h2>" + title + "</h2>" +
         "<p class=\"lead\">" + lead + "</p>" +
