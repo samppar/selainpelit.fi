@@ -1,0 +1,7 @@
+{
+  "name": "romuralli",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Romuralli — Death Rally -henkinen ylhäältä kuvattu aseellinen kilpa-ajopeli (selainpeli).",
+  "scripts": { "test": "node test/run_tests.js", "build": "node build.js" }
+}

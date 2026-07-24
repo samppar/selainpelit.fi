@@ -45,6 +45,8 @@ jobs:
             needs_install: false
           - game: kapysota
             needs_install: false
+          - game: romuralli
+            needs_install: false
     defaults:
       run:
         working-directory: ${{ matrix.game }}
