@@ -39,7 +39,7 @@
 
   // ———————————————————————— Äänet ————————————————————————
   const S = (() => {
-    let ac = null, master = null, engOsc = null, engGain = null, engFilter = null;
+    let ac = null, master = null, eng = null;
     let enabled = true;
     function ensure() {
       if (ac || !enabled) return;
@@ -50,25 +50,50 @@
       master.gain.value = 0.5;
       master.connect(ac.destination);
     }
-    function engine(on, speed) {
+    // V8-henkinen moottori: sahalaita + ali-oskillaattori (pörinä) + kevyt
+    // särö; kaasu avaa suodatinta, tyhjäkäynnillä epätasainen "loppatus".
+    function engine(on, speed, throttle) {
       ensure();
       if (!ac) return;
-      if (on && !engOsc) {
-        engOsc = ac.createOscillator();
-        engOsc.type = "sawtooth";
-        engFilter = ac.createBiquadFilter();
-        engFilter.type = "lowpass";
-        engFilter.frequency.value = 500;
-        engGain = ac.createGain();
-        engGain.gain.value = 0;
-        engOsc.connect(engFilter).connect(engGain).connect(master);
-        engOsc.start();
+      if (on && !eng) {
+        const o1 = ac.createOscillator(); o1.type = "sawtooth";
+        const o2 = ac.createOscillator(); o2.type = "square";   // ali-oktaavi
+        const o3 = ac.createOscillator(); o3.type = "sawtooth"; // levitys
+        o3.detune.value = 11;
+        const oGain2 = ac.createGain(); oGain2.gain.value = 0.55;
+        const pre = ac.createGain(); pre.gain.value = 1.6;      // aja säröön kuumana
+        const shaper = ac.createWaveShaper();
+        const curve = new Float32Array(257);
+        for (let i = 0; i <= 256; i++) curve[i] = Math.tanh((i / 128 - 1) * 2.6);
+        shaper.curve = curve;
+        shaper.oversample = "2x";
+        const filter = ac.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 240;
+        filter.Q.value = 1.1;
+        const g = ac.createGain(); g.gain.value = 0;
+        // Käyntiepätasaisuus: hidas LFO heiluttaa kierroksia hieman
+        const lfo = ac.createOscillator(); lfo.type = "triangle"; lfo.frequency.value = 9;
+        const lfoG = ac.createGain(); lfoG.gain.value = 2.5;
+        lfo.connect(lfoG);
+        lfoG.connect(o1.frequency);
+        lfoG.connect(o2.frequency);
+        o1.connect(pre); o3.connect(pre);
+        o2.connect(oGain2).connect(pre);
+        pre.connect(shaper).connect(filter).connect(g).connect(master);
+        o1.start(); o2.start(); o3.start(); lfo.start();
+        eng = { o1, o2, o3, lfo, lfoG, filter, g };
       }
-      if (engOsc) {
-        const f = 55 + speed * 0.34;
-        engOsc.frequency.setTargetAtTime(f, ac.currentTime, 0.08);
-        engFilter.frequency.setTargetAtTime(300 + speed * 2, ac.currentTime, 0.1);
-        engGain.gain.setTargetAtTime(on && enabled ? 0.045 : 0, ac.currentTime, 0.1);
+      if (eng) {
+        const th = Math.max(0, throttle || 0);
+        const f = 34 + speed * 0.22;
+        eng.o1.frequency.setTargetAtTime(f, ac.currentTime, 0.09);
+        eng.o3.frequency.setTargetAtTime(f, ac.currentTime, 0.09);
+        eng.o2.frequency.setTargetAtTime(f / 2, ac.currentTime, 0.09);
+        eng.lfo.frequency.setTargetAtTime(8 + speed * 0.03, ac.currentTime, 0.2);
+        eng.lfoG.gain.setTargetAtTime(Math.max(0.6, 3 - speed * 0.01), ac.currentTime, 0.2);
+        eng.filter.frequency.setTargetAtTime(170 + speed * 2.4 + th * 260, ac.currentTime, 0.12);
+        eng.g.gain.setTargetAtTime(on && enabled ? 0.075 + th * 0.02 : 0, ac.currentTime, 0.1);
       }
     }
     function blip(freq, dur, type, vol, slide) {
@@ -878,7 +903,7 @@
       }
       if (acc >= E.DT) acc = 0;
       const pl = state.cars[0];
-      S.engine(mode === "race" && !pl.wrecked, Math.hypot(pl.vx, pl.vy));
+      S.engine(mode === "race" && !pl.wrecked, Math.hypot(pl.vx, pl.vy), input.throttle);
       if (pendingResultT > 0 && mode === "race") {
         pendingResultT -= dt;
         if (pendingResultT <= 0) showResults();
