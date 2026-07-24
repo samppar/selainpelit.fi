@@ -9,16 +9,45 @@
   var COLORS = ["K", "S", "P", "O"]; // musta, sininen, punainen, keltainen
   var COLOR_NAMES = { K: "musta", S: "sininen", P: "punainen", O: "keltainen" };
   var RACK_SIZE = 14; // oletus
-  var RACK_SIZE_CHOICES = [7, 10, 14];
-  var INITIAL_MELD = 30;
+  var RACK_SIZE_MIN = 5;
+  var RACK_SIZE_MAX = 20;
+  var RACK_SIZE_CHOICES = [7, 10, 14]; // vanha API, säilytetty
+  var INITIAL_MELD = 30; // oletus, säädettävissä (openMin)
+  var OPEN_MIN_MIN = 0;
+  var OPEN_MIN_MAX = 50;
   var JOKER_PENALTY = 30;
-  var PLAYER_COUNT = 2;
+  var PLAYER_COUNT = 2; // oletus
+  var PLAYER_COUNT_CHOICES = [2, 3, 4];
   var MATCH_TARGET = 200; // ottelu useammalla erällä
 
   function clampRackSize(n) {
     var v = n | 0;
-    if (RACK_SIZE_CHOICES.indexOf(v) >= 0) return v;
-    return RACK_SIZE;
+    if (!v && v !== 0) return RACK_SIZE;
+    if (v < RACK_SIZE_MIN) return RACK_SIZE;
+    if (v > RACK_SIZE_MAX) return RACK_SIZE_MAX;
+    return v;
+  }
+
+  function clampOpenMin(n) {
+    if (n == null || isNaN(+n)) return INITIAL_MELD;
+    var v = +n | 0;
+    if (v < OPEN_MIN_MIN) return OPEN_MIN_MIN;
+    if (v > OPEN_MIN_MAX) return OPEN_MIN_MAX;
+    return v;
+  }
+
+  function openMinOf(state) {
+    return state.openMin != null ? state.openMin : INITIAL_MELD;
+  }
+
+  function clampPlayerCount(n) {
+    var v = n | 0;
+    if (PLAYER_COUNT_CHOICES.indexOf(v) >= 0) return v;
+    return PLAYER_COUNT;
+  }
+
+  function playerCountOf(state) {
+    return state.playerCount || state.racks.length;
   }
 
   function makeRNG(seed) {
@@ -216,6 +245,7 @@
    */
   function validatePlay(state, newBoard, newRack) {
     var p = state.turn;
+    var openMin = openMinOf(state);
     var oldRack = state.racks[p];
     var oldBoard = state.board;
 
@@ -259,10 +289,10 @@
             return { ok: false, error: "Avauksessa käytä vain omia palojasi" };
           }
           var meldScore = scoreTiles(fromRack);
-          if (meldScore < INITIAL_MELD) {
+          if (meldScore < openMin) {
             return {
               ok: false,
-              error: "Avaus vaatii vähintään " + INITIAL_MELD + " pistettä (nyt " + meldScore + ")",
+              error: "Avaus vaatii vähintään " + openMin + " pistettä (nyt " + meldScore + ")",
               score: meldScore,
             };
           }
@@ -273,20 +303,20 @@
             return { ok: false, error: "Pelaa uusia rypäitä avaukseen" };
           }
           var ms = scoreTiles(played.tiles);
-          if (ms < INITIAL_MELD) {
+          if (ms < openMin) {
             return {
               ok: false,
-              error: "Avaus vaatii vähintään " + INITIAL_MELD + " pistettä (nyt " + ms + ")",
+              error: "Avaus vaatii vähintään " + openMin + " pistettä (nyt " + ms + ")",
               score: ms,
             };
           }
         }
       } else {
         var ms0 = scoreTiles(played.tiles);
-        if (ms0 < INITIAL_MELD) {
+        if (ms0 < openMin) {
           return {
             ok: false,
-            error: "Avaus vaatii vähintään " + INITIAL_MELD + " pistettä (nyt " + ms0 + ")",
+            error: "Avaus vaatii vähintään " + openMin + " pistettä (nyt " + ms0 + ")",
             score: ms0,
           };
         }
@@ -346,34 +376,43 @@
   function newGame(opts) {
     opts = opts || {};
     var rackSize = clampRackSize(opts.rackSize != null ? opts.rackSize : RACK_SIZE);
+    var playerCount = clampPlayerCount(opts.playerCount != null ? opts.playerCount : PLAYER_COUNT);
     var seed = opts.seed != null ? opts.seed : ((Math.random() * 1e9) | 0);
     var rng = makeRNG(seed);
     var bag = buildBag(rng);
     var racks = [];
-    for (var p = 0; p < PLAYER_COUNT; p++) {
+    var hasMelded = [];
+    var scores = [];
+    var lastAction = [];
+    for (var p = 0; p < playerCount; p++) {
       racks.push(bag.splice(bag.length - rackSize, rackSize));
+      hasMelded.push(false);
+      scores.push(0);
+      lastAction.push(null);
     }
-    var matchScores = opts.matchScores ? opts.matchScores.slice() : [0, 0];
+    var matchScores = opts.matchScores ? opts.matchScores.slice() : scores.slice();
     return {
       bag: bag,
       board: [],
       racks: racks,
+      playerCount: playerCount,
       turn: 0,
-      hasMelded: [false, false],
+      hasMelded: hasMelded,
       over: false,
       winner: null,
-      scores: [0, 0], // tämän erän pisteet
+      scores: scores, // tämän erän pisteet
       settled: false,
       matchScores: matchScores,
       matchTarget: opts.matchTarget != null ? opts.matchTarget : MATCH_TARGET,
       matchOver: false,
       matchWinner: null,
       round: opts.round != null ? opts.round : 1,
-      lastAction: [null, null],
+      lastAction: lastAction,
       rng: rng,
       seed: seed,
       difficulty: opts.difficulty || "normaali",
       rackSize: rackSize,
+      openMin: clampOpenMin(opts.openMin),
     };
   }
 
@@ -381,14 +420,21 @@
   function settleRound(state) {
     if (!state.over || state.settled) return state;
     state.settled = true;
-    state.matchScores[0] += state.scores[0];
-    state.matchScores[1] += state.scores[1];
+    var n = playerCountOf(state);
     var t = state.matchTarget;
-    if (state.matchScores[0] >= t || state.matchScores[1] >= t) {
+    var reached = false;
+    for (var p = 0; p < n; p++) {
+      state.matchScores[p] += state.scores[p];
+      if (state.matchScores[p] >= t) reached = true;
+    }
+    if (reached) {
       state.matchOver = true;
-      if (state.matchScores[0] > state.matchScores[1]) state.matchWinner = 0;
-      else if (state.matchScores[1] > state.matchScores[0]) state.matchWinner = 1;
-      else state.matchWinner = null;
+      var best = -Infinity, winner = null, tie = false;
+      for (var q = 0; q < n; q++) {
+        if (state.matchScores[q] > best) { best = state.matchScores[q]; winner = q; tie = false; }
+        else if (state.matchScores[q] === best) tie = true;
+      }
+      state.matchWinner = tie ? null : winner;
     }
     return state;
   }
@@ -403,6 +449,8 @@
       seed: nextSeed,
       difficulty: state.difficulty,
       rackSize: state.rackSize,
+      openMin: openMinOf(state),
+      playerCount: playerCountOf(state),
       matchScores: state.matchScores.slice(),
       matchTarget: state.matchTarget,
       round: (state.round || 1) + 1,
@@ -414,13 +462,13 @@
     if (!state.bag.length) {
       // Pussi tyhjä: ohita (ei nostoa)
       state.lastAction[state.turn] = { type: "pass", reason: "pussi tyhjä" };
-      state.turn = (state.turn + 1) % PLAYER_COUNT;
+      state.turn = (state.turn + 1) % playerCountOf(state);
       return { ok: true, drew: null, passed: true };
     }
     var t = state.bag.pop();
     state.racks[state.turn].push(t);
     state.lastAction[state.turn] = { type: "draw", tile: cloneTile(t) };
-    state.turn = (state.turn + 1) % PLAYER_COUNT;
+    state.turn = (state.turn + 1) % playerCountOf(state);
     return { ok: true, drew: t };
   }
 
@@ -440,14 +488,17 @@
     if (res.won) {
       state.over = true;
       state.winner = p;
-      // Häviäjän telineen pisteet voittajalle
-      var other = 1 - p;
-      var pen = scoreTiles(state.racks[other]);
-      state.scores[p] += pen;
-      state.scores[other] -= pen;
+      // Häviäjien telineiden pisteet voittajalle
+      var n = playerCountOf(state);
+      for (var other = 0; other < n; other++) {
+        if (other === p) continue;
+        var pen = scoreTiles(state.racks[other]);
+        state.scores[p] += pen;
+        state.scores[other] -= pen;
+      }
       settleRound(state);
     } else {
-      state.turn = (state.turn + 1) % PLAYER_COUNT;
+      state.turn = (state.turn + 1) % playerCountOf(state);
     }
     return res;
   }
@@ -586,6 +637,7 @@
     var rack = state.racks[player].slice();
     var board = cloneBoard(state.board);
     var hasMelded = state.hasMelded[player];
+    var openMin = openMinOf(state);
 
     if (!hasMelded) {
       // Etsi yhdistelmä rypäitä joiden pisteet ≥ 30
@@ -595,7 +647,7 @@
       for (var i = 0; i < sets.length; i++) {
         var s = sets[i];
         var sc = scoreTiles(s.tiles);
-        if (sc >= INITIAL_MELD) {
+        if (sc >= openMin) {
           var cand = {
             board: board.concat([cloneSet(s.tiles)]),
             rack: removeTiles(rack, s.tiles),
@@ -618,7 +670,7 @@
           });
           if (overlap) continue;
           var sc2 = scoreTiles(sets[a].tiles) + scoreTiles(sets[b].tiles);
-          if (sc2 >= INITIAL_MELD) {
+          if (sc2 >= openMin) {
             var cand2 = {
               board: board.concat([cloneSet(sets[a].tiles), cloneSet(sets[b].tiles)]),
               rack: removeTiles(removeTiles(rack, sets[a].tiles), sets[b].tiles),
@@ -687,23 +739,34 @@
       turns++;
       // Umpikuja: molemmat vain nostavat ja pussi tyhjä
       if (!state.bag.length) {
+        var n = playerCountOf(state);
         var idle = 0;
         // anna vielä muutama vuoro
-        while (!state.over && idle < PLAYER_COUNT * 2 && turns < maxTurns) {
+        while (!state.over && idle < n * 2 && turns < maxTurns) {
           var before = state.racks[state.turn].length;
           aiTurn(state);
           turns++;
-          if (state.racks[(state.turn + PLAYER_COUNT - 1) % PLAYER_COUNT].length >= before) idle++;
+          if (state.racks[(state.turn + n - 1) % n].length >= before) idle++;
           else idle = 0;
         }
         if (!state.over) {
-          // Pisteytä telineet: vähemmän häviää vähemmän
-          var s0 = scoreTiles(state.racks[0]);
-          var s1 = scoreTiles(state.racks[1]);
+          // Pisteytä telineet: pienin telinesumma voittaa, saa muiden pisteet
+          var sums = state.racks.map(scoreTiles);
+          var best = Infinity, winner = null, tie = false;
+          for (var p = 0; p < n; p++) {
+            if (sums[p] < best) { best = sums[p]; winner = p; tie = false; }
+            else if (sums[p] === best) tie = true;
+          }
           state.over = true;
-          if (s0 < s1) { state.winner = 0; state.scores[0] += s1; state.scores[1] -= s1; }
-          else if (s1 < s0) { state.winner = 1; state.scores[1] += s0; state.scores[0] -= s0; }
-          else state.winner = null; // tasapeli
+          if (tie) state.winner = null; // tasapeli
+          else {
+            state.winner = winner;
+            for (var q = 0; q < n; q++) {
+              if (q === winner) continue;
+              state.scores[winner] += sums[q];
+              state.scores[q] -= sums[q];
+            }
+          }
         }
         break;
       }
@@ -718,9 +781,16 @@
     RACK_SIZE: RACK_SIZE,
     RACK_SIZE_CHOICES: RACK_SIZE_CHOICES,
     clampRackSize: clampRackSize,
+    RACK_SIZE_MIN: RACK_SIZE_MIN,
+    RACK_SIZE_MAX: RACK_SIZE_MAX,
+    OPEN_MIN_MIN: OPEN_MIN_MIN,
+    OPEN_MIN_MAX: OPEN_MIN_MAX,
+    clampOpenMin: clampOpenMin,
     INITIAL_MELD: INITIAL_MELD,
     JOKER_PENALTY: JOKER_PENALTY,
     PLAYER_COUNT: PLAYER_COUNT,
+    PLAYER_COUNT_CHOICES: PLAYER_COUNT_CHOICES,
+    clampPlayerCount: clampPlayerCount,
     MATCH_TARGET: MATCH_TARGET,
     makeRNG: makeRNG,
     shuffle: shuffle,

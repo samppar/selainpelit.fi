@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        game: [tuppi, sanaseppa, sanapalat, sanasato, rypas, holdem, mylly, tammi, mosaiikki, palikat, labyrintti, moottori-mania, katko, kapysota]
+        game: [tuppi, sanaseppa, sanapalat, sanasato, rypas, holdem, mylly, tammi, mosaiikki, palikat, labyrintti, moottori-mania, katko, kapysota, romuralli]
     defaults:
       run:
         working-directory: ${{ matrix.game }}
@@ -61,9 +61,10 @@ jobs:
           (cd labyrintti && node build.js)
           (cd katko && node build.js)
           (cd kapysota && node build.js)
+          (cd romuralli && node build.js)
           # moottori-mania: ei build.js:ää, index.html on itsenäinen ja jo valmis
 
-          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/mylly _site/tammi _site/mosaiikki _site/palikat _site/labyrintti _site/moottori-mania _site/katko _site/kapysota
+          mkdir -p _site/hertta _site/tuppi _site/sanaseppa _site/sanapalat _site/sanasato _site/rypas _site/holdem _site/mylly _site/tammi _site/mosaiikki _site/palikat _site/labyrintti _site/moottori-mania _site/katko _site/kapysota _site/romuralli
 
           cp -R hertta/dist/. _site/hertta/
           cp tuppi/tuppi.html _site/tuppi/index.html
@@ -80,6 +81,7 @@ jobs:
           cp moottori-mania/index.html _site/moottori-mania/index.html
           cp katko/dist/index.html _site/katko/index.html
           cp kapysota/index.html _site/kapysota/index.html
+          cp romuralli/index.html _site/romuralli/index.html
 
           # Etusivu = repossa ylläpidetty home/index.html
           cp home/index.html _site/index.html

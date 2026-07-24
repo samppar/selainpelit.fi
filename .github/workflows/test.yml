@@ -47,6 +47,8 @@ jobs:
             needs_install: false
           - game: sladi
             needs_install: false
+          - game: romuralli
+            needs_install: false
     defaults:
       run:
         working-directory: ${{ matrix.game }}

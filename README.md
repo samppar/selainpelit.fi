@@ -20,6 +20,7 @@ Monorepo for browser games hosted at selainpelit.fi.
 | `palikat/` | Palikat — Blokus Duo -tyylinen polyominopeli vs. computer |
 | `labyrintti/` | Labyrintti — kallistettava kuulalabyrintti, kolme vaikeustasoa |
 | `moottori-mania/` | Moottori-Mania — Elasto Mania -henkinen ajopeli, portattu fysiikka |
+| `romuralli/` | Romuralli — Death Rally -henkinen aseellinen kilpa-ajopeli ylhäältä kuvattuna |
 
 Each game is self-contained in its folder. See the README inside a game for run instructions.
 
