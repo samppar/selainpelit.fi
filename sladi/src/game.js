@@ -326,34 +326,65 @@
     }
     c.lineJoin = "round"; c.lineCap = "round";
 
-    // reunakivet: valkoinen pohja + punaiset katkot
+    // reunakivet: leveä valkoinen pohja + punaiset katkot
     tracePath();
-    c.strokeStyle = "#e8e4da";
-    c.lineWidth = track.width + 13;
+    c.strokeStyle = "#efece3";
+    c.lineWidth = track.width + 24;
     c.stroke();
-    c.setLineDash([15, 15]);
+    c.setLineDash([28, 28]);
     tracePath();
-    c.strokeStyle = "#c9453a";
-    c.lineWidth = track.width + 13;
+    c.strokeStyle = "#cc4437";
+    c.lineWidth = track.width + 24;
     c.stroke();
     c.setLineDash([]);
 
-    // asfaltti
+    // asfaltti — vaalea, retrohenkinen
     tracePath();
-    c.strokeStyle = "#43474f";
+    c.strokeStyle = "#84888e";
     c.lineWidth = track.width;
     c.stroke();
     // ajolinjan kuluma
     tracePath();
-    c.strokeStyle = "rgba(255,255,255,0.05)";
-    c.lineWidth = track.width * 0.45;
+    c.strokeStyle = "rgba(255,255,255,0.07)";
+    c.lineWidth = track.width * 0.5;
     c.stroke();
+    // asfaltin täplätekstuuri (deterministinen)
+    for (i = 0; i < N; i += 6) {
+      var tp = S[i];
+      var rx = Math.sin(i * 37.7) * track.width * 0.42;
+      var ry = Math.sin(i * 53.3) * 0.9;
+      var tnx = -Math.sin(tp.dir), tny = Math.cos(tp.dir);
+      c.fillStyle = (i % 12) ? "rgba(60,63,70,0.16)" : "rgba(255,255,255,0.10)";
+      c.beginPath();
+      c.arc(tp.x + tnx * rx + ry, tp.y + tny * rx, 1.6 + (i % 3), 0, Math.PI * 2);
+      c.fill();
+    }
 
-    // turbonuolet
+    // keltaiset suuntanuolet tiessä
+    var arrowCount = 5;
+    for (i = 0; i < arrowCount; i++) {
+      var ap = S[Math.round((i + 0.55) * N / arrowCount) % N];
+      c.save();
+      c.translate(ap.x, ap.y);
+      c.rotate(ap.dir);
+      c.fillStyle = "rgba(247,224,76,0.75)";
+      var aw = track.width * 0.13;
+      c.beginPath();
+      c.moveTo(-aw * 2.1, -aw * 0.55); c.lineTo(aw * 0.4, -aw * 0.55);
+      c.lineTo(aw * 0.4, -aw * 1.15); c.lineTo(aw * 2.1, 0);
+      c.lineTo(aw * 0.4, aw * 1.15); c.lineTo(aw * 0.4, aw * 0.55);
+      c.lineTo(-aw * 2.1, aw * 0.55);
+      c.closePath(); c.fill();
+      c.restore();
+    }
+
+    // turbonuolet (skaalautuvat padin kokoon)
     track.boosts.forEach(function (b) {
+      var bs = b.r / 34;
       c.save();
       c.translate(b.x, b.y);
       c.rotate(b.a);
+      c.scale(bs, bs);
       c.fillStyle = "#ffd23e";
       for (var k = -1; k <= 1; k += 2) {
         c.beginPath();
@@ -364,18 +395,23 @@
       c.restore();
     });
 
-    // öljyläikät
-    track.oils.forEach(function (o) {
-      var g = c.createRadialGradient(o.x - 5, o.y - 5, 2, o.x, o.y, o.r);
-      g.addColorStop(0, "rgba(70,70,90,0.95)");
-      g.addColorStop(0.6, "rgba(25,25,38,0.92)");
-      g.addColorStop(1, "rgba(15,15,25,0.0)");
-      c.fillStyle = g;
+    // öljyläikät — litteä, epäsäännöllinen lätäkkö
+    track.oils.forEach(function (o, oi) {
+      c.fillStyle = "rgba(28,28,40,0.78)";
+      for (var bl = 0; bl < 5; bl++) {
+        var ba = oi * 1.3 + bl * 1.256;
+        var bd = bl === 0 ? 0 : o.r * 0.42;
+        c.beginPath();
+        c.ellipse(
+          o.x + Math.cos(ba) * bd, o.y + Math.sin(ba) * bd * 0.7,
+          o.r * (bl === 0 ? 0.85 : 0.42), o.r * (bl === 0 ? 0.6 : 0.3),
+          ba, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.fillStyle = "rgba(150,175,235,0.16)";
       c.beginPath();
-      c.ellipse(o.x, o.y, o.r, o.r * 0.8, 0.5, 0, Math.PI * 2);
+      c.ellipse(o.x - o.r * 0.2, o.y - o.r * 0.15, o.r * 0.4, o.r * 0.16, 0.4, 0, Math.PI * 2);
       c.fill();
-      c.fillStyle = "rgba(160,190,255,0.18)";
-      c.beginPath(); c.ellipse(o.x - o.r * 0.25, o.y - o.r * 0.2, o.r * 0.35, o.r * 0.18, 0.4, 0, Math.PI * 2); c.fill();
     });
 
     // lähtöviiva (shakkiruutu)
@@ -384,7 +420,7 @@
     c.translate(st.x, st.y);
     c.rotate(st.dir);
     var half = track.width / 2;
-    var sq = 7;
+    var sq = 9;
     for (var row = 0; row < 3; row++) {
       for (var kk = 0; kk < Math.ceil(track.width / sq); kk++) {
         c.fillStyle = (row + kk) % 2 ? "#14171c" : "#f4f2ec";

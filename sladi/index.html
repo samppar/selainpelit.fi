@@ -394,39 +394,39 @@ canvas#board { display: block; width: 100%; height: auto; }
     {
       id: "rengasrata",
       name: "Rengasrata",
-      blurb: "Nopea perusrata: pitkät suorat, kaksi turboa ja yksi ilkeä mutkasarja.",
-      width: 68,
+      blurb: "Leveä ja nopea peruslenkki: pitkät suorat, kaksi turboa.",
+      width: 150,
       laps: 4,
       points: [
-        [160, 300], [240, 170], [520, 120], [900, 150], [1250, 120],
-        [1480, 200], [1545, 430], [1470, 660], [1280, 845], [980, 905],
-        [700, 860], [565, 735], [430, 855], [240, 820], [140, 620]
+        [175, 320], [265, 155], [700, 110], [1200, 120], [1490, 220],
+        [1560, 500], [1450, 800], [1050, 930], [550, 920], [235, 830],
+        [140, 560]
       ],
       startFrac: 0.06,
-      boosts: [{ frac: 0.18 }, { frac: 0.60 }],
+      boosts: [{ frac: 0.20 }, { frac: 0.62 }],
       oils: [{ frac: 0.44, side: 0.35 }]
     },
     {
       id: "serpentiini",
       name: "Serpentiini",
-      blurb: "Mutkia peräkanaa ja kaksi neulansilmää — jarru on kaverisi.",
-      width: 62,
+      blurb: "Neljä pitkää suoraa peräkanaa — jarruta ennen käännöstä.",
+      width: 130,
       laps: 4,
       points: [
-        [190, 170], [640, 130], [1120, 155], [1420, 235], [1500, 435],
-        [1330, 545], [1000, 525], [660, 505], [470, 605], [565, 730],
-        [900, 705], [1250, 725], [1425, 830], [1300, 955], [850, 965],
-        [400, 930], [190, 785], [150, 470]
+        [180, 140], [800, 120], [1380, 130], [1530, 260], [1470, 420],
+        [950, 470], [480, 450], [350, 610], [530, 760], [1050, 720],
+        [1440, 750], [1545, 890], [1300, 975], [600, 965], [220, 940],
+        [120, 700], [100, 400]
       ],
-      startFrac: 0.03,
-      boosts: [{ frac: 0.10 }],
-      oils: [{ frac: 0.30, side: -0.3 }, { frac: 0.78, side: 0.3 }]
+      startFrac: 0.02,
+      boosts: [{ frac: 0.08 }],
+      oils: [{ frac: 0.33, side: -0.3 }, { frac: 0.75, side: 0.3 }]
     },
     {
       id: "kahdeksikko",
       name: "Kahdeksikko",
       blurb: "Rata risteää itsensä kanssa keskellä — pidä silmät auki risteyksessä.",
-      width: 62,
+      width: 120,
       laps: 4,
       // lemniskaatta: x = cx + a·sin t, y = cy + b·sin 2t
       points: (function () {
@@ -501,7 +501,8 @@ canvas#board { display: block; width: 100%; height: auto; }
     var length = N * SPACING;
 
     // 4) portit: tasavälein, ei kahta porttia päällekkäin (kahdeksikko!)
-    var gateR = def.width * 0.85 + 12;
+    // säde kattaa koko tienleveyden + pienen oikaisuvaran
+    var gateR = def.width * 0.62 + 18;
     var gates = null, K = clamp(Math.round(length / 300), 8, 24);
     for (var tryK = 0; tryK < 6 && !gates; tryK++) {
       var cand = [], k = K + (tryK % 2 ? -((tryK + 1) >> 1) : (tryK >> 1));
@@ -531,13 +532,13 @@ canvas#board { display: block; width: 100%; height: auto; }
 
     var boosts = (def.boosts || []).map(function (bd) {
       var sp = atFrac(bd.frac);
-      return { x: sp.x, y: sp.y, a: sp.dir, r: 34 };
+      return { x: sp.x, y: sp.y, a: sp.dir, r: Math.max(34, def.width * 0.40) };
     });
     var oils = (def.oils || []).map(function (od) {
       var sp = atFrac(od.frac);
       var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
       var lat = (od.side || 0) * def.width * 0.5;
-      return { x: sp.x + nx * lat, y: sp.y + ny * lat, r: 30 };
+      return { x: sp.x + nx * lat, y: sp.y + ny * lat, r: Math.max(30, def.width * 0.34) };
     });
 
     // näkymän ja fysiikan rajat: radan äärimitat + reunakaista
@@ -631,7 +632,7 @@ canvas#board { display: block; width: 100%; height: auto; }
       var si = (N - backSamples) % N;
       var sp = S[si];
       var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
-      var lat = (i % 2 === 0 ? -1 : 1) * 19;
+      var lat = (i % 2 === 0 ? -1 : 1) * Math.max(19, track.width * 0.18);
       cars.push({
         idx: i, kind: L.kind, name: L.name, color: L.color,
         skill: L.skill || "kova",
@@ -678,11 +679,14 @@ canvas#board { display: block; width: 100%; height: auto; }
     }
     if (car.stuckT > 1.3) { car.revT = 0.9; car.stuckT = 0; }
 
-    // katsepiste edempänä radalla
+    // katsepiste edempänä radalla — kukin botti ajaa omaa kaistaansa
     var lookDist = clamp(speed * sk.look + 50, 80, 230);
     var lookN = Math.round(lookDist / SPACING);
     var target = S[(near.i + lookN) % N];
-    var aim = Math.atan2(target.y - car.y, target.x - car.x);
+    var lane = Math.sin(idx * 2.1 + 0.8) * track.width * 0.24;
+    var tx = target.x - Math.sin(target.dir) * lane;
+    var ty = target.y + Math.cos(target.dir) * lane;
+    var aim = Math.atan2(ty - car.y, tx - car.x);
     var noise = Math.sin(state.time * 1.7 + idx * 2.39) * sk.noise;
     var diff = angNorm(aim - car.angle + noise);
 
@@ -1239,34 +1243,65 @@ canvas#board { display: block; width: 100%; height: auto; }
     }
     c.lineJoin = "round"; c.lineCap = "round";
 
-    // reunakivet: valkoinen pohja + punaiset katkot
+    // reunakivet: leveä valkoinen pohja + punaiset katkot
     tracePath();
-    c.strokeStyle = "#e8e4da";
-    c.lineWidth = track.width + 13;
+    c.strokeStyle = "#efece3";
+    c.lineWidth = track.width + 24;
     c.stroke();
-    c.setLineDash([15, 15]);
+    c.setLineDash([28, 28]);
     tracePath();
-    c.strokeStyle = "#c9453a";
-    c.lineWidth = track.width + 13;
+    c.strokeStyle = "#cc4437";
+    c.lineWidth = track.width + 24;
     c.stroke();
     c.setLineDash([]);
 
-    // asfaltti
+    // asfaltti — vaalea, retrohenkinen
     tracePath();
-    c.strokeStyle = "#43474f";
+    c.strokeStyle = "#84888e";
     c.lineWidth = track.width;
     c.stroke();
     // ajolinjan kuluma
     tracePath();
-    c.strokeStyle = "rgba(255,255,255,0.05)";
-    c.lineWidth = track.width * 0.45;
+    c.strokeStyle = "rgba(255,255,255,0.07)";
+    c.lineWidth = track.width * 0.5;
     c.stroke();
+    // asfaltin täplätekstuuri (deterministinen)
+    for (i = 0; i < N; i += 6) {
+      var tp = S[i];
+      var rx = Math.sin(i * 37.7) * track.width * 0.42;
+      var ry = Math.sin(i * 53.3) * 0.9;
+      var tnx = -Math.sin(tp.dir), tny = Math.cos(tp.dir);
+      c.fillStyle = (i % 12) ? "rgba(60,63,70,0.16)" : "rgba(255,255,255,0.10)";
+      c.beginPath();
+      c.arc(tp.x + tnx * rx + ry, tp.y + tny * rx, 1.6 + (i % 3), 0, Math.PI * 2);
+      c.fill();
+    }
 
-    // turbonuolet
+    // keltaiset suuntanuolet tiessä
+    var arrowCount = 5;
+    for (i = 0; i < arrowCount; i++) {
+      var ap = S[Math.round((i + 0.55) * N / arrowCount) % N];
+      c.save();
+      c.translate(ap.x, ap.y);
+      c.rotate(ap.dir);
+      c.fillStyle = "rgba(247,224,76,0.75)";
+      var aw = track.width * 0.13;
+      c.beginPath();
+      c.moveTo(-aw * 2.1, -aw * 0.55); c.lineTo(aw * 0.4, -aw * 0.55);
+      c.lineTo(aw * 0.4, -aw * 1.15); c.lineTo(aw * 2.1, 0);
+      c.lineTo(aw * 0.4, aw * 1.15); c.lineTo(aw * 0.4, aw * 0.55);
+      c.lineTo(-aw * 2.1, aw * 0.55);
+      c.closePath(); c.fill();
+      c.restore();
+    }
+
+    // turbonuolet (skaalautuvat padin kokoon)
     track.boosts.forEach(function (b) {
+      var bs = b.r / 34;
       c.save();
       c.translate(b.x, b.y);
       c.rotate(b.a);
+      c.scale(bs, bs);
       c.fillStyle = "#ffd23e";
       for (var k = -1; k <= 1; k += 2) {
         c.beginPath();
@@ -1277,18 +1312,23 @@ canvas#board { display: block; width: 100%; height: auto; }
       c.restore();
     });
 
-    // öljyläikät
-    track.oils.forEach(function (o) {
-      var g = c.createRadialGradient(o.x - 5, o.y - 5, 2, o.x, o.y, o.r);
-      g.addColorStop(0, "rgba(70,70,90,0.95)");
-      g.addColorStop(0.6, "rgba(25,25,38,0.92)");
-      g.addColorStop(1, "rgba(15,15,25,0.0)");
-      c.fillStyle = g;
+    // öljyläikät — litteä, epäsäännöllinen lätäkkö
+    track.oils.forEach(function (o, oi) {
+      c.fillStyle = "rgba(28,28,40,0.78)";
+      for (var bl = 0; bl < 5; bl++) {
+        var ba = oi * 1.3 + bl * 1.256;
+        var bd = bl === 0 ? 0 : o.r * 0.42;
+        c.beginPath();
+        c.ellipse(
+          o.x + Math.cos(ba) * bd, o.y + Math.sin(ba) * bd * 0.7,
+          o.r * (bl === 0 ? 0.85 : 0.42), o.r * (bl === 0 ? 0.6 : 0.3),
+          ba, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.fillStyle = "rgba(150,175,235,0.16)";
       c.beginPath();
-      c.ellipse(o.x, o.y, o.r, o.r * 0.8, 0.5, 0, Math.PI * 2);
+      c.ellipse(o.x - o.r * 0.2, o.y - o.r * 0.15, o.r * 0.4, o.r * 0.16, 0.4, 0, Math.PI * 2);
       c.fill();
-      c.fillStyle = "rgba(160,190,255,0.18)";
-      c.beginPath(); c.ellipse(o.x - o.r * 0.25, o.y - o.r * 0.2, o.r * 0.35, o.r * 0.18, 0.4, 0, Math.PI * 2); c.fill();
     });
 
     // lähtöviiva (shakkiruutu)
@@ -1297,7 +1337,7 @@ canvas#board { display: block; width: 100%; height: auto; }
     c.translate(st.x, st.y);
     c.rotate(st.dir);
     var half = track.width / 2;
-    var sq = 7;
+    var sq = 9;
     for (var row = 0; row < 3; row++) {
       for (var kk = 0; kk < Math.ceil(track.width / sq); kk++) {
         c.fillStyle = (row + kk) % 2 ? "#14171c" : "#f4f2ec";

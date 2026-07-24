@@ -48,39 +48,39 @@
     {
       id: "rengasrata",
       name: "Rengasrata",
-      blurb: "Nopea perusrata: pitkät suorat, kaksi turboa ja yksi ilkeä mutkasarja.",
-      width: 68,
+      blurb: "Leveä ja nopea peruslenkki: pitkät suorat, kaksi turboa.",
+      width: 150,
       laps: 4,
       points: [
-        [160, 300], [240, 170], [520, 120], [900, 150], [1250, 120],
-        [1480, 200], [1545, 430], [1470, 660], [1280, 845], [980, 905],
-        [700, 860], [565, 735], [430, 855], [240, 820], [140, 620]
+        [175, 320], [265, 155], [700, 110], [1200, 120], [1490, 220],
+        [1560, 500], [1450, 800], [1050, 930], [550, 920], [235, 830],
+        [140, 560]
       ],
       startFrac: 0.06,
-      boosts: [{ frac: 0.18 }, { frac: 0.60 }],
+      boosts: [{ frac: 0.20 }, { frac: 0.62 }],
       oils: [{ frac: 0.44, side: 0.35 }]
     },
     {
       id: "serpentiini",
       name: "Serpentiini",
-      blurb: "Mutkia peräkanaa ja kaksi neulansilmää — jarru on kaverisi.",
-      width: 62,
+      blurb: "Neljä pitkää suoraa peräkanaa — jarruta ennen käännöstä.",
+      width: 130,
       laps: 4,
       points: [
-        [190, 170], [640, 130], [1120, 155], [1420, 235], [1500, 435],
-        [1330, 545], [1000, 525], [660, 505], [470, 605], [565, 730],
-        [900, 705], [1250, 725], [1425, 830], [1300, 955], [850, 965],
-        [400, 930], [190, 785], [150, 470]
+        [180, 140], [800, 120], [1380, 130], [1530, 260], [1470, 420],
+        [950, 470], [480, 450], [350, 610], [530, 760], [1050, 720],
+        [1440, 750], [1545, 890], [1300, 975], [600, 965], [220, 940],
+        [120, 700], [100, 400]
       ],
-      startFrac: 0.03,
-      boosts: [{ frac: 0.10 }],
-      oils: [{ frac: 0.30, side: -0.3 }, { frac: 0.78, side: 0.3 }]
+      startFrac: 0.02,
+      boosts: [{ frac: 0.08 }],
+      oils: [{ frac: 0.33, side: -0.3 }, { frac: 0.75, side: 0.3 }]
     },
     {
       id: "kahdeksikko",
       name: "Kahdeksikko",
       blurb: "Rata risteää itsensä kanssa keskellä — pidä silmät auki risteyksessä.",
-      width: 62,
+      width: 120,
       laps: 4,
       // lemniskaatta: x = cx + a·sin t, y = cy + b·sin 2t
       points: (function () {
@@ -155,7 +155,8 @@
     var length = N * SPACING;
 
     // 4) portit: tasavälein, ei kahta porttia päällekkäin (kahdeksikko!)
-    var gateR = def.width * 0.85 + 12;
+    // säde kattaa koko tienleveyden + pienen oikaisuvaran
+    var gateR = def.width * 0.62 + 18;
     var gates = null, K = clamp(Math.round(length / 300), 8, 24);
     for (var tryK = 0; tryK < 6 && !gates; tryK++) {
       var cand = [], k = K + (tryK % 2 ? -((tryK + 1) >> 1) : (tryK >> 1));
@@ -185,13 +186,13 @@
 
     var boosts = (def.boosts || []).map(function (bd) {
       var sp = atFrac(bd.frac);
-      return { x: sp.x, y: sp.y, a: sp.dir, r: 34 };
+      return { x: sp.x, y: sp.y, a: sp.dir, r: Math.max(34, def.width * 0.40) };
     });
     var oils = (def.oils || []).map(function (od) {
       var sp = atFrac(od.frac);
       var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
       var lat = (od.side || 0) * def.width * 0.5;
-      return { x: sp.x + nx * lat, y: sp.y + ny * lat, r: 30 };
+      return { x: sp.x + nx * lat, y: sp.y + ny * lat, r: Math.max(30, def.width * 0.34) };
     });
 
     // näkymän ja fysiikan rajat: radan äärimitat + reunakaista
@@ -285,7 +286,7 @@
       var si = (N - backSamples) % N;
       var sp = S[si];
       var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
-      var lat = (i % 2 === 0 ? -1 : 1) * 19;
+      var lat = (i % 2 === 0 ? -1 : 1) * Math.max(19, track.width * 0.18);
       cars.push({
         idx: i, kind: L.kind, name: L.name, color: L.color,
         skill: L.skill || "kova",
@@ -332,11 +333,14 @@
     }
     if (car.stuckT > 1.3) { car.revT = 0.9; car.stuckT = 0; }
 
-    // katsepiste edempänä radalla
+    // katsepiste edempänä radalla — kukin botti ajaa omaa kaistaansa
     var lookDist = clamp(speed * sk.look + 50, 80, 230);
     var lookN = Math.round(lookDist / SPACING);
     var target = S[(near.i + lookN) % N];
-    var aim = Math.atan2(target.y - car.y, target.x - car.x);
+    var lane = Math.sin(idx * 2.1 + 0.8) * track.width * 0.24;
+    var tx = target.x - Math.sin(target.dir) * lane;
+    var ty = target.y + Math.cos(target.dir) * lane;
+    var aim = Math.atan2(ty - car.y, tx - car.x);
     var noise = Math.sin(state.time * 1.7 + idx * 2.39) * sk.noise;
     var diff = angNorm(aim - car.angle + noise);
 
