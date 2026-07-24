@@ -34,7 +34,7 @@ module.exports = {
       if (t.raise && decent) {
         return {
           type: "raise",
-          amount: U.clampBet(t.raise, Math.floor(t.raise.min + pot * (0.5 + eq * 0.5))),
+          amount: U.clampBet(t.raise, Math.floor(t.raise.min + pot * U.pickPotFraction(eq, avg, rng))),
         };
       }
       if (t.fold) return { type: "fold" };
@@ -46,7 +46,7 @@ module.exports = {
       if (roll < betChance) {
         return {
           type: "bet",
-          amount: U.clampBet(t.bet, Math.floor(pot * (0.45 + eq * 0.45))),
+          amount: U.clampBet(t.bet, Math.floor(pot * U.pickPotFraction(eq, avg, rng))),
         };
       }
       return { type: "check" };
@@ -56,7 +56,7 @@ module.exports = {
     if (strong && t.raise && roll < 0.8) {
       return {
         type: "raise",
-        amount: U.clampBet(t.raise, Math.floor(toCall + pot * (0.55 + eq * 0.45))),
+        amount: U.clampBet(t.raise, Math.floor(toCall + pot * U.pickPotFraction(eq, avg, rng))),
       };
     }
 

@@ -123,7 +123,9 @@ valitsee turvallisen laillisen siirron (kuten hertan `safePlay`).
 src/engine.js       säännöt, botView, safeAct, scenario
 src/match.js        playMatch, compareBots
 src/botRegistry.js  BOTS + getBot + botForDifficulty
-src/botUtil.js      strength-apurit politiikoille
+src/botUtil.js      strength-apurit politiikoille (mm. estimateEquity, pickPotFraction)
+src/preflopEquity.js  GENEROITU 169 aloituskäden equity-taulukko (npm run gen:preflop)
+tools/genPreflopEquity.js  taulukon generointi (aja jos moottorin käsiarvio muuttuu)
 src/bots/           random, basic, normal, hard, template
 src/game.js         selain-UI
 test/run_tests.js   yksikkö + AI

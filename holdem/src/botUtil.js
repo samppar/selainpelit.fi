@@ -138,6 +138,25 @@ function handStrength(hole, board, evaluateHand) {
   return CAT[ev.category] || 0.2;
 }
 
+// Pluribus-tyylinen diskreetti panoskokomenu (potin murto-osia). Valinta
+// painotetaan equityllä ja sekoitetaan rng:llä; bluffi käyttää samoja kokoja
+// kuin value-bet, jotta koosta ei voi lukea käden vahvuutta.
+var BET_SIZES = [0.33, 0.5, 0.75, 1, 1.5];
+
+function pickPotFraction(eq, avg, rng) {
+  var w;
+  if (eq > Math.min(0.72, avg * 1.45)) w = [0.05, 0.15, 0.3, 0.3, 0.2];
+  else if (eq > avg * 1.15) w = [0.2, 0.35, 0.3, 0.1, 0.05];
+  else w = [0, 0.35, 0.4, 0.25, 0];
+  var r = rng();
+  var acc = 0;
+  for (var i = 0; i < w.length; i++) {
+    acc += w[i];
+    if (r < acc) return BET_SIZES[i];
+  }
+  return 0.75;
+}
+
 function byType(legal) {
   var m = {};
   (legal || []).forEach(function (a) { m[a.type] = a; });
@@ -187,6 +206,7 @@ function avoidLimp(view, t, strength, raiseThreshold) {
 
 module.exports = {
   estimateEquity: estimateEquity,
+  pickPotFraction: pickPotFraction,
   handStrengthPreflop: handStrengthPreflop,
   handStrength: handStrength,
   byType: byType,
