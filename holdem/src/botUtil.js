@@ -36,8 +36,13 @@ function compareVec(a, b) {
 /**
  * Monte Carlo -equity: todennäköisyys voittaa showdown aktiivisia vastustajia
  * vastaan, kun loput kortit jaetaan satunnaisesti. Deterministinen view.rng:llä.
- * Palauttaa [0,1]; satunnaiskäden equity ≈ 1/(vastustajat+1).
+ * Range-suodatus: tällä kadulla panostaneelle/korottaneelle ei arvota täyttä
+ * roskaa, vaan käsi arvotaan uudelleen (rejection sampling) kunnes
+ * preflop-vahvuus ylittää kynnyksen. Palauttaa [0,1]; satunnaiskäden
+ * equity ≈ 1/(vastustajat+1).
  */
+var AGGRO_FLOOR = 0.3; // korottajan simuloidun käden preflop-vahvuusminimi
+
 function estimateEquity(view, opts) {
   opts = opts || {};
   var iters = opts.iterations || 160;
@@ -47,9 +52,20 @@ function estimateEquity(view, opts) {
     return handStrength(view.hole, view.board, evalHand);
   }
   var board = view.board || [];
-  var opps = (view.opponents || []).filter(function (o) {
+  var actives = (view.opponents || []).filter(function (o) {
     return !o.folded;
-  }).length || 1;
+  });
+  var opps = actives.length || 1;
+  var bb = view.bb || 10;
+  var cur = view.currentBet || 0;
+  // Kadun aggressori: preflopissa korottanut yli BB:n, muuten panostanut.
+  var floors = actives.map(function (o) {
+    var aggro = view.street === "preflop"
+      ? cur > bb && o.bet >= cur
+      : cur > 0 && o.bet >= cur;
+    return aggro ? AGGRO_FLOOR : 0;
+  });
+  if (!floors.length) floors = [0];
 
   var known = {};
   view.hole.concat(board).forEach(function (c) { known[c.rank + c.suit] = true; });
@@ -61,23 +77,33 @@ function estimateEquity(view, opts) {
   }
 
   var need = 5 - board.length;
-  var draw = need + opps * 2;
   var score = 0;
   for (var it = 0; it < iters; it++) {
-    // osittainen Fisher-Yates: nostetaan draw korttia pakan alkuun
-    for (var i = 0; i < draw; i++) {
-      var j = i + ((rng() * (deck.length - i)) | 0);
+    for (var i = deck.length - 1; i > 0; i--) {
+      var j = (rng() * (i + 1)) | 0;
       var t = deck[i]; deck[i] = deck[j]; deck[j] = t;
     }
     var fullBoard = board.concat(deck.slice(0, need));
     var mine = evalHand(view.hole.concat(fullBoard)).vector;
     var beaten = false;
     var tied = 0;
+    var p = need;
     for (var o = 0; o < opps; o++) {
-      var hole = [deck[need + o * 2], deck[need + o * 2 + 1]];
+      var hole = [deck[p], deck[p + 1]];
+      p += 2;
+      var tries = 0;
+      while (
+        floors[o] > 0 && tries < 6 && p + 1 < deck.length &&
+        handStrengthPreflop(hole) < floors[o]
+      ) {
+        hole = [deck[p], deck[p + 1]];
+        p += 2;
+        tries++;
+      }
+      if (beaten) continue;
       var c = compareVec(evalHand(hole.concat(fullBoard)).vector, mine);
-      if (c > 0) { beaten = true; break; }
-      if (c === 0) tied++;
+      if (c > 0) beaten = true;
+      else if (c === 0) tied++;
     }
     if (!beaten) score += 1 / (1 + tied);
   }
