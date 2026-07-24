@@ -93,8 +93,17 @@
         eng.lfo.frequency.setTargetAtTime(8 + speed * 0.03, ac.currentTime, 0.2);
         eng.lfoG.gain.setTargetAtTime(Math.max(0.6, 3 - speed * 0.01), ac.currentTime, 0.2);
         eng.filter.frequency.setTargetAtTime(170 + speed * 2.4 + th * 260, ac.currentTime, 0.12);
-        eng.g.gain.setTargetAtTime(on && enabled ? 0.075 + th * 0.02 : 0, ac.currentTime, 0.1);
+        // Tyhjäkäynti hiljaa, ääni kasvaa vauhdin ja kaasun mukana
+        const vol = 0.026 + Math.min(1, speed / 330) * 0.05 + th * 0.018;
+        eng.g.gain.setTargetAtTime(on && enabled ? vol : 0, ac.currentTime, 0.1);
       }
+    }
+    // Taustavälilehti: koko äänikonteksti seis (muuten moottori jää soimaan,
+    // kun rAF-silmukka pysähtyy eikä enää päivitä gainia)
+    function suspend(hidden) {
+      if (!ac) return;
+      if (hidden) ac.suspend();
+      else if (enabled) ac.resume();
     }
     function blip(freq, dur, type, vol, slide) {
       ensure();
@@ -136,8 +145,8 @@
       count: () => blip(440, 0.12, "square", 0.1),
       go: () => blip(880, 0.3, "square", 0.12),
       finish: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => blip(f, 0.18, "triangle", 0.12), i * 110)),
-      engine,
-      toggle() { enabled = !enabled; if (!enabled && engGain && ac) engGain.gain.setTargetAtTime(0, ac.currentTime, 0.05); return enabled; },
+      engine, suspend,
+      toggle() { enabled = !enabled; if (!enabled && eng && ac) eng.g.gain.setTargetAtTime(0, ac.currentTime, 0.05); return enabled; },
       get enabled() { return enabled; },
       ensure,
     };
@@ -950,6 +959,7 @@
     $("btnSound").textContent = on ? "Ääni: päällä" : "Ääni: pois";
     $("btnSound").setAttribute("aria-pressed", String(on));
   });
+  document.addEventListener("visibilitychange", () => S.suspend(document.hidden));
 
   // Vaikeustasokortit: paras sijoitus näkyviin
   function decorateTiers() {
