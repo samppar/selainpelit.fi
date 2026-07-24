@@ -1,0 +1,2312 @@
+<!DOCTYPE html><html lang="fi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Sladi — Slicks 'n Slide -henkinen ylhäältä kuvattu kaahailu: koko rata näkyvissä, autot sladaavat. 1–2 pelaajaa ja botit.">
+<meta name="theme-color" content="#0e141c"><title>Sladi — selainpelit.fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>/* Sladi — ulkoasu */
+:root {
+  --bg0: #0e141c;
+  --bg1: #16202c;
+  --panel: #182231;
+  --panel2: #1e2a3b;
+  --ink: #ecf2f8;
+  --ink-dim: #9fb0c3;
+  --line: rgba(255, 255, 255, 0.09);
+  --accent: #f2b63c;
+  --p1: #e6453c;
+  --p2: #3b82d9;
+  --good: #4cae5a;
+  --radius: 18px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: "Source Serif 4", Georgia, serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 700px at 75% -10%, #22374b 0%, transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, #1d3227 0%, transparent 55%),
+    linear-gradient(160deg, var(--bg1), var(--bg0) 70%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.shell {
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: clamp(12px, 2.4vw, 28px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 22px;
+  align-items: start;
+}
+
+/* ------------------------------------------------ vasen palsta */
+
+.brand { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+.brand h1 {
+  font-family: "Fraunces", serif;
+  font-weight: 700;
+  font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+  letter-spacing: 0.01em;
+  background: linear-gradient(100deg, #ffd88a, #f2b63c 45%, #e6714b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.brand p { color: var(--ink-dim); font-size: 0.95rem; }
+.brand a { color: var(--ink-dim); }
+
+.stage { position: relative; }
+
+.board-frame {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow:
+    0 30px 60px -25px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: #253d23;
+}
+.board-frame:fullscreen { border-radius: 0; display: grid; place-items: center; background: #0c1210; }
+.board-frame:fullscreen canvas { max-height: 100vh; }
+
+canvas#board { display: block; width: 100%; height: auto; }
+
+/* retrohenkinen tulostaulu radan alla */
+.scorebar {
+  display: flex; flex-wrap: wrap; gap: 4px 10px;
+  background: linear-gradient(180deg, #171b22, #0d1116);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 7px 12px;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.86rem;
+  min-height: 36px;
+  align-items: center;
+}
+.scorebar .slot {
+  display: inline-flex; align-items: center; gap: 6px;
+  flex: 1 1 auto; justify-content: center;
+  color: var(--ink-dim); white-space: nowrap;
+}
+.scorebar .slot b.pos { font-family: "Fraunces", serif; color: var(--ink); }
+.scorebar .chip { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.scorebar .digits {
+  background: #05070a; border-radius: 5px; padding: 1px 7px;
+  color: #ffd23e; letter-spacing: 0.04em;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.scorebar .slot.me .digits { color: #ffe9a8; box-shadow: 0 0 0 1px rgba(242, 182, 60, 0.35); }
+
+.fs-corner {
+  position: absolute; top: 10px; right: 10px; z-index: 5;
+  width: 38px; height: 38px; border-radius: 10px; border: 0;
+  background: rgba(10, 16, 12, 0.45); color: #fff;
+  font-size: 1.05rem; cursor: pointer; backdrop-filter: blur(3px);
+  transition: background 0.15s;
+}
+.fs-corner:hover { background: rgba(10, 16, 12, 0.7); }
+
+.snd-corner {
+  position: absolute; top: 10px; right: 56px; z-index: 5;
+  width: 38px; height: 38px; border-radius: 10px; border: 0;
+  background: rgba(10, 16, 12, 0.45); color: #fff;
+  font-size: 1.05rem; cursor: pointer; backdrop-filter: blur(3px);
+}
+.snd-corner:hover { background: rgba(10, 16, 12, 0.7); }
+.snd-corner.off { opacity: 0.55; }
+
+/* lähtölaskenta */
+.count {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  pointer-events: none; z-index: 4;
+}
+.count span {
+  font-family: "Fraunces", serif; font-weight: 700;
+  font-size: clamp(4rem, 14vw, 9rem);
+  color: #fff;
+  text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6), 0 0 60px rgba(242, 182, 60, 0.35);
+  animation: countpop 0.9s ease-out both;
+}
+.count span.go { color: #ffd88a; }
+@keyframes countpop {
+  0% { transform: scale(1.6); opacity: 0; }
+  18% { transform: scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0; }
+}
+
+/* ------------------------------------------------ overlay (valikko + tulokset) */
+
+.overlay {
+  position: absolute; inset: 0; z-index: 6;
+  display: none; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, rgba(9, 14, 11, 0.78), rgba(9, 14, 11, 0.88));
+  backdrop-filter: blur(4px);
+  padding: 18px;
+  overflow: auto;
+}
+.overlay.show { display: flex; }
+
+.overlay-card {
+  width: min(560px, 100%);
+  background: linear-gradient(170deg, #212f42, #16202e 75%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 20px;
+  padding: clamp(18px, 3vw, 30px);
+  box-shadow: 0 24px 70px -20px rgba(0, 0, 0, 0.8);
+  text-align: center;
+  animation: cardin 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes cardin { from { transform: translateY(14px) scale(0.97); opacity: 0; } }
+
+.overlay-card h2 {
+  font-family: "Fraunces", serif; font-weight: 700;
+  font-size: clamp(1.5rem, 4vw, 2.1rem); margin-bottom: 6px;
+}
+.overlay-card > p { color: var(--ink-dim); font-size: 0.95rem; margin-bottom: 16px; }
+
+.track-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.track-pick {
+  border: 1px solid var(--line); border-radius: 14px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.04); color: var(--ink);
+  padding: 10px 8px 9px; display: flex; flex-direction: column; gap: 6px; align-items: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  font-family: inherit;
+}
+.track-pick:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.07); }
+.track-pick.sel { border-color: var(--accent); background: rgba(242, 182, 60, 0.10); box-shadow: 0 0 0 1px var(--accent); }
+.track-pick canvas { width: 100%; height: auto; display: block; }
+.track-pick b { font-size: 0.88rem; font-weight: 600; }
+.track-pick small { color: var(--ink-dim); font-size: 0.72rem; line-height: 1.25; }
+
+.veh-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.veh-pick {
+  border: 1px solid var(--line); border-radius: 12px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.04); color: var(--ink);
+  padding: 7px 4px 8px; display: flex; flex-direction: column; gap: 3px; align-items: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  font-family: inherit;
+}
+.veh-pick:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.07); }
+.veh-pick.sel { border-color: var(--accent); background: rgba(242, 182, 60, 0.10); box-shadow: 0 0 0 1px var(--accent); }
+.veh-pick canvas { width: 60px; height: auto; display: block; }
+.veh-pick b { font-size: 0.82rem; font-weight: 600; }
+.veh-pick small { color: var(--ink-dim); font-size: 0.66rem; line-height: 1.25; }
+
+.mode-picker { display: flex; flex-direction: column; gap: 9px; }
+.mode-picker button {
+  font-family: inherit; font-size: 1.02rem; font-weight: 600;
+  color: #10160f;
+  background: linear-gradient(175deg, #ffd88a, #f2b63c);
+  border: 0; border-radius: 13px; padding: 12px 16px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: transform 0.12s, filter 0.12s;
+}
+.mode-picker button small { font-weight: 400; font-size: 0.8rem; opacity: 0.75; }
+.mode-picker button:hover { transform: translateY(-2px); filter: brightness(1.06); }
+.mode-picker button.alt {
+  background: rgba(255, 255, 255, 0.09); color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+/* tulokset */
+.results { margin: 6px 0 16px; text-align: left; }
+.results .row {
+  display: grid; grid-template-columns: 30px 16px 1fr auto auto; gap: 10px;
+  align-items: center; padding: 8px 10px; border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.results .row:nth-child(odd) { background: rgba(255, 255, 255, 0.045); }
+.results .row.me { background: rgba(242, 182, 60, 0.13); box-shadow: inset 0 0 0 1px rgba(242, 182, 60, 0.4); }
+.results .pl { font-family: "Fraunces", serif; font-weight: 700; font-size: 1.05rem; text-align: center; }
+.results .chip { width: 14px; height: 14px; border-radius: 4px; }
+.results .nm { font-weight: 600; }
+.results .tt, .results .bb { color: var(--ink-dim); font-size: 0.88rem; }
+.results .bb b { color: var(--accent); font-weight: 600; }
+
+.again-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.again-row button {
+  font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer;
+  border: 0; border-radius: 12px; padding: 11px 22px;
+  background: linear-gradient(175deg, #ffd88a, #f2b63c); color: #10160f;
+  transition: transform 0.12s, filter 0.12s;
+}
+.again-row button:hover { transform: translateY(-2px); filter: brightness(1.06); }
+.again-row button.alt { background: rgba(255, 255, 255, 0.09); color: var(--ink); border: 1px solid var(--line); }
+
+/* ------------------------------------------------ kosketusohjaimet */
+
+.touchbar {
+  display: none;
+  margin-top: 12px;
+  grid-template-columns: 1fr 1fr 1.3fr 1.3fr;
+  gap: 10px;
+}
+@media (pointer: coarse) { .touchbar { display: grid; } }
+.touchbar button {
+  border: 1px solid var(--line); border-radius: 14px;
+  background: var(--panel2); color: var(--ink);
+  font-size: 1.35rem; padding: 16px 0; cursor: pointer;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.touchbar button:active { background: #2c3c53; }
+.touchbar .gas { background: linear-gradient(175deg, #5fbf6d, #3f9a4e); color: #0c1410; font-weight: 700; font-size: 1.05rem; }
+.touchbar .brk { background: linear-gradient(175deg, #e6837a, #cc5148); color: #180d0c; font-weight: 700; font-size: 1.05rem; }
+
+/* ------------------------------------------------ sivupaneeli */
+
+.side {
+  background: linear-gradient(180deg, var(--panel2), var(--panel));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 14px;
+  position: sticky; top: 16px;
+}
+.side h2 {
+  font-family: "Fraunces", serif; font-weight: 600; font-size: 1.02rem;
+  color: var(--accent); letter-spacing: 0.02em;
+}
+.side .phase { font-weight: 600; font-size: 1.02rem; }
+.side .message { color: var(--ink-dim); font-size: 0.9rem; min-height: 2.5em; line-height: 1.35; }
+
+.standings { display: flex; flex-direction: column; gap: 6px; }
+.standing {
+  display: grid; grid-template-columns: 22px 14px 1fr auto; gap: 8px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+  border-radius: 10px; padding: 7px 9px;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.25s;
+}
+.standing.me { border-color: rgba(242, 182, 60, 0.45); background: rgba(242, 182, 60, 0.10); }
+.standing .pl { font-family: "Fraunces", serif; font-weight: 700; text-align: center; }
+.standing .chip { width: 13px; height: 13px; border-radius: 4px; }
+.standing .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.standing .lap { color: var(--ink-dim); font-size: 0.84rem; }
+
+.laptimes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.laptime {
+  background: rgba(255, 255, 255, 0.04); border-radius: 10px; padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.laptime b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.laptime span { color: var(--ink-dim); font-size: 0.76rem; }
+
+.help { color: var(--ink-dim); font-size: 0.86rem; line-height: 1.5; }
+.help strong { color: var(--ink); font-weight: 600; }
+.help kbd {
+  font-family: inherit; font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line);
+  border-radius: 5px; padding: 0 5px;
+}
+
+.footer-note { color: var(--ink-dim); font-size: 0.8rem; margin-top: auto; }
+.footer-note a { color: var(--ink-dim); }
+
+/* ------------------------------------------------ kapeat näytöt */
+
+@media (max-width: 980px) {
+  .shell { grid-template-columns: 1fr; }
+  .side { position: static; }
+  .track-picker { grid-template-columns: repeat(3, 1fr); }
+  /* matala ratakehys ei mahduta valikkoa — overlay koko ruudun modaaliksi */
+  .overlay { position: fixed; z-index: 60; }
+  .board-frame:fullscreen .overlay { position: absolute; }
+}
+@media (max-width: 560px) {
+  .track-picker { grid-template-columns: 1fr 1fr; }
+  .veh-picker { grid-template-columns: 1fr 1fr; }
+}
+</style></head><body><main class="shell">
+<section class="board-col" aria-label="Sladi-kilparata">
+  <div class="brand"><h1>Sladi</h1><p>Koko radan liukukaahailu — <a href="/">selainpelit.fi</a></p></div>
+  <div class="stage">
+    <div id="boardFrame" class="board-frame">
+      <canvas id="board" width="1680" height="1050" role="img" aria-label="Kilparata ylhäältä kuvattuna"></canvas>
+      <div id="scorebar" class="scorebar" aria-hidden="true"></div>
+      <button id="btnSnd" class="snd-corner" type="button" title="Äänet (M)" aria-label="Äänet">♪</button>
+      <button id="btnFsCorner" class="fs-corner" type="button" title="Koko ruutu (F)" aria-label="Koko ruutu">⛶</button>
+      <div id="countWrap" class="count" aria-hidden="true"></div>
+      <div id="overlay" class="overlay show" role="dialog" aria-modal="true">
+        <div id="menuCard" class="overlay-card">
+          <h2>Sladi</h2>
+          <p>Ylhäältä kuvattu kaahailu, jossa koko rata näkyy kerralla ja autot sladaavat mutkissa. Neljä kierrosta — nopein voittaa.</p>
+          <div id="trackPicker" class="track-picker" aria-label="Valitse rata"></div>
+          <div id="vehPicker" class="veh-picker" aria-label="Valitse ajoneuvo"></div>
+          <div class="mode-picker" aria-label="Valitse pelimuoto">
+            <button type="button" data-mode="1p" data-skill="rento">Yksin · rennot botit<small>hyvä ensimmäiseen kisaan</small></button>
+            <button type="button" data-mode="1p" data-skill="kova">Yksin · kovat botit<small>botit jarruttavat myöhään</small></button>
+            <button type="button" data-mode="2p" data-skill="rento" class="alt">Kaksin samalla näppäimistöllä<small>P1: nuolet · P2: WASD · + 2 bottia</small></button>
+          </div>
+        </div>
+        <div id="resultCard" class="overlay-card" style="display:none">
+          <h2 id="resultTitle">Maali!</h2>
+          <div id="resultRows" class="results"></div>
+          <div class="again-row">
+            <button id="btnAgain" type="button">Uusinta</button>
+            <button id="btnMenu" type="button" class="alt">Valikkoon</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="touchbar" aria-label="Kosketusohjaimet">
+    <button id="tLeft" type="button" aria-label="Käänny vasemmalle">◀</button>
+    <button id="tRight" type="button" aria-label="Käänny oikealle">▶</button>
+    <button id="tBrake" class="brk" type="button" aria-label="Jarruta">JARRU</button>
+    <button id="tGas" class="gas" type="button" aria-label="Kaasuta">KAASU</button>
+  </div>
+</section>
+<aside class="side">
+  <p id="phase" class="phase">Valitse rata ja pelimuoto</p>
+  <p id="message" class="message" aria-live="polite">Kaasuta suorilla ja anna perän sladata mutkissa.</p>
+  <h2>Sijoitukset</h2>
+  <div id="standings" class="standings" aria-live="off"></div>
+  <h2>Omat ajat</h2>
+  <div class="laptimes">
+    <div class="laptime"><b id="lapNow">–</b><span>Kierros</span></div>
+    <div class="laptime"><b id="speedNow">0 km/h</b><span>Vauhti</span></div>
+    <div class="laptime"><b id="lapLast">–</b><span>Viime kierros</span></div>
+    <div class="laptime"><b id="lapBest">–</b><span>Paras kierros</span></div>
+  </div>
+  <h2>Ohjaus</h2>
+  <p class="help"><strong>P1:</strong> nuolinäppäimet — <kbd>▲</kbd> kaasu, <kbd>▼</kbd> jarru/pakki.<br>
+  <strong>P2:</strong> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> kaksinpelissä.<br>
+  <kbd>F</kbd> koko ruutu · <kbd>M</kbd> äänet.<br>
+  Keltaiset nuolet = turbo. Öljy vie pidon, ruskea muta hidastaa,
+  sininen vesi upottaa lähes pysähdyksiin. Väistä rengaskasoja —
+  ja Kahdeksikossa alempi tie kulkee sillan alitse!</p>
+  <p class="footer-note">Kunnianosoitus 90-luvun suomalaisklassikoille · <a href="/">selainpelit.fi</a></p>
+</aside>
+</main>
+<script>/* Sladi — pelin ydin. Puhdas JS ilman DOM:ia; deterministinen kiintein
+ * aika-askelin (120 Hz). Ei Date.now / Math.random -kutsuja. */
+(function (global) {
+  "use strict";
+
+  var TAU = Math.PI * 2;
+  var DT = 1 / 120;
+  var SPACING = 6; // keskilinjan näytteiden väli (maailmayksikköä)
+
+  var WORLD = { w: 1680, h: 1050 };
+
+  var CAR = {
+    accel: 265,      // kiihtyvyys eteen
+    revAccel: 160,   // peruutuskiihtyvyys
+    brake: 430,      // jarrutushidastuvuus
+    dragK: 0.78,     // lineaarinen vastuskerroin (accel/dragK ≈ huippunopeus)
+    steer: 3.2,      // maksimikääntönopeus rad/s
+    maxRev: 130,     // peruutuksen huippunopeus
+    radius: 14,      // törmäysympyrän säde
+    boostMax: 470,   // huippunopeus turbolla
+    boostPush: 950   // turbon kiihdytys
+  };
+
+  /* Ajoneuvoluokat alkuperäisklassikon hengessä: nopea formula, tasapainoinen
+   * sportti, hiekalla pitävä ralli ja raskas paku joka voittaa kolarit. */
+  var VEHICLES = {
+    formula: {
+      name: "Formula", desc: "nopein — mutta arka hiekalle",
+      accel: 300, top: 400, steer: 3.45, gripMul: 1.1,
+      offAccel: 0.7, offDrag: 1.35, mass: 0.85
+    },
+    sportti: {
+      name: "Sportti", desc: "tasapainoinen yleisauto",
+      accel: 265, top: 340, steer: 3.2, gripMul: 1.0,
+      offAccel: 1.0, offDrag: 1.0, mass: 1.0
+    },
+    ralli: {
+      name: "Ralli", desc: "kulkee hiekalla ja nurmella",
+      accel: 255, top: 315, steer: 3.3, gripMul: 0.88,
+      offAccel: 1.55, offDrag: 0.55, mass: 1.05
+    },
+    paku: {
+      name: "Paku", desc: "hidas ja raskas — voittaa kolarit",
+      accel: 235, top: 300, steer: 2.85, gripMul: 1.28,
+      offAccel: 0.95, offDrag: 0.9, mass: 1.6
+    }
+  };
+
+  var SURFACES = {
+    asphalt: { grip: 8.5, dragMul: 1.0, accelMul: 1.0 },
+    // ulosajo hidastaa muttei rankaise kohtuuttomasti — Slicks-henki
+    grass:   { grip: 3.6, dragMul: 1.55, accelMul: 0.6 },
+    oil:     { grip: 0.7, dragMul: 1.0, accelMul: 1.0 },
+    mud:     { grip: 4.5, dragMul: 2.3, accelMul: 0.55 },
+    water:   { grip: 2.5, dragMul: 5.0, accelMul: 0.22 }
+  };
+
+  var AI_SKILLS = {
+    rento: { look: 0.40, liftAt: 0.85, brakeAt: 1.25, noise: 0.16, topFrac: 0.90 },
+    kova:  { look: 0.46, liftAt: 1.00, brakeAt: 1.45, noise: 0.05, topFrac: 1.00 }
+  };
+
+  // ---------------------------------------------------------------- apurit
+
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function hyp(x, y) { return Math.sqrt(x * x + y * y); }
+  function angNorm(a) {
+    while (a > Math.PI) a -= TAU;
+    while (a < -Math.PI) a += TAU;
+    return a;
+  }
+
+  // ---------------------------------------------------------------- radat
+
+  var TRACKS = [
+    {
+      id: "rengasrata",
+      name: "Rengasrata",
+      blurb: "Leveä ja nopea peruslenkki: pitkät suorat ja yksi mutkatasku.",
+      width: 145,
+      laps: 4,
+      points: [
+        [220, 140], [850, 120], [1460, 140], [1545, 240], [1550, 500],
+        [1540, 760], [1450, 890], [1150, 920], [950, 900], [865, 755],
+        [755, 700], [645, 745], [560, 885], [380, 910], [190, 860],
+        [130, 650], [140, 340]
+      ],
+      startFrac: 0.06,
+      boosts: [{ frac: 0.20 }, { frac: 0.66 }],
+      oils: [{ frac: 0.44, side: 0.35 }],
+      muds: [{ frac: 0.30, side: -0.5, r: 46 }],
+      waters: [{ frac: 0.55, side: 2.8, r: 62 }],
+      obst: [{ frac: 0.34, side: 0.3, r: 22 }, { frac: 0.74, side: -0.35, r: 18 }],
+      walls: [{ frac: 0.13, side: 0, len: 240 }]
+    },
+    {
+      id: "serpentiini",
+      name: "Serpentiini",
+      blurb: "Hiekkaerämaan neljä pitkää suoraa — jarruta ennen päätykäännöstä.",
+      width: 130,
+      theme: "sand",
+      laps: 4,
+      points: [
+        [180, 140], [800, 120], [1400, 130], [1520, 200], [1530, 330],
+        [1450, 420], [950, 465], [520, 450], [400, 530], [420, 650],
+        [560, 745], [1050, 715], [1400, 745], [1520, 820], [1510, 930],
+        [1350, 975], [700, 960], [260, 935], [140, 830], [110, 600],
+        [115, 350]
+      ],
+      startFrac: 0.02,
+      boosts: [{ frac: 0.08 }],
+      oils: [{ frac: 0.33, side: -0.3 }, { frac: 0.75, side: 0.3 }],
+      muds: [{ frac: 0.57, side: 0.4, r: 44 }],
+      waters: [{ frac: 0.06, side: 2.8, r: 48 }, { frac: 0.86, side: 2.8, r: 55 }],
+      obst: [{ frac: 0.42, side: 0.3, r: 18 }],
+      walls: [{ frac: 0.63, side: 0, len: 220 }]
+    },
+    {
+      id: "kahdeksikko",
+      name: "Kahdeksikko",
+      blurb: "Rata ylittää itsensä sillalla — alempi tie sukeltaa alitse.",
+      width: 120,
+      laps: 4,
+      // lemniskaatta: x = cx + a·sin t, y = cy + b·sin 2t
+      points: (function () {
+        var pts = [], K = 20;
+        for (var k = 0; k < K; k++) {
+          var t = (k / K) * TAU;
+          pts.push([
+            Math.round(840 + 630 * Math.sin(t)),
+            Math.round(525 + 345 * Math.sin(2 * t))
+          ]);
+        }
+        return pts;
+      })(),
+      startFrac: 0.12,
+      boosts: [{ frac: 0.31 }, { frac: 0.81 }],
+      oils: [{ frac: 0.63, side: 0 }],
+      muds: [{ frac: 0.10, side: -0.4, r: 40 }],
+      waters: [{ frac: 0.25, side: 2.6, r: 55 }],
+      obst: [{ frac: 0.44, side: 0.25, r: 18 }, { frac: 0.94, side: -0.25, r: 18 }]
+    }
+  ];
+
+  function catmull(p0, p1, p2, p3, t) {
+    var t2 = t * t, t3 = t2 * t;
+    return [
+      0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t +
+        (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+        (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+      0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t +
+        (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+        (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
+    ];
+  }
+
+  /** Rakentaa radan: tasavälinen keskilinja, suunnat, portit, turbot ja öljyt. */
+  function buildTrack(def) {
+    // 1) tiheä catmull-rom -polku
+    var raw = [], n = def.points.length, i, j;
+    for (i = 0; i < n; i++) {
+      var p0 = def.points[(i - 1 + n) % n], p1 = def.points[i];
+      var p2 = def.points[(i + 1) % n], p3 = def.points[(i + 2) % n];
+      var segLen = hyp(p2[0] - p1[0], p2[1] - p1[1]);
+      var steps = Math.max(6, Math.round(segLen / 3));
+      for (j = 0; j < steps; j++) raw.push(catmull(p0, p1, p2, p3, j / steps));
+    }
+    // 2) tasavälinen uudelleennäytteistys
+    var samples = [], acc = 0, prev = raw[0];
+    samples.push({ x: prev[0], y: prev[1] });
+    for (i = 1; i <= raw.length; i++) {
+      var cur = raw[i % raw.length];
+      var d = hyp(cur[0] - prev[0], cur[1] - prev[1]);
+      while (acc + d >= SPACING) {
+        var t = (SPACING - acc) / d;
+        prev = [prev[0] + (cur[0] - prev[0]) * t, prev[1] + (cur[1] - prev[1]) * t];
+        d = hyp(cur[0] - prev[0], cur[1] - prev[1]);
+        acc = 0;
+        samples.push({ x: prev[0], y: prev[1] });
+      }
+      acc += d;
+      prev = cur;
+    }
+    // poista mahdollinen liian lähelle alkua osuva viimeinen näyte
+    var first = samples[0], last = samples[samples.length - 1];
+    if (hyp(first.x - last.x, first.y - last.y) < SPACING * 0.5) samples.pop();
+
+    // 3) siirrä aloituskohta haluttuun kohtaan rataa
+    var off = Math.round((def.startFrac || 0) * samples.length);
+    samples = samples.slice(off).concat(samples.slice(0, off));
+
+    var N = samples.length;
+    for (i = 0; i < N; i++) {
+      var a = samples[i], b = samples[(i + 1) % N];
+      a.dir = Math.atan2(b.y - a.y, b.x - a.x);
+    }
+    var length = N * SPACING;
+
+    // 4) portit: tasavälein, ei kahta porttia päällekkäin (kahdeksikko!)
+    // säde kattaa koko tienleveyden + pienen oikaisuvaran
+    var gateR = def.width * 0.62 + 18;
+    var gates = null, K = clamp(Math.round(length / 300), 8, 24);
+    for (var tryK = 0; tryK < 6 && !gates; tryK++) {
+      var cand = [], k = K + (tryK % 2 ? -((tryK + 1) >> 1) : (tryK >> 1));
+      if (k < 6) continue;
+      for (i = 0; i < k; i++) {
+        var s = samples[Math.round(i * N / k) % N];
+        cand.push({ x: s.x, y: s.y, i: Math.round(i * N / k) % N });
+      }
+      var ok = true;
+      for (i = 0; i < k && ok; i++) {
+        for (j = i + 1; j < k && ok; j++) {
+          if (hyp(cand[i].x - cand[j].x, cand[i].y - cand[j].y) < gateR * 2.1) ok = false;
+        }
+      }
+      if (ok) gates = cand;
+    }
+    if (!gates) { // varasuunnitelma: harvenna kunnes mahtuu
+      gates = [];
+      K = 8;
+      for (i = 0; i < K; i++) {
+        var ss = samples[Math.round(i * N / K) % N];
+        gates.push({ x: ss.x, y: ss.y, i: Math.round(i * N / K) % N });
+      }
+    }
+
+    function atFrac(frac) { return samples[Math.round(frac * N) % N]; }
+
+    function featAt(fd, defR) {
+      var sp = atFrac(fd.frac);
+      var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
+      var lat = (fd.side || 0) * def.width * 0.5;
+      return { x: sp.x + nx * lat, y: sp.y + ny * lat, r: fd.r || defR };
+    }
+    var boosts = (def.boosts || []).map(function (bd) {
+      var sp = atFrac(bd.frac);
+      return { x: sp.x, y: sp.y, a: sp.dir, r: Math.max(34, def.width * 0.40) };
+    });
+    var oils = (def.oils || []).map(function (od) {
+      return featAt(od, Math.max(30, def.width * 0.34));
+    });
+    var muds = (def.muds || []).map(function (md) {
+      return featAt(md, def.width * 0.3);
+    });
+    var obstacles = (def.obst || []).map(function (od) {
+      return featAt(od, 20);
+    });
+    // violetit seinäesteet: kapseli radan suuntaisesti
+    var walls = (def.walls || []).map(function (wd) {
+      var ctr = featAt(wd, 0);
+      var sp = atFrac(wd.frac);
+      var half = (wd.len || 200) / 2;
+      var dx = Math.cos(sp.dir), dy = Math.sin(sp.dir);
+      return {
+        x1: ctr.x - dx * half, y1: ctr.y - dy * half,
+        x2: ctr.x + dx * half, y2: ctr.y + dy * half,
+        r: 7
+      };
+    });
+    // pisteet joita botit kiertävät (rengaskasat + seinien päät ja keskikohdat)
+    var avoidPts = obstacles.slice();
+    walls.forEach(function (w) {
+      for (var k = 0; k <= 3; k++) {
+        avoidPts.push({
+          x: w.x1 + (w.x2 - w.x1) * k / 3,
+          y: w.y1 + (w.y2 - w.y1) * k / 3,
+          r: w.r + 12
+        });
+      }
+    });
+    // vesialtaat radan ulkopuolelle; valitse se puoli jolla on enemmän tilaa
+    function distToLine(x, y) {
+      var bd = Infinity;
+      for (var k = 0; k < N; k += 4) {
+        var dd = (samples[k].x - x) * (samples[k].x - x) + (samples[k].y - y) * (samples[k].y - y);
+        if (dd < bd) bd = dd;
+      }
+      return Math.sqrt(bd);
+    }
+    var waters = (def.waters || []).map(function (wd) {
+      var a = featAt(wd, 60);
+      var b = featAt({ frac: wd.frac, side: -(wd.side || 0), r: wd.r }, 60);
+      return distToLine(a.x, a.y) >= distToLine(b.x, b.y) ? a : b;
+    });
+
+    // sillat: etsi radan itseleikkaus — lähekkäiset näytteet, jotka ovat
+    // rataa pitkin kaukana toisistaan. Jälkimmäinen haara on siltakansi.
+    var bridges = [];
+    var minSep = Math.round(N * 0.2), bestD = def.width * 0.5, bi = -1, bj = -1;
+    for (i = 0; i < N; i += 2) {
+      for (j = i + minSep; j < N && j < i + N - minSep; j += 2) {
+        var bd2 = hyp(samples[i].x - samples[j].x, samples[i].y - samples[j].y);
+        if (bd2 < bestD) { bestD = bd2; bi = i; bj = j; }
+      }
+    }
+    if (bi >= 0) {
+      bridges.push({
+        x: (samples[bi].x + samples[bj].x) / 2,
+        y: (samples[bi].y + samples[bj].y) / 2,
+        r: def.width * 1.15,
+        ia: bi,       // alempi tie
+        ib: bj,       // siltakansi
+        deckHalf: Math.round((def.width * 1.5) / SPACING)
+      });
+    }
+
+    // näkymän ja fysiikan rajat: radan äärimitat + reunakaista
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (i = 0; i < N; i++) {
+      if (samples[i].x < minX) minX = samples[i].x;
+      if (samples[i].x > maxX) maxX = samples[i].x;
+      if (samples[i].y < minY) minY = samples[i].y;
+      if (samples[i].y > maxY) maxY = samples[i].y;
+    }
+    var pad = def.width / 2 + 80;
+    var bounds = {
+      minX: minX - pad, minY: minY - pad,
+      maxX: maxX + pad, maxY: maxY + pad
+    };
+    bounds.w = bounds.maxX - bounds.minX;
+    bounds.h = bounds.maxY - bounds.minY;
+
+    return {
+      def: def, id: def.id, name: def.name, width: def.width,
+      samples: samples, spacing: SPACING, length: length,
+      gates: gates, gateR: gateR, boosts: boosts, oils: oils,
+      muds: muds, waters: waters, obstacles: obstacles, walls: walls,
+      avoidPts: avoidPts, bridges: bridges,
+      world: WORLD, bounds: bounds
+    };
+  }
+
+  var _built = {};
+  function getTrack(id) {
+    if (!_built[id]) {
+      var def = null;
+      for (var i = 0; i < TRACKS.length; i++) if (TRACKS[i].id === id) def = TRACKS[i];
+      if (!def) throw new Error("tuntematon rata: " + id);
+      _built[id] = buildTrack(def);
+    }
+    return _built[id];
+  }
+
+  /** Lähin keskilinjan näyte (karkea haku + tarkennus). */
+  function nearestSample(track, x, y) {
+    var S = track.samples, N = S.length, stride = 8;
+    var best = 0, bd = Infinity, i, d;
+    for (i = 0; i < N; i += stride) {
+      d = (S[i].x - x) * (S[i].x - x) + (S[i].y - y) * (S[i].y - y);
+      if (d < bd) { bd = d; best = i; }
+    }
+    for (i = best - stride; i <= best + stride; i++) {
+      var k = (i + N) % N;
+      d = (S[k].x - x) * (S[k].x - x) + (S[k].y - y) * (S[k].y - y);
+      if (d < bd) { bd = d; best = k; }
+    }
+    return { i: best, dist: Math.sqrt(bd) };
+  }
+
+  /** Ikkunoitu lähin näyte AI:lle (ei hyppää risteyksessä toiselle haaralle). */
+  function nearestWindow(track, x, y, from, win) {
+    var S = track.samples, N = S.length;
+    var best = from, bd = Infinity;
+    for (var o = -win; o <= win; o++) {
+      var k = (from + o + N) % N;
+      var d = (S[k].x - x) * (S[k].x - x) + (S[k].y - y) * (S[k].y - y);
+      if (d < bd) { bd = d; best = k; }
+    }
+    return { i: best, dist: Math.sqrt(bd) };
+  }
+
+  function surfaceAt(track, x, y) {
+    var i, o;
+    for (i = 0; i < track.oils.length; i++) {
+      o = track.oils[i];
+      if (hyp(o.x - x, o.y - y) < o.r) return "oil";
+    }
+    for (i = 0; i < track.muds.length; i++) {
+      o = track.muds[i];
+      if (hyp(o.x - x, o.y - y) < o.r) return "mud";
+    }
+    for (i = 0; i < track.waters.length; i++) {
+      o = track.waters[i];
+      if (hyp(o.x - x, o.y - y) < o.r) return "water";
+    }
+    if (nearestSample(track, x, y).dist > track.width * 0.5 + 4) return "grass";
+    return "asphalt";
+  }
+
+  // ---------------------------------------------------------------- kilpailu
+
+  function defaultInput() { return { up: false, down: false, left: false, right: false }; }
+
+  /**
+   * createRace({ trackId, lineup: [{kind:'human'|'ai', name, color, skill}], laps })
+   * Autot lähtevät ruudukosta lähtöviivan takaa.
+   */
+  function createRace(opts) {
+    var track = getTrack(opts.trackId);
+    var laps = opts.laps || track.def.laps || 4;
+    var S = track.samples, N = S.length;
+    var cars = [];
+    for (var i = 0; i < opts.lineup.length; i++) {
+      var L = opts.lineup[i];
+      var backSamples = Math.round((30 + Math.floor(i / 2) * 46) / SPACING);
+      var si = (N - backSamples) % N;
+      var sp = S[si];
+      var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
+      var lat = (i % 2 === 0 ? -1 : 1) * Math.max(19, track.width * 0.18);
+      cars.push({
+        idx: i, kind: L.kind, name: L.name, color: L.color,
+        skill: L.skill || "kova",
+        veh: VEHICLES[L.vehicle] ? L.vehicle : "sportti",
+        x: sp.x + nx * lat, y: sp.y + ny * lat,
+        angle: sp.dir, vx: 0, vy: 0,
+        surf: "asphalt", slip: 0, boostT: 0,
+        nextGate: 0, gatesCount: 0, started: false,
+        lapsDone: 0, lapStart: 0, lastLap: null, bestLap: null,
+        finished: false, finishTime: null, place: null,
+        aiCi: si, stuckT: 0, revT: 0
+      });
+    }
+    return {
+      trackId: opts.trackId, track: track, laps: laps,
+      time: 0, phase: "countdown", count: 3.0,
+      cars: cars, events: [], finishedCount: 0,
+      grace: null // aikaa muille, kun ensimmäinen ihminen on maalissa
+    };
+  }
+
+  /** Botin ohjaussyöte. Deterministinen (kohina sin-funktiolla ajasta). */
+  function aiInput(state, idx) {
+    var car = state.cars[idx], track = state.track;
+    var S = track.samples, N = S.length;
+    var sk = AI_SKILLS[car.skill] || AI_SKILLS.kova;
+    var inp = defaultInput();
+
+    var speed = hyp(car.vx, car.vy);
+    var near = nearestWindow(track, car.x, car.y, car.aiCi, 30);
+    if (near.dist > 260) near = nearestSample(track, car.x, car.y);
+    car.aiCi = near.i;
+
+    // juuttumisen tunnistus ja peruutus
+    if (state.phase === "racing" && speed < 18) car.stuckT += DT; else car.stuckT = 0;
+    if (car.revT > 0) {
+      car.revT -= DT;
+      var backTo = S[(near.i + N - 8) % N];
+      var bAng = Math.atan2(backTo.y - car.y, backTo.x - car.x);
+      var bDiff = angNorm(bAng - car.angle);
+      inp.down = true;
+      inp.left = bDiff > 0.15;   // peruutettaessa ohjaus peilautuu
+      inp.right = bDiff < -0.15;
+      return inp;
+    }
+    if (car.stuckT > 1.3) { car.revT = 0.9; car.stuckT = 0; }
+
+    // katsepiste edempänä radalla — kukin botti ajaa omaa kaistaansa
+    var lookDist = clamp(speed * sk.look + 50, 80, 230);
+    var lookN = Math.round(lookDist / SPACING);
+    var target = S[(near.i + lookN) % N];
+    var lane = Math.sin(idx * 2.1 + 0.8) * track.width * 0.24;
+    var tx = target.x - Math.sin(target.dir) * lane;
+    var ty = target.y + Math.cos(target.dir) * lane;
+    var aim = Math.atan2(ty - car.y, tx - car.x);
+
+    // väistä rengaskasat ja seinät: jos este on edessä ajolinjalla, kierrä ohi
+    var obs = track.avoidPts;
+    for (var oi = 0; oi < obs.length; oi++) {
+      var ob = obs[oi];
+      var od = hyp(ob.x - car.x, ob.y - car.y);
+      var range = clamp(speed * 0.8, 130, 280);
+      if (od > range || od < 1) continue;
+      var oAng = Math.atan2(ob.y - car.y, ob.x - car.x);
+      var rel = angNorm(oAng - aim);
+      if (Math.abs(rel) < 0.5) {
+        var dodge = (rel === 0 ? (idx % 2 ? 1 : -1) : (rel > 0 ? -1 : 1));
+        aim += dodge * (0.55 * (1 - od / range) + 0.15);
+      }
+    }
+
+    var noise = Math.sin(state.time * 1.7 + idx * 2.39) * sk.noise;
+    var diff = angNorm(aim - car.angle + noise);
+
+    inp.left = diff < -0.06;
+    inp.right = diff > 0.06;
+
+    // kaasu/jarru mutkan jyrkkyyden ja nopeuden mukaan
+    var sharp = Math.abs(diff);
+    var top = VEHICLES[car.veh].top * sk.topFrac;
+    if (sharp > sk.brakeAt && speed > 150) inp.down = true;
+    else if (sharp > sk.liftAt && speed > 120) { /* rullaa */ }
+    else if (speed < top) inp.up = true;
+    return inp;
+  }
+
+  function carSurface(state, car) {
+    return surfaceAt(state.track, car.x, car.y);
+  }
+
+  /** Yksi kiinteä aika-askel. inputs = taulukko syötteitä (autoa kohti). */
+  function step(state, inputs) {
+    var track = state.track, cars = state.cars;
+    var i, car, inp;
+
+    if (state.phase === "countdown") {
+      state.count -= DT;
+      if (state.count <= 0) {
+        state.phase = "racing";
+        state.count = 0;
+        state.events.push({ type: "go" });
+      }
+    } else if (state.phase !== "finished") {
+      state.time += DT;
+    }
+
+    for (i = 0; i < cars.length; i++) {
+      car = cars[i];
+      inp = (state.phase === "racing" && !car.finished) ||
+            (state.phase === "finished" && car.kind === "ai")
+        ? (inputs && inputs[i]) || defaultInput()
+        : defaultInput();
+      // maalin jälkeen botit ja maaliin tulleet rullaavat vapaalla
+      if (car.finished) inp = defaultInput();
+
+      // seuraa auton kohtaa keskilinjalla (haaratieto siltoja varten)
+      var nw = nearestWindow(track, car.x, car.y, car.aiCi, 30);
+      if (nw.dist > 260) nw = nearestSample(track, car.x, car.y);
+      car.aiCi = nw.i;
+
+      var surfName = carSurface(state, car);
+      var surf = SURFACES[surfName];
+      car.surf = surfName;
+      var veh = VEHICLES[car.veh];
+
+      var speed = hyp(car.vx, car.vy);
+
+      // kääntö: teho kasvaa vauhdin mukana, peruuttaessa peilattu
+      var fx = Math.cos(car.angle), fy = Math.sin(car.angle);
+      var vf0 = car.vx * fx + car.vy * fy;
+      var steer = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
+      var dir = vf0 < -5 ? -1 : 1;
+      var sf = clamp(speed / 70, 0, 1) / (1 + speed / 900);
+      car.angle = angNorm(car.angle + steer * veh.steer * sf * dir * DT);
+
+      // nopeus auton akselistossa (uusi keula)
+      fx = Math.cos(car.angle); fy = Math.sin(car.angle);
+      var vf = car.vx * fx + car.vy * fy;
+      var vl = -car.vx * fy + car.vy * fx;
+
+      // ajoneuvokohtainen maastokelpoisuus
+      var accelMul = surfName === "asphalt" ? 1 : clamp(surf.accelMul * veh.offAccel, 0, 1);
+      var dragMul = surfName === "asphalt" ? 1 : 1 + (surf.dragMul - 1) * veh.offDrag;
+      var grip = surfName === "oil" ? surf.grip : surf.grip * veh.gripMul;
+      var dragK = veh.accel / veh.top;
+
+      if (inp.up) vf += veh.accel * accelMul * DT;
+      if (inp.down) {
+        if (vf > 10) vf -= CAR.brake * DT;
+        else vf -= CAR.revAccel * accelMul * DT;
+      }
+      vf -= vf * dragK * dragMul * DT;
+      vl *= Math.exp(-grip * DT);
+      if (vf < -CAR.maxRev) vf = -CAR.maxRev;
+
+      // turbot
+      car.boostT = Math.max(0, car.boostT - DT);
+      var boostMax = Math.max(CAR.boostMax, veh.top * 1.17);
+      for (var b = 0; b < track.boosts.length; b++) {
+        var bp = track.boosts[b];
+        if (hyp(bp.x - car.x, bp.y - car.y) < bp.r && vf > 40) {
+          if (vf < boostMax) vf = Math.min(boostMax, vf + CAR.boostPush * DT);
+          if (car.boostT <= 0) state.events.push({ type: "boost", car: i });
+          car.boostT = 0.6;
+        }
+      }
+
+      car.slip = Math.abs(vl);
+      car.vx = fx * vf - fy * vl;
+      car.vy = fy * vf + fx * vl;
+      car.x += car.vx * DT;
+      car.y += car.vy * DT;
+
+      // näkymän reunat (pehmeä kimmoke) — autot pysyvät rajatussa kuvassa
+      var bnd = track.bounds;
+      if (car.x < bnd.minX + 20) { car.x = bnd.minX + 20; car.vx = Math.abs(car.vx) * 0.4; }
+      if (car.x > bnd.maxX - 20) { car.x = bnd.maxX - 20; car.vx = -Math.abs(car.vx) * 0.4; }
+      if (car.y < bnd.minY + 20) { car.y = bnd.minY + 20; car.vy = Math.abs(car.vy) * 0.4; }
+      if (car.y > bnd.maxY - 20) { car.y = bnd.maxY - 20; car.vy = -Math.abs(car.vy) * 0.4; }
+    }
+
+    resolveCollisions(state);
+    resolveObstacles(state);
+    resolveWalls(state);
+
+    // portit ja kierrokset
+    if (state.phase !== "countdown") {
+      for (i = 0; i < cars.length; i++) touchGates(state, cars[i]);
+    }
+
+    // sijoitukset
+    var standings = computeStandings(state);
+    for (i = 0; i < standings.length; i++) cars[standings[i]].place = i + 1;
+
+    // kilpailu päättyy kun kaikki ihmiset ovat maalissa — tai kun
+    // ensimmäisen ihmisen maaliintulosta on kulunut armonaika (30 s)
+    if (state.phase === "racing") {
+      var humansLeft = 0, humans = 0, humansDone = 0;
+      for (i = 0; i < cars.length; i++) {
+        if (cars[i].kind === "human") {
+          humans++;
+          if (cars[i].finished) humansDone++; else humansLeft++;
+        }
+      }
+      var anyLeft = 0;
+      for (i = 0; i < cars.length; i++) if (!cars[i].finished) anyLeft++;
+      if (humansDone > 0 && state.grace === null) state.grace = 30;
+      if (state.grace !== null) state.grace -= DT;
+      if ((humans > 0 && humansLeft === 0) || anyLeft === 0 ||
+          (state.grace !== null && state.grace <= 0)) {
+        state.phase = "finished";
+        state.events.push({ type: "raceover" });
+      }
+    }
+    return state;
+  }
+
+  function touchGates(state, car) {
+    if (car.finished) return;
+    var track = state.track, gates = track.gates, K = gates.length;
+    var g = gates[car.nextGate];
+    if (hyp(g.x - car.x, g.y - car.y) > track.gateR) return;
+    car.nextGate = (car.nextGate + 1) % K;
+    car.gatesCount++;
+    if (gates.indexOf(g) === 0) {
+      if (car.started) {
+        var lapTime = state.time - car.lapStart;
+        car.lastLap = lapTime;
+        if (car.bestLap === null || lapTime < car.bestLap) car.bestLap = lapTime;
+        car.lapsDone++;
+        car.lapStart = state.time;
+        if (car.lapsDone >= state.laps) {
+          car.finished = true;
+          state.finishedCount++;
+          car.finishTime = state.time;
+          state.events.push({ type: "finish", car: car.idx, time: state.time, place: state.finishedCount });
+        } else {
+          state.events.push({ type: "lap", car: car.idx, lap: car.lapsDone, time: lapTime, best: lapTime === car.bestLap });
+        }
+      } else {
+        car.started = true;
+        car.lapStart = state.time;
+      }
+    }
+  }
+
+  /** Onko auto siltakannella (vai alemmalla tiellä)? null = ei sillalla. */
+  function bridgeLevel(track, car) {
+    var N = track.samples.length;
+    for (var i = 0; i < track.bridges.length; i++) {
+      var br = track.bridges[i];
+      if (hyp(br.x - car.x, br.y - car.y) > br.r) continue;
+      var da = Math.min(Math.abs(car.aiCi - br.ia), N - Math.abs(car.aiCi - br.ia));
+      var db = Math.min(Math.abs(car.aiCi - br.ib), N - Math.abs(car.aiCi - br.ib));
+      return db < da ? 1 : 0;
+    }
+    return null;
+  }
+
+  function resolveCollisions(state) {
+    var cars = state.cars, R = CAR.radius;
+    for (var i = 0; i < cars.length; i++) {
+      for (var j = i + 1; j < cars.length; j++) {
+        var a = cars[i], b = cars[j];
+        // sillalla eri tasoilla ajavat eivät kohtaa
+        var la = bridgeLevel(state.track, a), lb = bridgeLevel(state.track, b);
+        if (la !== null && lb !== null && la !== lb) continue;
+        var dx = b.x - a.x, dy = b.y - a.y;
+        var d = hyp(dx, dy);
+        if (d >= R * 2 || d === 0) continue;
+        var nx = dx / d, ny = dy / d;
+        var ma = VEHICLES[a.veh].mass, mb = VEHICLES[b.veh].mass;
+        var overlap = R * 2 - d;
+        a.x -= nx * overlap * (mb / (ma + mb)); a.y -= ny * overlap * (mb / (ma + mb));
+        b.x += nx * overlap * (ma / (ma + mb)); b.y += ny * overlap * (ma / (ma + mb));
+        var rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+        if (rel < 0) {
+          var imp = -(1 + 0.35) * rel / (1 / ma + 1 / mb);
+          a.vx -= nx * imp / ma; a.vy -= ny * imp / ma;
+          b.vx += nx * imp / mb; b.vy += ny * imp / mb;
+          if (imp > 25) state.events.push({ type: "hit", x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, force: imp });
+        }
+      }
+    }
+  }
+
+  /** Rengaskasat yms. kiinteät esteet: työnnä auto ulos ja kimmota. */
+  function resolveObstacles(state) {
+    var obs = state.track.obstacles, R = CAR.radius;
+    for (var i = 0; i < state.cars.length; i++) {
+      var car = state.cars[i];
+      for (var j = 0; j < obs.length; j++) {
+        var o = obs[j];
+        var dx = car.x - o.x, dy = car.y - o.y;
+        var d = hyp(dx, dy), lim = R + o.r;
+        if (d >= lim || d === 0) continue;
+        var nx = dx / d, ny = dy / d;
+        car.x = o.x + nx * lim;
+        car.y = o.y + ny * lim;
+        var vn = car.vx * nx + car.vy * ny;
+        if (vn < 0) {
+          car.vx -= (1 + 0.45) * vn * nx;
+          car.vy -= (1 + 0.45) * vn * ny;
+          if (-vn > 80) state.events.push({ type: "hit", x: o.x + nx * o.r, y: o.y + ny * o.r, force: -vn });
+        }
+      }
+    }
+  }
+
+  /** Violetit seinäesteet: kapselitörmäys — työnnä ulos ja kimmota. */
+  function resolveWalls(state) {
+    var walls = state.track.walls, R = CAR.radius;
+    for (var i = 0; i < state.cars.length; i++) {
+      var car = state.cars[i];
+      for (var j = 0; j < walls.length; j++) {
+        var w = walls[j];
+        var wx = w.x2 - w.x1, wy = w.y2 - w.y1;
+        var len2 = wx * wx + wy * wy;
+        var t = len2 === 0 ? 0 :
+          clamp(((car.x - w.x1) * wx + (car.y - w.y1) * wy) / len2, 0, 1);
+        var px = w.x1 + wx * t, py = w.y1 + wy * t;
+        var dx = car.x - px, dy = car.y - py;
+        var d = hyp(dx, dy), lim = R + w.r;
+        if (d >= lim || d === 0) continue;
+        var nx = dx / d, ny = dy / d;
+        car.x = px + nx * lim;
+        car.y = py + ny * lim;
+        var vn = car.vx * nx + car.vy * ny;
+        if (vn < 0) {
+          car.vx -= (1 + 0.4) * vn * nx;
+          car.vy -= (1 + 0.4) * vn * ny;
+          if (-vn > 80) state.events.push({ type: "hit", x: px, y: py, force: -vn });
+        }
+      }
+    }
+  }
+
+  /** Sijoitusjärjestys: maalissa olleet ajan mukaan, muut edistymisen mukaan. */
+  function computeStandings(state) {
+    var idx = state.cars.map(function (c) { return c.idx; });
+    var track = state.track;
+    idx.sort(function (ia, ib) {
+      var a = state.cars[ia], b = state.cars[ib];
+      if (a.finished && b.finished) return a.finishTime - b.finishTime;
+      if (a.finished) return -1;
+      if (b.finished) return 1;
+      var ga = state.track.gates[a.nextGate], gb = state.track.gates[b.nextGate];
+      var pa = a.gatesCount * 10000 - hyp(ga.x - a.x, ga.y - a.y);
+      var pb = b.gatesCount * 10000 - hyp(gb.x - b.x, gb.y - b.y);
+      return pb - pa;
+    });
+    return idx;
+  }
+
+  function formatTime(t) {
+    if (t === null || t === undefined) return "–";
+    var m = Math.floor(t / 60);
+    var s = t - m * 60;
+    var ss = s.toFixed(1);
+    if (s < 10) ss = "0" + ss;
+    return m + ":" + ss;
+  }
+
+  var api = {
+    TRACKS: TRACKS, CAR: CAR, SURFACES: SURFACES, VEHICLES: VEHICLES,
+    DT: DT, WORLD: WORLD,
+    buildTrack: buildTrack, getTrack: getTrack,
+    nearestSample: nearestSample, surfaceAt: surfaceAt,
+    createRace: createRace, step: step, aiInput: aiInput,
+    defaultInput: defaultInput, computeStandings: computeStandings,
+    bridgeLevel: bridgeLevel, formatTime: formatTime
+  };
+
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  global.SladiEngine = api;
+})(typeof window !== "undefined" ? window : globalThis);
+</script>
+<script>/* Sladi — käyttöliittymä ja renderöinti. Ydin: SladiEngine (src/engine.js). */
+(function () {
+  "use strict";
+
+  var E = window.SladiEngine;
+  var DT = E.DT;
+
+  var canvas = document.getElementById("board");
+  var ctx = canvas.getContext("2d");
+  var CAR_SCALE = 1.45; // autojen piirtokoko suhteessa fysiikkaan
+  var view = null;      // aktiivisen radan näkymärajat (track.bounds)
+
+  var PLAYER_COLORS = ["#e6453c", "#3b82d9"];
+  var BOT_POOL = [
+    { name: "Keke", color: "#f2b63c" },
+    { name: "Ilona", color: "#4cae5a" },
+    { name: "Ukko", color: "#9a6ae0" },
+    { name: "Mira", color: "#e07b39" }
+  ];
+
+  // ------------------------------------------------------------- tila
+
+  var state = null;          // moottorin kilpailutila
+  var raceOpts = null;       // viimeisimmät asetukset uusintaa varten
+  var selectedTrack = "rengasrata";
+  var selectedVehicle = "sportti";
+  try {
+    var savedVeh = localStorage.getItem("sladi-veh");
+    if (E.VEHICLES[savedVeh]) selectedVehicle = savedVeh;
+  } catch (e) {}
+  var BOT_VEHICLES = ["ralli", "formula", "paku", "sportti"];
+  var particles = [];
+  var carTrails = [];        // edelliset sijainnit sladijälkiä varten
+  var acc = 0, lastT = null;
+  var msgTimer = 0;
+  var resultsShown = false;
+  var finishDelay = 0;
+
+  var staticLayer = document.createElement("canvas");
+  var skidLayer = document.createElement("canvas");
+  var deckLayer = document.createElement("canvas"); // siltakansi autojen yläpuolelle
+
+  /** Mitoittaa piirtopinnat radan äärimittoihin — turha reunanurmi jää pois
+   *  ja autot näkyvät isompina. Kaikki piirto tapahtuu maailmankoordinaateissa. */
+  function setupView(track) {
+    view = track.bounds;
+    var w = Math.round(view.w), h = Math.round(view.h);
+    [canvas, staticLayer, skidLayer, deckLayer].forEach(function (cv) {
+      if (cv.width !== w) cv.width = w;
+      if (cv.height !== h) cv.height = h;
+    });
+    staticLayer.getContext("2d").setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+    skidLayer.getContext("2d").setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+    deckLayer.getContext("2d").setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+  }
+
+  var THEMES = {
+    grass: {
+      base: "#47903f", stripe: "rgba(255,255,240,0.045)",
+      dotDark: "rgba(30,70,28,0.20)", dotLight: "rgba(180,230,150,0.13)",
+      speck1: "rgba(255,235,150,0.5)", speck2: "rgba(255,255,255,0.42)",
+      asphalt: "#84888e", dust: "150,190,120"
+    },
+    sand: {
+      base: "#c49a58", stripe: "rgba(120,80,30,0.07)",
+      dotDark: "rgba(100,70,35,0.22)", dotLight: "rgba(255,244,215,0.16)",
+      speck1: "rgba(250,248,240,0.55)", speck2: "rgba(140,110,70,0.5)",
+      asphalt: "#7e8288", dust: "205,180,130"
+    }
+  };
+  function themeOf(track) { return THEMES[track.def.theme] || THEMES.grass; }
+
+  // ------------------------------------------------------------- DOM
+
+  var el = {
+    overlay: document.getElementById("overlay"),
+    menuCard: document.getElementById("menuCard"),
+    resultCard: document.getElementById("resultCard"),
+    resultRows: document.getElementById("resultRows"),
+    resultTitle: document.getElementById("resultTitle"),
+    trackPicker: document.getElementById("trackPicker"),
+    countWrap: document.getElementById("countWrap"),
+    phase: document.getElementById("phase"),
+    message: document.getElementById("message"),
+    standings: document.getElementById("standings"),
+    lapNow: document.getElementById("lapNow"),
+    lapBest: document.getElementById("lapBest"),
+    lapLast: document.getElementById("lapLast"),
+    speedNow: document.getElementById("speedNow"),
+    scorebar: document.getElementById("scorebar"),
+    btnFs: document.getElementById("btnFsCorner"),
+    btnSnd: document.getElementById("btnSnd"),
+    frame: document.getElementById("boardFrame")
+  };
+
+  // ------------------------------------------------------------- ääni
+
+  var audioCtx = null;
+  var soundOn = true;
+  try { soundOn = localStorage.getItem("sladi-sound") !== "off"; } catch (e) {}
+
+  function beep(freq, dur, type, vol, when) {
+    if (!soundOn) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var t0 = audioCtx.currentTime + (when || 0);
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || "square";
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol || 0.05, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t0); o.stop(t0 + dur + 0.05);
+    } catch (e) {}
+  }
+  function sndCount() { beep(660, 0.12, "square", 0.045); }
+  function sndGo() { beep(990, 0.35, "square", 0.06); beep(1320, 0.3, "square", 0.04, 0.05); }
+  function sndLap(best) { beep(880, 0.1, "triangle", 0.05); if (best) beep(1175, 0.16, "triangle", 0.05, 0.09); }
+  function sndHit() { beep(140, 0.12, "sawtooth", 0.055); }
+  function sndBoost() { beep(520, 0.2, "sawtooth", 0.035); beep(780, 0.18, "sawtooth", 0.03, 0.06); }
+  function sndFinish() { [660, 880, 990, 1320].forEach(function (f, i) { beep(f, 0.18, "triangle", 0.05, i * 0.11); }); }
+
+  function updateSndBtn() {
+    el.btnSnd.textContent = soundOn ? "♪" : "∅";
+    el.btnSnd.classList.toggle("off", !soundOn);
+    el.btnSnd.setAttribute("aria-label", soundOn ? "Äänet päällä" : "Äänet pois");
+  }
+  el.btnSnd.addEventListener("click", function () {
+    soundOn = !soundOn;
+    try { localStorage.setItem("sladi-sound", soundOn ? "on" : "off"); } catch (e) {}
+    updateSndBtn();
+  });
+  updateSndBtn();
+
+  // ------------------------------------------------------------- syötteet
+
+  var keys = {};
+  var touch = { left: false, right: false, gas: false, brake: false };
+
+  window.addEventListener("keydown", function (e) {
+    if (e.code === "KeyF" && !e.repeat) { toggleFs(); return; }
+    if (e.code === "KeyM" && !e.repeat) { el.btnSnd.click(); return; }
+    keys[e.code] = true;
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].indexOf(e.code) >= 0) e.preventDefault();
+  });
+  window.addEventListener("keyup", function (e) { keys[e.code] = false; });
+  window.addEventListener("blur", function () { keys = {}; });
+
+  function bindTouch(id, prop) {
+    var b = document.getElementById(id);
+    if (!b) return;
+    function on(e) { e.preventDefault(); touch[prop] = true; }
+    function off(e) { e.preventDefault(); touch[prop] = false; }
+    b.addEventListener("pointerdown", on);
+    b.addEventListener("pointerup", off);
+    b.addEventListener("pointercancel", off);
+    b.addEventListener("pointerleave", off);
+  }
+  bindTouch("tLeft", "left");
+  bindTouch("tRight", "right");
+  bindTouch("tGas", "gas");
+  bindTouch("tBrake", "brake");
+
+  function humanInput(slot) {
+    var twoP = raceOpts && raceOpts.players === 2;
+    if (slot === 0) {
+      return {
+        up: !!keys.ArrowUp || (!twoP && !!keys.KeyW) || touch.gas,
+        down: !!keys.ArrowDown || (!twoP && !!keys.KeyS) || touch.brake,
+        left: !!keys.ArrowLeft || (!twoP && !!keys.KeyA) || touch.left,
+        right: !!keys.ArrowRight || (!twoP && !!keys.KeyD) || touch.right
+      };
+    }
+    return { up: !!keys.KeyW, down: !!keys.KeyS, left: !!keys.KeyA, right: !!keys.KeyD };
+  }
+
+  function toggleFs() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (el.frame.requestFullscreen) el.frame.requestFullscreen();
+  }
+  el.btnFs.addEventListener("click", toggleFs);
+
+  // ------------------------------------------------------------- valikko
+
+  function buildTrackPicker() {
+    el.trackPicker.innerHTML = "";
+    E.TRACKS.forEach(function (def) {
+      var t = E.getTrack(def.id);
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "track-pick" + (def.id === selectedTrack ? " sel" : "");
+      var cv = document.createElement("canvas");
+      cv.width = 150; cv.height = 94;
+      drawPreview(cv, t);
+      var nm = document.createElement("b"); nm.textContent = def.name;
+      var bl = document.createElement("small"); bl.textContent = def.blurb;
+      b.appendChild(cv); b.appendChild(nm); b.appendChild(bl);
+      b.addEventListener("click", function () {
+        selectedTrack = def.id;
+        buildTrackPicker();
+        renderIdle();
+      });
+      el.trackPicker.appendChild(b);
+    });
+  }
+
+  function drawPreview(cv, track) {
+    var c = cv.getContext("2d");
+    var v = track.bounds, pad = 10;
+    var sx = (cv.width - pad * 2) / v.w, sy = (cv.height - pad * 2) / v.h;
+    var s = Math.min(sx, sy);
+    var ox = (cv.width - v.w * s) / 2 - v.minX * s;
+    var oy = (cv.height - v.h * s) / 2 - v.minY * s;
+    c.clearRect(0, 0, cv.width, cv.height);
+    c.beginPath();
+    track.samples.forEach(function (p, i) {
+      if (i === 0) c.moveTo(ox + p.x * s, oy + p.y * s);
+      else c.lineTo(ox + p.x * s, oy + p.y * s);
+    });
+    c.closePath();
+    c.lineJoin = "round"; c.lineCap = "round";
+    c.strokeStyle = "rgba(236,242,248,0.9)";
+    c.lineWidth = Math.max(3, track.width * s * 1.1);
+    c.stroke();
+    c.strokeStyle = "#2f6d38";
+    c.lineWidth = Math.max(1.6, track.width * s * 0.55);
+    c.stroke();
+    var st = track.samples[0];
+    c.fillStyle = "#f2b63c";
+    c.beginPath(); c.arc(ox + st.x * s, oy + st.y * s, 3, 0, Math.PI * 2); c.fill();
+  }
+
+  document.querySelectorAll("[data-mode]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var mode = btn.getAttribute("data-mode");
+      var skill = btn.getAttribute("data-skill") || "kova";
+      startRace({
+        trackId: selectedTrack,
+        players: mode === "2p" ? 2 : 1,
+        botSkill: skill,
+        vehicle: selectedVehicle
+      });
+    });
+  });
+
+  function buildVehPicker() {
+    var wrap = document.getElementById("vehPicker");
+    wrap.innerHTML = "";
+    Object.keys(E.VEHICLES).forEach(function (key) {
+      var veh = E.VEHICLES[key];
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "veh-pick" + (key === selectedVehicle ? " sel" : "");
+      var cv = document.createElement("canvas");
+      cv.width = 84; cv.height = 40;
+      var c = cv.getContext("2d");
+      c.translate(cv.width / 2, cv.height / 2);
+      c.scale(1.5, 1.5);
+      drawCarBody(c, key, "#e6453c", false);
+      var nm = document.createElement("b"); nm.textContent = veh.name;
+      var ds = document.createElement("small"); ds.textContent = veh.desc;
+      b.appendChild(cv); b.appendChild(nm); b.appendChild(ds);
+      b.addEventListener("click", function () {
+        selectedVehicle = key;
+        try { localStorage.setItem("sladi-veh", key); } catch (e) {}
+        buildVehPicker();
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  document.getElementById("btnAgain").addEventListener("click", function () {
+    if (raceOpts) startRace(raceOpts);
+  });
+  document.getElementById("btnMenu").addEventListener("click", showMenu);
+
+  function showMenu() {
+    state = null;
+    resultsShown = false;
+    el.menuCard.style.display = "";
+    el.resultCard.style.display = "none";
+    el.overlay.classList.add("show");
+    el.phase.textContent = "Valitse rata, auto ja pelimuoto";
+    el.message.textContent = "Kaasuta täysillä suorilla ja anna perän sladata mutkissa — koko rata näkyy kerralla.";
+    buildTrackPicker();
+    buildVehPicker();
+    renderIdle();
+  }
+
+  // ------------------------------------------------------------- kilpailun aloitus
+
+  function startRace(opts) {
+    raceOpts = opts;
+    var lineup = [];
+    lineup.push({ kind: "human", name: opts.players === 2 ? "Pelaaja 1" : "Sinä", color: PLAYER_COLORS[0], vehicle: opts.vehicle });
+    if (opts.players === 2) lineup.push({ kind: "human", name: "Pelaaja 2", color: PLAYER_COLORS[1], vehicle: opts.vehicle });
+    var botCount = opts.players === 2 ? 2 : 3;
+    for (var i = 0; i < botCount; i++) {
+      var b = BOT_POOL[i];
+      lineup.push({ kind: "ai", name: b.name, color: b.color, skill: opts.botSkill, vehicle: BOT_VEHICLES[i % BOT_VEHICLES.length] });
+    }
+    state = E.createRace({ trackId: opts.trackId, lineup: lineup, laps: undefined });
+    particles = [];
+    carTrails = state.cars.map(function (c) { return { x: c.x, y: c.y }; });
+    resultsShown = false;
+    finishDelay = 0;
+    lastCount = null;
+    setupView(state.track);
+    skidLayer.getContext("2d").clearRect(view.minX, view.minY, view.w, view.h);
+    drawStatic(state.track);
+    buildStandings();
+    el.overlay.classList.remove("show");
+    el.phase.textContent = state.track.name + " · " + state.laps + " kierrosta";
+    el.message.textContent = "Lähtölaskenta käy — kaasu pohjaan kun valot sammuvat!";
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  }
+
+  // ------------------------------------------------------------- staattinen rata
+
+  function drawStatic(track) {
+    var c = staticLayer.getContext("2d");
+    var v = track.bounds;
+    var th = themeOf(track);
+    var i;
+
+    // maasto raidoilla (nurmi tai hiekka)
+    c.fillStyle = th.base;
+    c.fillRect(v.minX, v.minY, v.w, v.h);
+    c.save();
+    c.translate(v.minX + v.w / 2, v.minY + v.h / 2);
+    c.rotate(-0.32);
+    c.fillStyle = th.stripe;
+    var stripeN = Math.ceil((v.w + v.h) / 180) + 2;
+    for (i = -stripeN; i < stripeN; i += 2) c.fillRect(i * 90, -v.h * 1.5, 90, v.h * 3);
+    c.restore();
+
+    // kukkia/kiviä ja pientä tekstuuria (deterministinen sironta)
+    for (i = 0; i < 260; i++) {
+      var fx = (Math.sin(i * 12.9898) * 43758.5453) % 1; if (fx < 0) fx += 1;
+      var fy = (Math.sin(i * 78.233) * 12543.2371) % 1; if (fy < 0) fy += 1;
+      var px = v.minX + fx * v.w, py = v.minY + fy * v.h;
+      if (E.nearestSample(track, px, py).dist < track.width * 0.5 + 26) continue;
+      if (i % 9 === 0) {
+        c.fillStyle = i % 18 === 0 ? th.speck1 : th.speck2;
+        c.beginPath(); c.arc(px, py, 2.1, 0, Math.PI * 2); c.fill();
+      } else {
+        c.fillStyle = i % 2 ? th.dotDark : th.dotLight;
+        c.beginPath(); c.arc(px, py, 3 + (i % 4), 0, Math.PI * 2); c.fill();
+      }
+    }
+
+    // vesialtaat radan vierellä
+    track.waters.forEach(function (w, wi) {
+      c.fillStyle = "rgba(60,40,20,0.18)";
+      c.beginPath(); c.ellipse(w.x + 4, w.y + 5, w.r * 1.02, w.r * 0.8, wi, 0, Math.PI * 2); c.fill();
+      for (var bl = 0; bl < 5; bl++) {
+        var ba = wi * 1.1 + bl * 1.256;
+        var bd = bl === 0 ? 0 : w.r * 0.4;
+        c.fillStyle = bl === 0 ? "#2f66b5" : "#3872c2";
+        c.beginPath();
+        c.ellipse(
+          w.x + Math.cos(ba) * bd, w.y + Math.sin(ba) * bd * 0.75,
+          w.r * (bl === 0 ? 0.85 : 0.45), w.r * (bl === 0 ? 0.66 : 0.34),
+          ba, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.fillStyle = "rgba(190,220,255,0.5)";
+      c.beginPath(); c.ellipse(w.x - w.r * 0.22, w.y - w.r * 0.18, w.r * 0.34, w.r * 0.12, 0.5, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = "rgba(255,255,255,0.35)";
+      c.lineWidth = 1.6;
+      c.beginPath(); c.ellipse(w.x + w.r * 0.15, w.y + w.r * 0.2, w.r * 0.4, w.r * 0.2, 0.3, 0.4, 2.6); c.stroke();
+    });
+
+    // pensaat radan ulkopuolella
+    var S = track.samples, N = S.length;
+    for (i = 0; i < N; i += 47) {
+      var p = S[i];
+      var side = (i % 94 === 0) ? 1 : -1;
+      var nx = -Math.sin(p.dir) * side, ny = Math.cos(p.dir) * side;
+      var bx = p.x + nx * (track.width * 0.5 + 55 + (i % 5) * 14);
+      var by = p.y + ny * (track.width * 0.5 + 55 + (i % 7) * 11);
+      if (bx < v.minX + 30 || bx > v.maxX - 30 || by < v.minY + 30 || by > v.maxY - 30) continue;
+      if (E.nearestSample(track, bx, by).dist < track.width * 0.5 + 34) continue;
+      var nearWater = track.waters.some(function (w) {
+        return Math.hypot(w.x - bx, w.y - by) < w.r + 30;
+      });
+      if (nearWater) continue;
+      var r = 13 + (i % 3) * 4;
+      c.fillStyle = "rgba(20,50,22,0.5)";
+      c.beginPath(); c.arc(bx + 3, by + 4, r, 0, Math.PI * 2); c.fill();
+      c.fillStyle = i % 3 ? "#2f6d31" : "#387d38";
+      c.beginPath(); c.arc(bx, by, r, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "rgba(255,255,255,0.10)";
+      c.beginPath(); c.arc(bx - r * 0.3, by - r * 0.35, r * 0.55, 0, Math.PI * 2); c.fill();
+    }
+
+    // ratapolku
+    function tracePath() {
+      c.beginPath();
+      for (var j = 0; j < N; j++) {
+        if (j === 0) c.moveTo(S[j].x, S[j].y);
+        else c.lineTo(S[j].x, S[j].y);
+      }
+      c.closePath();
+    }
+    c.lineJoin = "round"; c.lineCap = "round";
+
+    // reunakivet: leveä valkoinen pohja + punaiset katkot
+    tracePath();
+    c.strokeStyle = "#efece3";
+    c.lineWidth = track.width + 24;
+    c.stroke();
+    c.setLineDash([28, 28]);
+    tracePath();
+    c.strokeStyle = "#cc4437";
+    c.lineWidth = track.width + 24;
+    c.stroke();
+    c.setLineDash([]);
+
+    // asfaltti — vaalea, retrohenkinen
+    tracePath();
+    c.strokeStyle = th.asphalt;
+    c.lineWidth = track.width;
+    c.stroke();
+    // ajolinjan kuluma
+    tracePath();
+    c.strokeStyle = "rgba(255,255,255,0.07)";
+    c.lineWidth = track.width * 0.5;
+    c.stroke();
+    // asfaltin täplätekstuuri (deterministinen)
+    for (i = 0; i < N; i += 6) {
+      var tp = S[i];
+      var rx = Math.sin(i * 37.7) * track.width * 0.42;
+      var ry = Math.sin(i * 53.3) * 0.9;
+      var tnx = -Math.sin(tp.dir), tny = Math.cos(tp.dir);
+      c.fillStyle = (i % 12) ? "rgba(60,63,70,0.16)" : "rgba(255,255,255,0.10)";
+      c.beginPath();
+      c.arc(tp.x + tnx * rx + ry, tp.y + tny * rx, 1.6 + (i % 3), 0, Math.PI * 2);
+      c.fill();
+    }
+
+    // keltaiset suuntanuolet tiessä
+    var arrowCount = 5;
+    for (i = 0; i < arrowCount; i++) {
+      var ap = S[Math.round((i + 0.55) * N / arrowCount) % N];
+      c.save();
+      c.translate(ap.x, ap.y);
+      c.rotate(ap.dir);
+      c.fillStyle = "rgba(247,224,76,0.75)";
+      var aw = track.width * 0.13;
+      c.beginPath();
+      c.moveTo(-aw * 2.1, -aw * 0.55); c.lineTo(aw * 0.4, -aw * 0.55);
+      c.lineTo(aw * 0.4, -aw * 1.15); c.lineTo(aw * 2.1, 0);
+      c.lineTo(aw * 0.4, aw * 1.15); c.lineTo(aw * 0.4, aw * 0.55);
+      c.lineTo(-aw * 2.1, aw * 0.55);
+      c.closePath(); c.fill();
+      c.restore();
+    }
+
+    // turbonuolet (skaalautuvat padin kokoon)
+    track.boosts.forEach(function (b) {
+      var bs = b.r / 34;
+      c.save();
+      c.translate(b.x, b.y);
+      c.rotate(b.a);
+      c.scale(bs, bs);
+      c.fillStyle = "#ffd23e";
+      for (var k = -1; k <= 1; k += 2) {
+        c.beginPath();
+        c.moveTo(k * 8 - 12, -13); c.lineTo(k * 8 + 2, 0); c.lineTo(k * 8 - 12, 13);
+        c.lineTo(k * 8 - 5, 0);
+        c.closePath(); c.fill();
+      }
+      c.restore();
+    });
+
+    // öljyläikät — litteä, epäsäännöllinen lätäkkö
+    track.oils.forEach(function (o, oi) {
+      c.fillStyle = "rgba(28,28,40,0.78)";
+      for (var bl = 0; bl < 5; bl++) {
+        var ba = oi * 1.3 + bl * 1.256;
+        var bd = bl === 0 ? 0 : o.r * 0.42;
+        c.beginPath();
+        c.ellipse(
+          o.x + Math.cos(ba) * bd, o.y + Math.sin(ba) * bd * 0.7,
+          o.r * (bl === 0 ? 0.85 : 0.42), o.r * (bl === 0 ? 0.6 : 0.3),
+          ba, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.fillStyle = "rgba(150,175,235,0.16)";
+      c.beginPath();
+      c.ellipse(o.x - o.r * 0.2, o.y - o.r * 0.15, o.r * 0.4, o.r * 0.16, 0.4, 0, Math.PI * 2);
+      c.fill();
+    });
+
+    // mutalätäköt tiellä
+    track.muds.forEach(function (m, mi) {
+      for (var bl = 0; bl < 6; bl++) {
+        var ba = mi * 0.9 + bl * 1.047;
+        var bd = bl === 0 ? 0 : m.r * 0.45;
+        c.fillStyle = bl % 2 ? "rgba(96,66,34,0.92)" : "rgba(116,82,44,0.9)";
+        c.beginPath();
+        c.ellipse(
+          m.x + Math.cos(ba) * bd, m.y + Math.sin(ba) * bd * 0.7,
+          m.r * (bl === 0 ? 0.8 : 0.4), m.r * (bl === 0 ? 0.58 : 0.28),
+          ba, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.fillStyle = "rgba(70,47,22,0.85)";
+      c.beginPath(); c.ellipse(m.x + m.r * 0.1, m.y + m.r * 0.08, m.r * 0.42, m.r * 0.26, 0.3, 0, Math.PI * 2); c.fill();
+      // roiskepisarat
+      for (var dr = 0; dr < 7; dr++) {
+        var da = dr * 0.9 + mi;
+        c.fillStyle = "rgba(96,66,34,0.7)";
+        c.beginPath();
+        c.arc(m.x + Math.cos(da) * m.r * (0.95 + (dr % 3) * 0.14),
+              m.y + Math.sin(da) * m.r * (0.75 + (dr % 2) * 0.16), 3 + (dr % 3), 0, Math.PI * 2);
+        c.fill();
+      }
+    });
+
+    // siltakansi omalle tasolleen (piirretään autojen päälle render()issä)
+    var dctx = deckLayer.getContext("2d");
+    dctx.clearRect(v.minX, v.minY, v.w, v.h);
+    track.bridges.forEach(function (br) {
+      var half = br.deckHalf;
+      function deckPath(cc) {
+        cc.beginPath();
+        for (var k = -half; k <= half; k++) {
+          var p = S[(br.ib + k + N) % N];
+          if (k === -half) cc.moveTo(p.x, p.y); else cc.lineTo(p.x, p.y);
+        }
+      }
+      dctx.lineCap = "butt";
+      dctx.lineJoin = "round";
+      // varjo alle
+      dctx.save();
+      dctx.translate(5, 8);
+      deckPath(dctx);
+      dctx.strokeStyle = "rgba(10,14,10,0.32)";
+      dctx.lineWidth = track.width + 20;
+      dctx.stroke();
+      dctx.restore();
+      // kaiteet ja kansi
+      deckPath(dctx);
+      dctx.strokeStyle = "#ddd9cd";
+      dctx.lineWidth = track.width + 18;
+      dctx.stroke();
+      deckPath(dctx);
+      dctx.strokeStyle = "#6e6a60";
+      dctx.lineWidth = track.width + 7;
+      dctx.stroke();
+      deckPath(dctx);
+      dctx.strokeStyle = "#8e9298";
+      dctx.lineWidth = track.width;
+      dctx.stroke();
+      // kannen keskiviiva
+      dctx.setLineDash([14, 18]);
+      deckPath(dctx);
+      dctx.strokeStyle = "rgba(255,255,255,0.35)";
+      dctx.lineWidth = 3;
+      dctx.stroke();
+      dctx.setLineDash([]);
+    });
+
+    // violetit seinäesteet turkoosipäädyin
+    track.walls.forEach(function (w) {
+      c.strokeStyle = "rgba(20,10,30,0.35)";
+      c.lineWidth = w.r * 2 + 6;
+      c.lineCap = "round";
+      c.beginPath(); c.moveTo(w.x1 + 3, w.y1 + 5); c.lineTo(w.x2 + 3, w.y2 + 5); c.stroke();
+      c.strokeStyle = "#7b4fa8";
+      c.lineWidth = w.r * 2;
+      c.beginPath(); c.moveTo(w.x1, w.y1); c.lineTo(w.x2, w.y2); c.stroke();
+      c.strokeStyle = "rgba(255,255,255,0.25)";
+      c.lineWidth = w.r * 0.8;
+      c.beginPath(); c.moveTo(w.x1, w.y1 - w.r * 0.35); c.lineTo(w.x2, w.y2 - w.r * 0.35); c.stroke();
+      [[w.x1, w.y1], [w.x2, w.y2]].forEach(function (p) {
+        c.fillStyle = "#3fbf9f";
+        c.beginPath(); c.arc(p[0], p[1], w.r + 2.5, 0, Math.PI * 2); c.fill();
+        c.fillStyle = "rgba(255,255,255,0.35)";
+        c.beginPath(); c.arc(p[0] - 2, p[1] - 2, (w.r + 2.5) * 0.45, 0, Math.PI * 2); c.fill();
+      });
+    });
+
+    // katsomo lähtösuoran varrella: aita ja värikäs yleisömosaiikki
+    (function () {
+      var sp = S[Math.round(N * 0.015) % N];
+      var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
+      var offs = track.width / 2 + 62;
+      var cand = [
+        { x: sp.x + nx * offs, y: sp.y + ny * offs },
+        { x: sp.x - nx * offs, y: sp.y - ny * offs }
+      ];
+      var pick = E.nearestSample(track, cand[0].x, cand[0].y).dist >=
+                 E.nearestSample(track, cand[1].x, cand[1].y).dist ? cand[0] : cand[1];
+      if (pick.x < v.minX + 40 || pick.x > v.maxX - 40 ||
+          pick.y < v.minY + 40 || pick.y > v.maxY - 40) return;
+      c.save();
+      c.translate(pick.x, pick.y);
+      c.rotate(sp.dir);
+      c.fillStyle = "rgba(20,25,18,0.3)";
+      c.fillRect(-76, -34, 156, 72);
+      c.fillStyle = "#8a6a40";
+      c.fillRect(-78, -37, 156, 72);
+      c.fillStyle = "#6f5330";
+      c.fillRect(-74, -33, 148, 64);
+      for (var yy = 0; yy < 8; yy++) {
+        for (var xx = 0; xx < 24; xx++) {
+          var h = Math.sin(xx * 12.9 + yy * 78.2 + track.samples.length) * 43758.545;
+          h -= Math.floor(h);
+          var pal = ["#e34b3f", "#3b6fd9", "#efd23e", "#f2f2f2", "#41a457", "#e078b0", "#2a2a33"];
+          c.fillStyle = pal[Math.floor(h * pal.length)];
+          c.fillRect(-70 + xx * 5.9, -29 + yy * 7, 3.6, 4.4);
+        }
+      }
+      c.fillStyle = "#ddd9cd";
+      c.fillRect(-78, 31, 156, 4);
+      c.restore();
+    })();
+
+    // lähtöviiva (shakkiruutu)
+    var st = S[0];
+    c.save();
+    c.translate(st.x, st.y);
+    c.rotate(st.dir);
+    var half = track.width / 2;
+    var sq = 9;
+    for (var row = 0; row < 3; row++) {
+      for (var kk = 0; kk < Math.ceil(track.width / sq); kk++) {
+        c.fillStyle = (row + kk) % 2 ? "#14171c" : "#f4f2ec";
+        c.fillRect(-10 + row * sq, -half + kk * sq, sq, Math.min(sq, half * 2 - kk * sq));
+      }
+    }
+    c.restore();
+  }
+
+  // ------------------------------------------------------------- piirto
+
+  function renderIdle() {
+    var track = E.getTrack(selectedTrack);
+    setupView(track);
+    drawStatic(track);
+    ctx.setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+    ctx.drawImage(staticLayer, view.minX, view.minY);
+  }
+
+  function drawCar(car, slot) {
+    var isPlayer = car.kind === "human";
+    ctx.save();
+    ctx.translate(car.x, car.y);
+    ctx.scale(CAR_SCALE, CAR_SCALE);
+
+    // varjo
+    ctx.save();
+    ctx.rotate(car.angle);
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.beginPath(); ctx.ellipse(1.5, 3, 15, 9, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    ctx.rotate(car.angle);
+
+    // turboliekki
+    if (car.boostT > 0.25) {
+      ctx.fillStyle = "rgba(255,170,40,0.85)";
+      ctx.beginPath();
+      ctx.moveTo(-14, -4); ctx.lineTo(-26 - Math.sin(car.boostT * 60) * 4, 0); ctx.lineTo(-14, 4);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "rgba(255,240,140,0.9)";
+      ctx.beginPath();
+      ctx.moveTo(-14, -2); ctx.lineTo(-20, 0); ctx.lineTo(-14, 2);
+      ctx.closePath(); ctx.fill();
+    }
+
+    drawCarBody(ctx, car.veh, car.color, isPlayer);
+    ctx.restore();
+
+    // pelaajan tunnus auton yllä
+    if (isPlayer && state.phase !== "finished") {
+      ctx.save();
+      ctx.font = "700 15px Fraunces, serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.fillText(slot === 0 ? "P1" : "P2", car.x + 1, car.y - 22);
+      ctx.fillStyle = slot === 0 ? "#ffd88a" : "#a8d0ff";
+      ctx.fillText(slot === 0 ? "P1" : "P2", car.x, car.y - 23);
+      ctx.restore();
+    }
+  }
+
+  /** Piirtää korin paikallisiin koordinaatteihin (keula +x-suuntaan). */
+  function drawCarBody(c, vehKey, color, outline) {
+    if (vehKey === "formula") {
+      // avonaiset renkaat + kapea runko ja siivet
+      c.fillStyle = "#15181d";
+      c.fillRect(-12, -9.5, 6, 4.5); c.fillRect(-12, 5, 6, 4.5);
+      c.fillRect(6, -8.5, 5, 4); c.fillRect(6, 4.5, 5, 4);
+      c.fillStyle = color;
+      roundRect(c, -13, -4.5, 26, 9, 3.5);
+      c.fill();
+      c.fillStyle = "rgba(0,0,0,0.3)";
+      c.fillRect(11, -7.5, 2.8, 15);            // etusiipi
+      c.fillRect(-14.5, -8, 3, 16);             // takasiipi
+      c.fillStyle = "rgba(20,26,34,0.9)";
+      c.beginPath(); c.arc(-1, 0, 3.2, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "rgba(160,210,255,0.4)";
+      c.beginPath(); c.arc(0.5, 0, 1.8, 0, Math.PI * 2); c.fill();
+      if (outline) {
+        c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 1.4;
+        roundRect(c, -13, -4.5, 26, 9, 3.5); c.stroke();
+      }
+    } else if (vehKey === "ralli") {
+      c.fillStyle = "#15181d";
+      c.fillRect(-10, -9.5, 6, 4); c.fillRect(-10, 5.5, 6, 4);
+      c.fillRect(4, -9.5, 6, 4); c.fillRect(4, 5.5, 6, 4);
+      c.fillStyle = color;
+      roundRect(c, -12, -8, 24, 16, 4);
+      c.fill();
+      c.fillStyle = "rgba(255,255,255,0.55)";   // ralliraidat
+      c.fillRect(-12, -2.6, 24, 1.7); c.fillRect(-12, 1, 24, 1.7);
+      c.fillStyle = "rgba(20,26,34,0.85)";
+      roundRect(c, -5, -5.5, 10, 11, 3);
+      c.fill();
+      c.fillStyle = "rgba(0,0,0,0.35)";
+      c.fillRect(-13, -8.5, 3, 17);             // takaspoileri
+      c.fillStyle = "rgba(255,255,255,0.75)";
+      c.fillRect(9.5, -6, 2.2, 3); c.fillRect(9.5, 3, 2.2, 3);
+      if (outline) {
+        c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 1.6;
+        roundRect(c, -12, -8, 24, 16, 4); c.stroke();
+      }
+    } else if (vehKey === "paku") {
+      c.fillStyle = "#15181d";
+      c.fillRect(-12, -10, 6.5, 4.5); c.fillRect(-12, 5.5, 6.5, 4.5);
+      c.fillRect(6, -10, 6.5, 4.5); c.fillRect(6, 5.5, 6.5, 4.5);
+      c.fillStyle = color;
+      roundRect(c, -15, -8.5, 30, 17, 3.5);
+      c.fill();
+      c.fillStyle = "rgba(0,0,0,0.22)";         // tavaratila
+      roundRect(c, -14, -7.5, 17, 15, 2.5);
+      c.fill();
+      c.fillStyle = "rgba(20,26,34,0.85)";      // ohjaamo edessä
+      roundRect(c, 6, -6.5, 6.5, 13, 2);
+      c.fill();
+      c.fillStyle = "rgba(255,255,255,0.75)";
+      c.fillRect(13, -5.5, 2, 3.2); c.fillRect(13, 2.3, 2, 3.2);
+      if (outline) {
+        c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 1.6;
+        roundRect(c, -15, -8.5, 30, 17, 3.5); c.stroke();
+      }
+    } else {
+      // sportti
+      c.fillStyle = "#15181d";
+      c.fillRect(-11, -9, 6, 4); c.fillRect(-11, 5, 6, 4);
+      c.fillRect(5, -9, 6, 4); c.fillRect(5, 5, 6, 4);
+      c.fillStyle = color;
+      roundRect(c, -13, -7, 26, 14, 4);
+      c.fill();
+      c.fillStyle = "rgba(255,255,255,0.75)";
+      c.fillRect(10, -5, 2.5, 3); c.fillRect(10, 2, 2.5, 3);
+      c.fillStyle = "rgba(0,0,0,0.35)";
+      c.fillRect(-13.5, -8, 3.5, 16);
+      c.fillStyle = "rgba(20,26,34,0.85)";
+      roundRect(c, -4, -4.5, 9, 9, 2.5);
+      c.fill();
+      c.fillStyle = "rgba(160,210,255,0.35)";
+      roundRect(c, 2, -3.5, 3, 7, 1.5);
+      c.fill();
+      if (outline) {
+        c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 1.6;
+        roundRect(c, -13, -7, 26, 14, 4); c.stroke();
+      }
+    }
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function addSkids() {
+    var c = skidLayer.getContext("2d");
+    state.cars.forEach(function (car, i) {
+      var prev = carTrails[i];
+      var slipping = car.slip > 42 || (car.surf === "grass" && Math.hypot(car.vx, car.vy) > 60);
+      // teleporttisuoja: älä piirrä jälkeä jos sijainti hyppäsi (esim. pikakelaus)
+      if (Math.hypot(car.x - prev.x, car.y - prev.y) > 30) slipping = false;
+      // sillan kohdalla jäljet sotkisivat tasot — jätä piirtämättä
+      if (E.bridgeLevel(state.track, car) !== null) slipping = false;
+      if (slipping) {
+        c.strokeStyle = car.surf === "grass" ? "rgba(74,52,28,0.16)" : "rgba(20,22,26,0.13)";
+        c.lineWidth = 5.5;
+        c.lineCap = "round";
+        var fx = Math.cos(car.angle), fy = Math.sin(car.angle);
+        for (var s = -1; s <= 1; s += 2) {
+          c.beginPath();
+          c.moveTo(prev.x - fy * 7 * s - fx * 11, prev.y + fx * 7 * s - fy * 11);
+          c.lineTo(car.x - fy * 7 * s - fx * 11, car.y + fx * 7 * s - fy * 11);
+          c.stroke();
+        }
+      }
+      prev.x = car.x; prev.y = car.y;
+    });
+  }
+
+  function spawnDust() {
+    var dustColor = themeOf(state.track).dust;
+    state.cars.forEach(function (car) {
+      var sp = Math.hypot(car.vx, car.vy);
+      if (car.surf === "water" && sp > 30 && particles.length < 240) {
+        particles.push({
+          x: car.x - Math.cos(car.angle) * 10, y: car.y - Math.sin(car.angle) * 10,
+          vx: -car.vx * 0.15 + Math.sin(car.x * 5.3) * 24, vy: -car.vy * 0.15 + Math.cos(car.y * 6.1) * 24,
+          life: 0.55, max: 0.55, size: 5, color: "160,200,250"
+        });
+      } else if (car.surf === "mud" && sp > 40 && particles.length < 240) {
+        particles.push({
+          x: car.x - Math.cos(car.angle) * 12, y: car.y - Math.sin(car.angle) * 12,
+          vx: -car.vx * 0.12 + Math.sin(car.x * 6.7) * 18, vy: -car.vy * 0.12 + Math.cos(car.y * 8.3) * 18,
+          life: 0.5, max: 0.5, size: 4.2, color: "120,84,46"
+        });
+      } else if (car.surf === "grass" && sp > 70 && particles.length < 240) {
+        particles.push({
+          x: car.x - Math.cos(car.angle) * 13, y: car.y - Math.sin(car.angle) * 13,
+          vx: -car.vx * 0.1 + Math.sin(car.x * 7.7) * 14, vy: -car.vy * 0.1 + Math.cos(car.y * 9.1) * 14,
+          life: 0.5, max: 0.5, size: 4.5, color: dustColor
+        });
+      } else if (car.slip > 70 && particles.length < 240) {
+        particles.push({
+          x: car.x - Math.cos(car.angle) * 12, y: car.y - Math.sin(car.angle) * 12,
+          vx: -car.vx * 0.06, vy: -car.vy * 0.06,
+          life: 0.4, max: 0.4, size: 3.5, color: "200,200,205"
+        });
+      }
+    });
+  }
+
+  function burst(x, y, n, color, speed) {
+    for (var i = 0; i < n; i++) {
+      var a = (i / n) * Math.PI * 2;
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(a) * speed * (0.5 + (i % 3) * 0.25),
+        vy: Math.sin(a) * speed * (0.5 + (i % 3) * 0.25),
+        life: 0.55, max: 0.55, size: 3.2, color: color
+      });
+    }
+  }
+
+  function stepParticles(dt) {
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.life -= dt;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.vx *= 0.94; p.vy *= 0.94;
+    }
+  }
+
+  function drawObstacles() {
+    state.track.obstacles.forEach(function (o) {
+      var tires = o.r >= 20
+        ? [[-0.45, -0.4], [0.5, -0.35], [0, 0.45]]
+        : [[0, 0]];
+      var tr = o.r >= 20 ? o.r * 0.62 : o.r;
+      ctx.fillStyle = "rgba(0,0,0,0.28)";
+      ctx.beginPath(); ctx.ellipse(o.x + 3, o.y + 4, o.r * 1.05, o.r * 0.85, 0, 0, Math.PI * 2); ctx.fill();
+      tires.forEach(function (t) {
+        var tx = o.x + t[0] * o.r, ty = o.y + t[1] * o.r;
+        ctx.fillStyle = "#23262b";
+        ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#454a52";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(tx, ty, tr * 0.62, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = "#101318";
+        ctx.beginPath(); ctx.arc(tx, ty, tr * 0.32, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.14)";
+        ctx.beginPath(); ctx.arc(tx - tr * 0.3, ty - tr * 0.3, tr * 0.28, 0, Math.PI * 2); ctx.fill();
+      });
+    });
+  }
+
+  function render() {
+    ctx.setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+    ctx.drawImage(staticLayer, view.minX, view.minY);
+    ctx.drawImage(skidLayer, view.minX, view.minY);
+    drawObstacles();
+
+    particles.forEach(function (p) {
+      ctx.fillStyle = "rgba(" + p.color + "," + (p.life / p.max * 0.55).toFixed(2) + ")";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * (0.6 + 0.7 * (1 - p.life / p.max)), 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // piirrä autot sijoitusjärjestyksessä (kärki päällimmäisenä);
+    // sillan alla ajavat ensin, kansi väliin, kannella ajavat päällimmäisiksi
+    var order = state.cars.slice().sort(function (a, b) { return (b.place || 9) - (a.place || 9); });
+    var slotOf = {};
+    var hi = 0;
+    state.cars.forEach(function (c) { if (c.kind === "human") slotOf[c.idx] = hi++; });
+    var lower = [], upper = [];
+    order.forEach(function (car) {
+      (E.bridgeLevel(state.track, car) === 1 ? upper : lower).push(car);
+    });
+    lower.forEach(function (car) { drawCar(car, slotOf[car.idx] || 0); });
+    ctx.drawImage(deckLayer, view.minX, view.minY);
+    upper.forEach(function (car) { drawCar(car, slotOf[car.idx] || 0); });
+  }
+
+  // ------------------------------------------------------------- HUD
+
+  var standingRows = [];
+  function buildStandings() {
+    el.standings.innerHTML = "";
+    standingRows = state.cars.map(function (car) {
+      var row = document.createElement("div");
+      row.className = "standing" + (car.kind === "human" ? " me" : "");
+      row.innerHTML = '<span class="pl"></span><span class="chip"></span>' +
+        '<span class="nm"></span><span class="lap"></span>';
+      row.querySelector(".chip").style.background = car.color;
+      row.querySelector(".nm").textContent = car.name;
+      el.standings.appendChild(row);
+      return row;
+    });
+    updateStandings();
+  }
+
+  function updateStandings() {
+    if (!state) return;
+    var sorted = state.cars.slice().sort(function (a, b) { return (a.place || 9) - (b.place || 9); });
+
+    // retrotulostaulu radan alla: sija · väri · kierrokset · aika
+    el.scorebar.innerHTML = sorted.map(function (car) {
+      var t = car.finished ? E.formatTime(car.finishTime)
+        : car.bestLap !== null ? E.formatTime(car.bestLap) : "-:--.-";
+      return '<span class="slot' + (car.kind === "human" ? " me" : "") + '">' +
+        '<b class="pos">' + (car.place || "·") + '</b>' +
+        '<span class="chip" style="background:' + car.color + '"></span>' +
+        '<span>' + Math.min(car.lapsDone + (car.finished ? 0 : 1), state.laps) + "/" + state.laps + '</span>' +
+        '<span class="digits">' + t + '</span></span>';
+    }).join("");
+
+    sorted.forEach(function (car, vi) {
+      var row = standingRows[car.idx];
+      row.querySelector(".pl").textContent = (car.place || vi + 1) + ".";
+      row.querySelector(".lap").textContent = car.finished
+        ? "🏁 " + E.formatTime(car.finishTime)
+        : (Math.min(car.lapsDone + 1, state.laps)) + "/" + state.laps;
+      if (el.standings.children[vi] !== row) el.standings.insertBefore(row, el.standings.children[vi] || null);
+    });
+
+    var me = state.cars[0];
+    el.lapNow.textContent = me.finished
+      ? "Maalissa"
+      : Math.min(me.lapsDone + 1, state.laps) + " / " + state.laps;
+    el.lapLast.textContent = E.formatTime(me.lastLap);
+    el.lapBest.textContent = E.formatTime(me.bestLap);
+    el.speedNow.textContent = Math.round(Math.hypot(me.vx, me.vy) * 0.72) + " km/h";
+  }
+
+  function setMessage(text, sticky) {
+    el.message.textContent = text;
+    msgTimer = sticky ? 8 : 3.5;
+  }
+
+  var lastCount = null;
+  function updateCountdown() {
+    if (!state) { el.countWrap.innerHTML = ""; return; }
+    if (state.phase === "countdown") {
+      var n = Math.ceil(state.count);
+      if (n !== lastCount) {
+        lastCount = n;
+        el.countWrap.innerHTML = "<span>" + n + "</span>";
+        sndCount();
+      }
+    } else if (lastCount !== "go" && lastCount !== null) {
+      lastCount = "go";
+      el.countWrap.innerHTML = '<span class="go">AJA!</span>';
+      setTimeout(function () { if (lastCount === "go") el.countWrap.innerHTML = ""; }, 900);
+    }
+  }
+
+  // ------------------------------------------------------------- tapahtumat
+
+  function handleEvents() {
+    var evs = state.events;
+    state.events = [];
+    evs.forEach(function (ev) {
+      var car = ev.car !== undefined ? state.cars[ev.car] : null;
+      switch (ev.type) {
+        case "go":
+          sndGo();
+          setMessage("Matkaan! " + state.laps + " kierrosta edessä.");
+          break;
+        case "lap":
+          if (car.kind === "human") {
+            sndLap(ev.best);
+            setMessage((ev.best ? "Paras kierros! " : "Kierros valmis: ") + E.formatTime(ev.time) +
+              " — " + (state.laps - ev.lap) + " jäljellä.");
+          }
+          break;
+        case "finish":
+          if (car.kind === "human") {
+            sndFinish();
+            setMessage(car.name + " maalissa — sija " + ev.place + "!", true);
+          }
+          burst(car.x, car.y, 14, "255,216,138", 120);
+          break;
+        case "hit":
+          if (ev.force > 60) sndHit();
+          burst(ev.x, ev.y, 6, "230,230,235", 90);
+          break;
+        case "boost":
+          if (car.kind === "human") sndBoost();
+          break;
+        case "raceover":
+          finishDelay = 1.4;
+          break;
+      }
+    });
+  }
+
+  // ------------------------------------------------------------- tulokset
+
+  function showResults() {
+    resultsShown = true;
+    var sorted = state.cars.slice().sort(function (a, b) { return (a.place || 9) - (b.place || 9); });
+    el.resultRows.innerHTML = "";
+    sorted.forEach(function (car) {
+      var row = document.createElement("div");
+      row.className = "row" + (car.kind === "human" ? " me" : "");
+      var medal = car.place === 1 ? "🥇" : car.place === 2 ? "🥈" : car.place === 3 ? "🥉" : car.place + ".";
+      row.innerHTML =
+        '<span class="pl">' + medal + '</span>' +
+        '<span class="chip" style="background:' + car.color + '"></span>' +
+        '<span class="nm">' + car.name + '</span>' +
+        '<span class="tt">' + (car.finished ? E.formatTime(car.finishTime) : "kesken") + '</span>' +
+        '<span class="bb">' + (car.bestLap !== null ? "paras <b>" + E.formatTime(car.bestLap) + "</b>" : "") + '</span>';
+      el.resultRows.appendChild(row);
+    });
+    var me = state.cars[0];
+    el.resultTitle.textContent =
+      me.place === 1 ? "Voitto!" :
+      me.place <= 3 ? "Palkintopallille!" : "Maali!";
+    el.menuCard.style.display = "none";
+    el.resultCard.style.display = "";
+    el.overlay.classList.add("show");
+    el.phase.textContent = "Kilpailu päättyi";
+  }
+
+  // ------------------------------------------------------------- pääsilmukka
+
+  function buildInputs() {
+    return state.cars.map(function (car, i) {
+      if (car.kind === "ai") return E.aiInput(state, i);
+      var slot = 0;
+      for (var j = 0; j < i; j++) if (state.cars[j].kind === "human") slot++;
+      return humanInput(slot);
+    });
+  }
+
+  var hudAcc = 0;
+  function frame(t) {
+    requestAnimationFrame(frame);
+    if (lastT === null) lastT = t;
+    var dt = Math.min((t - lastT) / 1000, 0.25);
+    lastT = t;
+
+    if (!state) return;
+
+    acc += dt;
+    while (acc >= DT) {
+      acc -= DT;
+      E.step(state, buildInputs());
+      handleEvents();
+      addSkids();
+    }
+    spawnDust();
+    stepParticles(dt);
+    updateCountdown();
+    render();
+
+    hudAcc += dt;
+    if (hudAcc > 0.15) { hudAcc = 0; updateStandings(); }
+
+    if (msgTimer > 0) {
+      msgTimer -= dt;
+      if (msgTimer <= 0 && state.phase === "racing") {
+        var me = state.cars[0];
+        el.message.textContent = me.place === 1
+          ? "Johdat kilpailua — pidä pää kylmänä."
+          : "Olet sijalla " + me.place + ". Ota johtaja kiinni!";
+      }
+    }
+
+    if (state.phase === "finished" && !resultsShown) {
+      finishDelay -= dt;
+      if (finishDelay <= 0) showResults();
+    }
+  }
+
+  // ------------------------------------------------------------- smoke-API
+
+  window.SladiUI = {
+    startRace: startRace,
+    showMenu: showMenu,
+    getState: function () { return state; },
+    selectTrack: function (id) { selectedTrack = id; buildTrackPicker(); },
+    pressKey: function (code, down) { keys[code] = down; },
+    fastForward: function (seconds) {
+      if (!state) return;
+      var steps = Math.round(seconds / DT);
+      for (var s = 0; s < steps; s++) {
+        E.step(state, buildInputs());
+        handleEvents();
+      }
+      state.cars.forEach(function (c, i) { carTrails[i].x = c.x; carTrails[i].y = c.y; });
+      updateStandings();
+      render();
+      if (state.phase === "finished" && !resultsShown) showResults();
+    }
+  };
+
+  // käynnistys
+  showMenu();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body></html>
