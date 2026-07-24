@@ -16,7 +16,7 @@
     dragK: 0.78,     // lineaarinen vastuskerroin (accel/dragK ≈ huippunopeus)
     steer: 3.2,      // maksimikääntönopeus rad/s
     maxRev: 130,     // peruutuksen huippunopeus
-    radius: 12,      // törmäysympyrän säde
+    radius: 14,      // törmäysympyrän säde
     boostMax: 470,   // huippunopeus turbolla
     boostPush: 950   // turbon kiihdytys
   };
@@ -49,7 +49,7 @@
       id: "rengasrata",
       name: "Rengasrata",
       blurb: "Nopea perusrata: pitkät suorat, kaksi turboa ja yksi ilkeä mutkasarja.",
-      width: 58,
+      width: 68,
       laps: 4,
       points: [
         [160, 300], [240, 170], [520, 120], [900, 150], [1250, 120],
@@ -64,7 +64,7 @@
       id: "serpentiini",
       name: "Serpentiini",
       blurb: "Mutkia peräkanaa ja kaksi neulansilmää — jarru on kaverisi.",
-      width: 54,
+      width: 62,
       laps: 4,
       points: [
         [190, 170], [640, 130], [1120, 155], [1420, 235], [1500, 435],
@@ -80,7 +80,7 @@
       id: "kahdeksikko",
       name: "Kahdeksikko",
       blurb: "Rata risteää itsensä kanssa keskellä — pidä silmät auki risteyksessä.",
-      width: 54,
+      width: 62,
       laps: 4,
       // lemniskaatta: x = cx + a·sin t, y = cy + b·sin 2t
       points: (function () {
@@ -185,20 +185,36 @@
 
     var boosts = (def.boosts || []).map(function (bd) {
       var sp = atFrac(bd.frac);
-      return { x: sp.x, y: sp.y, a: sp.dir, r: 30 };
+      return { x: sp.x, y: sp.y, a: sp.dir, r: 34 };
     });
     var oils = (def.oils || []).map(function (od) {
       var sp = atFrac(od.frac);
       var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
       var lat = (od.side || 0) * def.width * 0.5;
-      return { x: sp.x + nx * lat, y: sp.y + ny * lat, r: 26 };
+      return { x: sp.x + nx * lat, y: sp.y + ny * lat, r: 30 };
     });
+
+    // näkymän ja fysiikan rajat: radan äärimitat + reunakaista
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (i = 0; i < N; i++) {
+      if (samples[i].x < minX) minX = samples[i].x;
+      if (samples[i].x > maxX) maxX = samples[i].x;
+      if (samples[i].y < minY) minY = samples[i].y;
+      if (samples[i].y > maxY) maxY = samples[i].y;
+    }
+    var pad = def.width / 2 + 80;
+    var bounds = {
+      minX: minX - pad, minY: minY - pad,
+      maxX: maxX + pad, maxY: maxY + pad
+    };
+    bounds.w = bounds.maxX - bounds.minX;
+    bounds.h = bounds.maxY - bounds.minY;
 
     return {
       def: def, id: def.id, name: def.name, width: def.width,
       samples: samples, spacing: SPACING, length: length,
       gates: gates, gateR: gateR, boosts: boosts, oils: oils,
-      world: WORLD
+      world: WORLD, bounds: bounds
     };
   }
 
@@ -265,11 +281,11 @@
     var cars = [];
     for (var i = 0; i < opts.lineup.length; i++) {
       var L = opts.lineup[i];
-      var backSamples = Math.round((26 + Math.floor(i / 2) * 34) / SPACING);
+      var backSamples = Math.round((30 + Math.floor(i / 2) * 46) / SPACING);
       var si = (N - backSamples) % N;
       var sp = S[si];
       var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
-      var lat = (i % 2 === 0 ? -1 : 1) * 15;
+      var lat = (i % 2 === 0 ? -1 : 1) * 19;
       cars.push({
         idx: i, kind: L.kind, name: L.name, color: L.color,
         skill: L.skill || "kova",
@@ -416,11 +432,12 @@
       car.x += car.vx * DT;
       car.y += car.vy * DT;
 
-      // maailman reunat (pehmeä kimmoke)
-      if (car.x < 20) { car.x = 20; car.vx = Math.abs(car.vx) * 0.4; }
-      if (car.x > WORLD.w - 20) { car.x = WORLD.w - 20; car.vx = -Math.abs(car.vx) * 0.4; }
-      if (car.y < 20) { car.y = 20; car.vy = Math.abs(car.vy) * 0.4; }
-      if (car.y > WORLD.h - 20) { car.y = WORLD.h - 20; car.vy = -Math.abs(car.vy) * 0.4; }
+      // näkymän reunat (pehmeä kimmoke) — autot pysyvät rajatussa kuvassa
+      var bnd = track.bounds;
+      if (car.x < bnd.minX + 20) { car.x = bnd.minX + 20; car.vx = Math.abs(car.vx) * 0.4; }
+      if (car.x > bnd.maxX - 20) { car.x = bnd.maxX - 20; car.vx = -Math.abs(car.vx) * 0.4; }
+      if (car.y < bnd.minY + 20) { car.y = bnd.minY + 20; car.vy = Math.abs(car.vy) * 0.4; }
+      if (car.y > bnd.maxY - 20) { car.y = bnd.maxY - 20; car.vy = -Math.abs(car.vy) * 0.4; }
     }
 
     resolveCollisions(state);

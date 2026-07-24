@@ -7,8 +7,8 @@
 
   var canvas = document.getElementById("board");
   var ctx = canvas.getContext("2d");
-  var W = E.WORLD.w, H = E.WORLD.h;
-  canvas.width = W; canvas.height = H;
+  var CAR_SCALE = 1.45; // autojen piirtokoko suhteessa fysiikkaan
+  var view = null;      // aktiivisen radan näkymärajat (track.bounds)
 
   var PLAYER_COLORS = ["#e6453c", "#3b82d9"];
   var BOT_POOL = [
@@ -31,9 +31,20 @@
   var finishDelay = 0;
 
   var staticLayer = document.createElement("canvas");
-  staticLayer.width = W; staticLayer.height = H;
   var skidLayer = document.createElement("canvas");
-  skidLayer.width = W; skidLayer.height = H;
+
+  /** Mitoittaa piirtopinnat radan äärimittoihin — turha reunanurmi jää pois
+   *  ja autot näkyvät isompina. Kaikki piirto tapahtuu maailmankoordinaateissa. */
+  function setupView(track) {
+    view = track.bounds;
+    var w = Math.round(view.w), h = Math.round(view.h);
+    [canvas, staticLayer, skidLayer].forEach(function (cv) {
+      if (cv.width !== w) cv.width = w;
+      if (cv.height !== h) cv.height = h;
+    });
+    staticLayer.getContext("2d").setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+    skidLayer.getContext("2d").setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+  }
 
   // ------------------------------------------------------------- DOM
 
@@ -171,10 +182,11 @@
 
   function drawPreview(cv, track) {
     var c = cv.getContext("2d");
-    var pad = 10;
-    var sx = (cv.width - pad * 2) / W, sy = (cv.height - pad * 2) / H;
+    var v = track.bounds, pad = 10;
+    var sx = (cv.width - pad * 2) / v.w, sy = (cv.height - pad * 2) / v.h;
     var s = Math.min(sx, sy);
-    var ox = (cv.width - W * s) / 2, oy = (cv.height - H * s) / 2;
+    var ox = (cv.width - v.w * s) / 2 - v.minX * s;
+    var oy = (cv.height - v.h * s) / 2 - v.minY * s;
     c.clearRect(0, 0, cv.width, cv.height);
     c.beginPath();
     track.samples.forEach(function (p, i) {
@@ -241,7 +253,8 @@
     resultsShown = false;
     finishDelay = 0;
     lastCount = null;
-    skidLayer.getContext("2d").clearRect(0, 0, W, H);
+    setupView(state.track);
+    skidLayer.getContext("2d").clearRect(view.minX, view.minY, view.w, view.h);
     drawStatic(state.track);
     buildStandings();
     el.overlay.classList.remove("show");
@@ -254,23 +267,25 @@
 
   function drawStatic(track) {
     var c = staticLayer.getContext("2d");
+    var v = track.bounds;
     var i;
 
     // nurmi raidoilla
     c.fillStyle = "#47903f";
-    c.fillRect(0, 0, W, H);
+    c.fillRect(v.minX, v.minY, v.w, v.h);
     c.save();
-    c.translate(W / 2, H / 2);
+    c.translate(v.minX + v.w / 2, v.minY + v.h / 2);
     c.rotate(-0.32);
     c.fillStyle = "rgba(255,255,240,0.045)";
-    for (i = -14; i < 14; i += 2) c.fillRect(i * 90, -H, 90, H * 2);
+    var stripeN = Math.ceil((v.w + v.h) / 180) + 2;
+    for (i = -stripeN; i < stripeN; i += 2) c.fillRect(i * 90, -v.h * 1.5, 90, v.h * 3);
     c.restore();
 
     // kukkia ja pientä tekstuuria (deterministinen sironta)
     for (i = 0; i < 260; i++) {
       var fx = (Math.sin(i * 12.9898) * 43758.5453) % 1; if (fx < 0) fx += 1;
       var fy = (Math.sin(i * 78.233) * 12543.2371) % 1; if (fy < 0) fy += 1;
-      var px = fx * W, py = fy * H;
+      var px = v.minX + fx * v.w, py = v.minY + fy * v.h;
       if (E.nearestSample(track, px, py).dist < track.width * 0.5 + 26) continue;
       if (i % 9 === 0) {
         c.fillStyle = i % 18 === 0 ? "rgba(255,235,150,0.5)" : "rgba(255,255,255,0.42)";
@@ -289,7 +304,7 @@
       var nx = -Math.sin(p.dir) * side, ny = Math.cos(p.dir) * side;
       var bx = p.x + nx * (track.width * 0.5 + 55 + (i % 5) * 14);
       var by = p.y + ny * (track.width * 0.5 + 55 + (i % 7) * 11);
-      if (bx < 30 || bx > W - 30 || by < 30 || by > H - 30) continue;
+      if (bx < v.minX + 30 || bx > v.maxX - 30 || by < v.minY + 30 || by > v.maxY - 30) continue;
       if (E.nearestSample(track, bx, by).dist < track.width * 0.5 + 34) continue;
       var r = 13 + (i % 3) * 4;
       c.fillStyle = "rgba(20,50,22,0.5)";
@@ -383,14 +398,17 @@
 
   function renderIdle() {
     var track = E.getTrack(selectedTrack);
+    setupView(track);
     drawStatic(track);
-    ctx.drawImage(staticLayer, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+    ctx.drawImage(staticLayer, view.minX, view.minY);
   }
 
   function drawCar(car, slot) {
     var isPlayer = car.kind === "human";
     ctx.save();
     ctx.translate(car.x, car.y);
+    ctx.scale(CAR_SCALE, CAR_SCALE);
 
     // varjo
     ctx.save();
@@ -449,9 +467,9 @@
       ctx.font = "700 15px Fraunces, serif";
       ctx.textAlign = "center";
       ctx.fillStyle = "rgba(0,0,0,0.45)";
-      ctx.fillText(slot === 0 ? "P1" : "P2", car.x + 1, car.y - 17);
+      ctx.fillText(slot === 0 ? "P1" : "P2", car.x + 1, car.y - 22);
       ctx.fillStyle = slot === 0 ? "#ffd88a" : "#a8d0ff";
-      ctx.fillText(slot === 0 ? "P1" : "P2", car.x, car.y - 18);
+      ctx.fillText(slot === 0 ? "P1" : "P2", car.x, car.y - 23);
       ctx.restore();
     }
   }
@@ -471,15 +489,17 @@
     state.cars.forEach(function (car, i) {
       var prev = carTrails[i];
       var slipping = car.slip > 42 || (car.surf === "grass" && Math.hypot(car.vx, car.vy) > 60);
+      // teleporttisuoja: älä piirrä jälkeä jos sijainti hyppäsi (esim. pikakelaus)
+      if (Math.hypot(car.x - prev.x, car.y - prev.y) > 30) slipping = false;
       if (slipping) {
         c.strokeStyle = car.surf === "grass" ? "rgba(74,52,28,0.16)" : "rgba(20,22,26,0.13)";
-        c.lineWidth = 4;
+        c.lineWidth = 5.5;
         c.lineCap = "round";
         var fx = Math.cos(car.angle), fy = Math.sin(car.angle);
         for (var s = -1; s <= 1; s += 2) {
           c.beginPath();
-          c.moveTo(prev.x - fy * 5 * s - fx * 8, prev.y + fx * 5 * s - fy * 8);
-          c.lineTo(car.x - fy * 5 * s - fx * 8, car.y + fx * 5 * s - fy * 8);
+          c.moveTo(prev.x - fy * 7 * s - fx * 11, prev.y + fx * 7 * s - fy * 11);
+          c.lineTo(car.x - fy * 7 * s - fx * 11, car.y + fx * 7 * s - fy * 11);
           c.stroke();
         }
       }
@@ -492,13 +512,13 @@
       var sp = Math.hypot(car.vx, car.vy);
       if (car.surf === "grass" && sp > 70 && particles.length < 240) {
         particles.push({
-          x: car.x - Math.cos(car.angle) * 10, y: car.y - Math.sin(car.angle) * 10,
+          x: car.x - Math.cos(car.angle) * 13, y: car.y - Math.sin(car.angle) * 13,
           vx: -car.vx * 0.1 + Math.sin(car.x * 7.7) * 14, vy: -car.vy * 0.1 + Math.cos(car.y * 9.1) * 14,
           life: 0.5, max: 0.5, size: 4.5, color: "150,190,120"
         });
       } else if (car.slip > 70 && particles.length < 240) {
         particles.push({
-          x: car.x - Math.cos(car.angle) * 9, y: car.y - Math.sin(car.angle) * 9,
+          x: car.x - Math.cos(car.angle) * 12, y: car.y - Math.sin(car.angle) * 12,
           vx: -car.vx * 0.06, vy: -car.vy * 0.06,
           life: 0.4, max: 0.4, size: 3.5, color: "200,200,205"
         });
@@ -529,8 +549,9 @@
   }
 
   function render() {
-    ctx.drawImage(staticLayer, 0, 0);
-    ctx.drawImage(skidLayer, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+    ctx.drawImage(staticLayer, view.minX, view.minY);
+    ctx.drawImage(skidLayer, view.minX, view.minY);
 
     particles.forEach(function (p) {
       ctx.fillStyle = "rgba(" + p.color + "," + (p.life / p.max * 0.55).toFixed(2) + ")";
@@ -742,6 +763,7 @@
         E.step(state, buildInputs());
         handleEvents();
       }
+      state.cars.forEach(function (c, i) { carTrails[i].x = c.x; carTrails[i].y = c.y; });
       updateStandings();
       render();
       if (state.phase === "finished" && !resultsShown) showResults();
