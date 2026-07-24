@@ -1,8 +1,9 @@
 # Sladi
 
 Slicks 'n Slide -henkinen, ylhäältä kuvattu liukukaahailu selaimeen. Koko rata
-näkyy kerralla, autot sladaavat mutkissa, turbonuolet kiihdyttävät ja
-öljyläikät vievät pidon. 1–2 pelaajaa samalla näppäimistöllä + botit.
+näkyy kerralla yhdessä ruudussa — siksi samalla näppäimistöllä voi kisata
+useampi pelaaja. Leveät tiet, sladaavat autot, turbonuolet, öljyläikät, muta,
+vesialtaat, rengaskasat, violetit seinäesteet ja Kahdeksikon silta.
 Kaikki koodi ja grafiikka on tehty tähän peliin alusta asti — klassikko toimii
 vain hengen antajana.
 
@@ -13,10 +14,16 @@ vain hengen antajana.
 - **F** koko ruutu · **M** äänet
 - Kosketusnäytöllä ruudun alle ilmestyvät ohjaimet (1 pelaaja)
 
-Kolme rataa (Rengasrata, Serpentiini, Kahdeksikko), neljä kierrosta.
-Portit lasketaan järjestyksessä, joten oikominen nurmen poikki ei kartuta
+Neljä ajoneuvoluokkaa: **Formula** (nopein, arka hiekalle), **Sportti**
+(tasapainoinen), **Ralli** (kulkee hiekalla ja nurmella) ja **Paku**
+(hidas ja raskas — voittaa kolarit; massa vaikuttaa törmäyksiin).
+
+Kolme rataa (Rengasrata, Serpentiini/hiekka, Kahdeksikko sillalla), neljä
+kierrosta. Portit lasketaan järjestyksessä, joten oikominen ei kartuta
 kierroksia. Kun ensimmäinen ihminen on maalissa, muilla on 30 sekunnin
-armonaika.
+armonaika. Pinnat: asfaltti, nurmi/hiekka, öljy (pito katoaa), muta
+(hidastaa) ja vesi (upottaa lähes pysähdyksiin). Kahdeksikon silta erottaa
+tasot: kannella ja alittavalla tiellä ajavat eivät törmää toisiinsa.
 
 ## Rakenne
 

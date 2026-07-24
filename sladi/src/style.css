@@ -72,6 +72,31 @@ body {
 
 canvas#board { display: block; width: 100%; height: auto; }
 
+/* retrohenkinen tulostaulu radan alla */
+.scorebar {
+  display: flex; flex-wrap: wrap; gap: 4px 10px;
+  background: linear-gradient(180deg, #171b22, #0d1116);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 7px 12px;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.86rem;
+  min-height: 36px;
+  align-items: center;
+}
+.scorebar .slot {
+  display: inline-flex; align-items: center; gap: 6px;
+  flex: 1 1 auto; justify-content: center;
+  color: var(--ink-dim); white-space: nowrap;
+}
+.scorebar .slot b.pos { font-family: "Fraunces", serif; color: var(--ink); }
+.scorebar .chip { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.scorebar .digits {
+  background: #05070a; border-radius: 5px; padding: 1px 7px;
+  color: #ffd23e; letter-spacing: 0.04em;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.scorebar .slot.me .digits { color: #ffe9a8; box-shadow: 0 0 0 1px rgba(242, 182, 60, 0.35); }
+
 .fs-corner {
   position: absolute; top: 10px; right: 10px; z-index: 5;
   width: 38px; height: 38px; border-radius: 10px; border: 0;
@@ -153,6 +178,20 @@ canvas#board { display: block; width: 100%; height: auto; }
 .track-pick canvas { width: 100%; height: auto; display: block; }
 .track-pick b { font-size: 0.88rem; font-weight: 600; }
 .track-pick small { color: var(--ink-dim); font-size: 0.72rem; line-height: 1.25; }
+
+.veh-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.veh-pick {
+  border: 1px solid var(--line); border-radius: 12px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.04); color: var(--ink);
+  padding: 7px 4px 8px; display: flex; flex-direction: column; gap: 3px; align-items: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  font-family: inherit;
+}
+.veh-pick:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.07); }
+.veh-pick.sel { border-color: var(--accent); background: rgba(242, 182, 60, 0.10); box-shadow: 0 0 0 1px var(--accent); }
+.veh-pick canvas { width: 60px; height: auto; display: block; }
+.veh-pick b { font-size: 0.82rem; font-weight: 600; }
+.veh-pick small { color: var(--ink-dim); font-size: 0.66rem; line-height: 1.25; }
 
 .mode-picker { display: flex; flex-direction: column; gap: 9px; }
 .mode-picker button {
@@ -279,4 +318,5 @@ canvas#board { display: block; width: 100%; height: auto; }
 }
 @media (max-width: 560px) {
   .track-picker { grid-template-columns: 1fr 1fr; }
+  .veh-picker { grid-template-columns: 1fr 1fr; }
 }

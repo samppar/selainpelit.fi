@@ -23,6 +23,12 @@
   var state = null;          // moottorin kilpailutila
   var raceOpts = null;       // viimeisimmät asetukset uusintaa varten
   var selectedTrack = "rengasrata";
+  var selectedVehicle = "sportti";
+  try {
+    var savedVeh = localStorage.getItem("sladi-veh");
+    if (E.VEHICLES[savedVeh]) selectedVehicle = savedVeh;
+  } catch (e) {}
+  var BOT_VEHICLES = ["ralli", "formula", "paku", "sportti"];
   var particles = [];
   var carTrails = [];        // edelliset sijainnit sladijälkiä varten
   var acc = 0, lastT = null;
@@ -32,19 +38,37 @@
 
   var staticLayer = document.createElement("canvas");
   var skidLayer = document.createElement("canvas");
+  var deckLayer = document.createElement("canvas"); // siltakansi autojen yläpuolelle
 
   /** Mitoittaa piirtopinnat radan äärimittoihin — turha reunanurmi jää pois
    *  ja autot näkyvät isompina. Kaikki piirto tapahtuu maailmankoordinaateissa. */
   function setupView(track) {
     view = track.bounds;
     var w = Math.round(view.w), h = Math.round(view.h);
-    [canvas, staticLayer, skidLayer].forEach(function (cv) {
+    [canvas, staticLayer, skidLayer, deckLayer].forEach(function (cv) {
       if (cv.width !== w) cv.width = w;
       if (cv.height !== h) cv.height = h;
     });
     staticLayer.getContext("2d").setTransform(1, 0, 0, 1, -view.minX, -view.minY);
     skidLayer.getContext("2d").setTransform(1, 0, 0, 1, -view.minX, -view.minY);
+    deckLayer.getContext("2d").setTransform(1, 0, 0, 1, -view.minX, -view.minY);
   }
+
+  var THEMES = {
+    grass: {
+      base: "#47903f", stripe: "rgba(255,255,240,0.045)",
+      dotDark: "rgba(30,70,28,0.20)", dotLight: "rgba(180,230,150,0.13)",
+      speck1: "rgba(255,235,150,0.5)", speck2: "rgba(255,255,255,0.42)",
+      asphalt: "#84888e", dust: "150,190,120"
+    },
+    sand: {
+      base: "#c49a58", stripe: "rgba(120,80,30,0.07)",
+      dotDark: "rgba(100,70,35,0.22)", dotLight: "rgba(255,244,215,0.16)",
+      speck1: "rgba(250,248,240,0.55)", speck2: "rgba(140,110,70,0.5)",
+      asphalt: "#7e8288", dust: "205,180,130"
+    }
+  };
+  function themeOf(track) { return THEMES[track.def.theme] || THEMES.grass; }
 
   // ------------------------------------------------------------- DOM
 
@@ -63,6 +87,7 @@
     lapBest: document.getElementById("lapBest"),
     lapLast: document.getElementById("lapLast"),
     speedNow: document.getElementById("speedNow"),
+    scorebar: document.getElementById("scorebar"),
     btnFs: document.getElementById("btnFsCorner"),
     btnSnd: document.getElementById("btnSnd"),
     frame: document.getElementById("boardFrame")
@@ -213,10 +238,37 @@
       startRace({
         trackId: selectedTrack,
         players: mode === "2p" ? 2 : 1,
-        botSkill: skill
+        botSkill: skill,
+        vehicle: selectedVehicle
       });
     });
   });
+
+  function buildVehPicker() {
+    var wrap = document.getElementById("vehPicker");
+    wrap.innerHTML = "";
+    Object.keys(E.VEHICLES).forEach(function (key) {
+      var veh = E.VEHICLES[key];
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "veh-pick" + (key === selectedVehicle ? " sel" : "");
+      var cv = document.createElement("canvas");
+      cv.width = 84; cv.height = 40;
+      var c = cv.getContext("2d");
+      c.translate(cv.width / 2, cv.height / 2);
+      c.scale(1.5, 1.5);
+      drawCarBody(c, key, "#e6453c", false);
+      var nm = document.createElement("b"); nm.textContent = veh.name;
+      var ds = document.createElement("small"); ds.textContent = veh.desc;
+      b.appendChild(cv); b.appendChild(nm); b.appendChild(ds);
+      b.addEventListener("click", function () {
+        selectedVehicle = key;
+        try { localStorage.setItem("sladi-veh", key); } catch (e) {}
+        buildVehPicker();
+      });
+      wrap.appendChild(b);
+    });
+  }
 
   document.getElementById("btnAgain").addEventListener("click", function () {
     if (raceOpts) startRace(raceOpts);
@@ -229,9 +281,10 @@
     el.menuCard.style.display = "";
     el.resultCard.style.display = "none";
     el.overlay.classList.add("show");
-    el.phase.textContent = "Valitse rata ja pelimuoto";
+    el.phase.textContent = "Valitse rata, auto ja pelimuoto";
     el.message.textContent = "Kaasuta täysillä suorilla ja anna perän sladata mutkissa — koko rata näkyy kerralla.";
     buildTrackPicker();
+    buildVehPicker();
     renderIdle();
   }
 
@@ -240,12 +293,12 @@
   function startRace(opts) {
     raceOpts = opts;
     var lineup = [];
-    lineup.push({ kind: "human", name: opts.players === 2 ? "Pelaaja 1" : "Sinä", color: PLAYER_COLORS[0] });
-    if (opts.players === 2) lineup.push({ kind: "human", name: "Pelaaja 2", color: PLAYER_COLORS[1] });
+    lineup.push({ kind: "human", name: opts.players === 2 ? "Pelaaja 1" : "Sinä", color: PLAYER_COLORS[0], vehicle: opts.vehicle });
+    if (opts.players === 2) lineup.push({ kind: "human", name: "Pelaaja 2", color: PLAYER_COLORS[1], vehicle: opts.vehicle });
     var botCount = opts.players === 2 ? 2 : 3;
     for (var i = 0; i < botCount; i++) {
       var b = BOT_POOL[i];
-      lineup.push({ kind: "ai", name: b.name, color: b.color, skill: opts.botSkill });
+      lineup.push({ kind: "ai", name: b.name, color: b.color, skill: opts.botSkill, vehicle: BOT_VEHICLES[i % BOT_VEHICLES.length] });
     }
     state = E.createRace({ trackId: opts.trackId, lineup: lineup, laps: undefined });
     particles = [];
@@ -268,33 +321,56 @@
   function drawStatic(track) {
     var c = staticLayer.getContext("2d");
     var v = track.bounds;
+    var th = themeOf(track);
     var i;
 
-    // nurmi raidoilla
-    c.fillStyle = "#47903f";
+    // maasto raidoilla (nurmi tai hiekka)
+    c.fillStyle = th.base;
     c.fillRect(v.minX, v.minY, v.w, v.h);
     c.save();
     c.translate(v.minX + v.w / 2, v.minY + v.h / 2);
     c.rotate(-0.32);
-    c.fillStyle = "rgba(255,255,240,0.045)";
+    c.fillStyle = th.stripe;
     var stripeN = Math.ceil((v.w + v.h) / 180) + 2;
     for (i = -stripeN; i < stripeN; i += 2) c.fillRect(i * 90, -v.h * 1.5, 90, v.h * 3);
     c.restore();
 
-    // kukkia ja pientä tekstuuria (deterministinen sironta)
+    // kukkia/kiviä ja pientä tekstuuria (deterministinen sironta)
     for (i = 0; i < 260; i++) {
       var fx = (Math.sin(i * 12.9898) * 43758.5453) % 1; if (fx < 0) fx += 1;
       var fy = (Math.sin(i * 78.233) * 12543.2371) % 1; if (fy < 0) fy += 1;
       var px = v.minX + fx * v.w, py = v.minY + fy * v.h;
       if (E.nearestSample(track, px, py).dist < track.width * 0.5 + 26) continue;
       if (i % 9 === 0) {
-        c.fillStyle = i % 18 === 0 ? "rgba(255,235,150,0.5)" : "rgba(255,255,255,0.42)";
+        c.fillStyle = i % 18 === 0 ? th.speck1 : th.speck2;
         c.beginPath(); c.arc(px, py, 2.1, 0, Math.PI * 2); c.fill();
       } else {
-        c.fillStyle = i % 2 ? "rgba(30,70,28,0.20)" : "rgba(180,230,150,0.13)";
+        c.fillStyle = i % 2 ? th.dotDark : th.dotLight;
         c.beginPath(); c.arc(px, py, 3 + (i % 4), 0, Math.PI * 2); c.fill();
       }
     }
+
+    // vesialtaat radan vierellä
+    track.waters.forEach(function (w, wi) {
+      c.fillStyle = "rgba(60,40,20,0.18)";
+      c.beginPath(); c.ellipse(w.x + 4, w.y + 5, w.r * 1.02, w.r * 0.8, wi, 0, Math.PI * 2); c.fill();
+      for (var bl = 0; bl < 5; bl++) {
+        var ba = wi * 1.1 + bl * 1.256;
+        var bd = bl === 0 ? 0 : w.r * 0.4;
+        c.fillStyle = bl === 0 ? "#2f66b5" : "#3872c2";
+        c.beginPath();
+        c.ellipse(
+          w.x + Math.cos(ba) * bd, w.y + Math.sin(ba) * bd * 0.75,
+          w.r * (bl === 0 ? 0.85 : 0.45), w.r * (bl === 0 ? 0.66 : 0.34),
+          ba, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.fillStyle = "rgba(190,220,255,0.5)";
+      c.beginPath(); c.ellipse(w.x - w.r * 0.22, w.y - w.r * 0.18, w.r * 0.34, w.r * 0.12, 0.5, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = "rgba(255,255,255,0.35)";
+      c.lineWidth = 1.6;
+      c.beginPath(); c.ellipse(w.x + w.r * 0.15, w.y + w.r * 0.2, w.r * 0.4, w.r * 0.2, 0.3, 0.4, 2.6); c.stroke();
+    });
 
     // pensaat radan ulkopuolella
     var S = track.samples, N = S.length;
@@ -306,6 +382,10 @@
       var by = p.y + ny * (track.width * 0.5 + 55 + (i % 7) * 11);
       if (bx < v.minX + 30 || bx > v.maxX - 30 || by < v.minY + 30 || by > v.maxY - 30) continue;
       if (E.nearestSample(track, bx, by).dist < track.width * 0.5 + 34) continue;
+      var nearWater = track.waters.some(function (w) {
+        return Math.hypot(w.x - bx, w.y - by) < w.r + 30;
+      });
+      if (nearWater) continue;
       var r = 13 + (i % 3) * 4;
       c.fillStyle = "rgba(20,50,22,0.5)";
       c.beginPath(); c.arc(bx + 3, by + 4, r, 0, Math.PI * 2); c.fill();
@@ -340,7 +420,7 @@
 
     // asfaltti — vaalea, retrohenkinen
     tracePath();
-    c.strokeStyle = "#84888e";
+    c.strokeStyle = th.asphalt;
     c.lineWidth = track.width;
     c.stroke();
     // ajolinjan kuluma
@@ -414,6 +494,132 @@
       c.fill();
     });
 
+    // mutalätäköt tiellä
+    track.muds.forEach(function (m, mi) {
+      for (var bl = 0; bl < 6; bl++) {
+        var ba = mi * 0.9 + bl * 1.047;
+        var bd = bl === 0 ? 0 : m.r * 0.45;
+        c.fillStyle = bl % 2 ? "rgba(96,66,34,0.92)" : "rgba(116,82,44,0.9)";
+        c.beginPath();
+        c.ellipse(
+          m.x + Math.cos(ba) * bd, m.y + Math.sin(ba) * bd * 0.7,
+          m.r * (bl === 0 ? 0.8 : 0.4), m.r * (bl === 0 ? 0.58 : 0.28),
+          ba, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.fillStyle = "rgba(70,47,22,0.85)";
+      c.beginPath(); c.ellipse(m.x + m.r * 0.1, m.y + m.r * 0.08, m.r * 0.42, m.r * 0.26, 0.3, 0, Math.PI * 2); c.fill();
+      // roiskepisarat
+      for (var dr = 0; dr < 7; dr++) {
+        var da = dr * 0.9 + mi;
+        c.fillStyle = "rgba(96,66,34,0.7)";
+        c.beginPath();
+        c.arc(m.x + Math.cos(da) * m.r * (0.95 + (dr % 3) * 0.14),
+              m.y + Math.sin(da) * m.r * (0.75 + (dr % 2) * 0.16), 3 + (dr % 3), 0, Math.PI * 2);
+        c.fill();
+      }
+    });
+
+    // siltakansi omalle tasolleen (piirretään autojen päälle render()issä)
+    var dctx = deckLayer.getContext("2d");
+    dctx.clearRect(v.minX, v.minY, v.w, v.h);
+    track.bridges.forEach(function (br) {
+      var half = br.deckHalf;
+      function deckPath(cc) {
+        cc.beginPath();
+        for (var k = -half; k <= half; k++) {
+          var p = S[(br.ib + k + N) % N];
+          if (k === -half) cc.moveTo(p.x, p.y); else cc.lineTo(p.x, p.y);
+        }
+      }
+      dctx.lineCap = "butt";
+      dctx.lineJoin = "round";
+      // varjo alle
+      dctx.save();
+      dctx.translate(5, 8);
+      deckPath(dctx);
+      dctx.strokeStyle = "rgba(10,14,10,0.32)";
+      dctx.lineWidth = track.width + 20;
+      dctx.stroke();
+      dctx.restore();
+      // kaiteet ja kansi
+      deckPath(dctx);
+      dctx.strokeStyle = "#ddd9cd";
+      dctx.lineWidth = track.width + 18;
+      dctx.stroke();
+      deckPath(dctx);
+      dctx.strokeStyle = "#6e6a60";
+      dctx.lineWidth = track.width + 7;
+      dctx.stroke();
+      deckPath(dctx);
+      dctx.strokeStyle = "#8e9298";
+      dctx.lineWidth = track.width;
+      dctx.stroke();
+      // kannen keskiviiva
+      dctx.setLineDash([14, 18]);
+      deckPath(dctx);
+      dctx.strokeStyle = "rgba(255,255,255,0.35)";
+      dctx.lineWidth = 3;
+      dctx.stroke();
+      dctx.setLineDash([]);
+    });
+
+    // violetit seinäesteet turkoosipäädyin
+    track.walls.forEach(function (w) {
+      c.strokeStyle = "rgba(20,10,30,0.35)";
+      c.lineWidth = w.r * 2 + 6;
+      c.lineCap = "round";
+      c.beginPath(); c.moveTo(w.x1 + 3, w.y1 + 5); c.lineTo(w.x2 + 3, w.y2 + 5); c.stroke();
+      c.strokeStyle = "#7b4fa8";
+      c.lineWidth = w.r * 2;
+      c.beginPath(); c.moveTo(w.x1, w.y1); c.lineTo(w.x2, w.y2); c.stroke();
+      c.strokeStyle = "rgba(255,255,255,0.25)";
+      c.lineWidth = w.r * 0.8;
+      c.beginPath(); c.moveTo(w.x1, w.y1 - w.r * 0.35); c.lineTo(w.x2, w.y2 - w.r * 0.35); c.stroke();
+      [[w.x1, w.y1], [w.x2, w.y2]].forEach(function (p) {
+        c.fillStyle = "#3fbf9f";
+        c.beginPath(); c.arc(p[0], p[1], w.r + 2.5, 0, Math.PI * 2); c.fill();
+        c.fillStyle = "rgba(255,255,255,0.35)";
+        c.beginPath(); c.arc(p[0] - 2, p[1] - 2, (w.r + 2.5) * 0.45, 0, Math.PI * 2); c.fill();
+      });
+    });
+
+    // katsomo lähtösuoran varrella: aita ja värikäs yleisömosaiikki
+    (function () {
+      var sp = S[Math.round(N * 0.015) % N];
+      var nx = -Math.sin(sp.dir), ny = Math.cos(sp.dir);
+      var offs = track.width / 2 + 62;
+      var cand = [
+        { x: sp.x + nx * offs, y: sp.y + ny * offs },
+        { x: sp.x - nx * offs, y: sp.y - ny * offs }
+      ];
+      var pick = E.nearestSample(track, cand[0].x, cand[0].y).dist >=
+                 E.nearestSample(track, cand[1].x, cand[1].y).dist ? cand[0] : cand[1];
+      if (pick.x < v.minX + 40 || pick.x > v.maxX - 40 ||
+          pick.y < v.minY + 40 || pick.y > v.maxY - 40) return;
+      c.save();
+      c.translate(pick.x, pick.y);
+      c.rotate(sp.dir);
+      c.fillStyle = "rgba(20,25,18,0.3)";
+      c.fillRect(-76, -34, 156, 72);
+      c.fillStyle = "#8a6a40";
+      c.fillRect(-78, -37, 156, 72);
+      c.fillStyle = "#6f5330";
+      c.fillRect(-74, -33, 148, 64);
+      for (var yy = 0; yy < 8; yy++) {
+        for (var xx = 0; xx < 24; xx++) {
+          var h = Math.sin(xx * 12.9 + yy * 78.2 + track.samples.length) * 43758.545;
+          h -= Math.floor(h);
+          var pal = ["#e34b3f", "#3b6fd9", "#efd23e", "#f2f2f2", "#41a457", "#e078b0", "#2a2a33"];
+          c.fillStyle = pal[Math.floor(h * pal.length)];
+          c.fillRect(-70 + xx * 5.9, -29 + yy * 7, 3.6, 4.4);
+        }
+      }
+      c.fillStyle = "#ddd9cd";
+      c.fillRect(-78, 31, 156, 4);
+      c.restore();
+    })();
+
     // lähtöviiva (shakkiruutu)
     var st = S[0];
     c.save();
@@ -467,34 +673,7 @@
       ctx.closePath(); ctx.fill();
     }
 
-    // renkaat
-    ctx.fillStyle = "#15181d";
-    ctx.fillRect(-11, -9, 6, 4); ctx.fillRect(-11, 5, 6, 4);
-    ctx.fillRect(5, -9, 6, 4); ctx.fillRect(5, 5, 6, 4);
-
-    // kori
-    ctx.fillStyle = car.color;
-    roundRect(ctx, -13, -7, 26, 14, 4);
-    ctx.fill();
-    // keulan valo + takasiipi
-    ctx.fillStyle = "rgba(255,255,255,0.75)";
-    ctx.fillRect(10, -5, 2.5, 3); ctx.fillRect(10, 2, 2.5, 3);
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(-13.5, -8, 3.5, 16);
-    // ohjaamo
-    ctx.fillStyle = "rgba(20,26,34,0.85)";
-    roundRect(ctx, -4, -4.5, 9, 9, 2.5);
-    ctx.fill();
-    ctx.fillStyle = "rgba(160,210,255,0.35)";
-    roundRect(ctx, 2, -3.5, 3, 7, 1.5);
-    ctx.fill();
-
-    if (isPlayer) {
-      ctx.strokeStyle = "rgba(255,255,255,0.9)";
-      ctx.lineWidth = 1.6;
-      roundRect(ctx, -13, -7, 26, 14, 4);
-      ctx.stroke();
-    }
+    drawCarBody(ctx, car.veh, car.color, isPlayer);
     ctx.restore();
 
     // pelaajan tunnus auton yllä
@@ -507,6 +686,91 @@
       ctx.fillStyle = slot === 0 ? "#ffd88a" : "#a8d0ff";
       ctx.fillText(slot === 0 ? "P1" : "P2", car.x, car.y - 23);
       ctx.restore();
+    }
+  }
+
+  /** Piirtää korin paikallisiin koordinaatteihin (keula +x-suuntaan). */
+  function drawCarBody(c, vehKey, color, outline) {
+    if (vehKey === "formula") {
+      // avonaiset renkaat + kapea runko ja siivet
+      c.fillStyle = "#15181d";
+      c.fillRect(-12, -9.5, 6, 4.5); c.fillRect(-12, 5, 6, 4.5);
+      c.fillRect(6, -8.5, 5, 4); c.fillRect(6, 4.5, 5, 4);
+      c.fillStyle = color;
+      roundRect(c, -13, -4.5, 26, 9, 3.5);
+      c.fill();
+      c.fillStyle = "rgba(0,0,0,0.3)";
+      c.fillRect(11, -7.5, 2.8, 15);            // etusiipi
+      c.fillRect(-14.5, -8, 3, 16);             // takasiipi
+      c.fillStyle = "rgba(20,26,34,0.9)";
+      c.beginPath(); c.arc(-1, 0, 3.2, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "rgba(160,210,255,0.4)";
+      c.beginPath(); c.arc(0.5, 0, 1.8, 0, Math.PI * 2); c.fill();
+      if (outline) {
+        c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 1.4;
+        roundRect(c, -13, -4.5, 26, 9, 3.5); c.stroke();
+      }
+    } else if (vehKey === "ralli") {
+      c.fillStyle = "#15181d";
+      c.fillRect(-10, -9.5, 6, 4); c.fillRect(-10, 5.5, 6, 4);
+      c.fillRect(4, -9.5, 6, 4); c.fillRect(4, 5.5, 6, 4);
+      c.fillStyle = color;
+      roundRect(c, -12, -8, 24, 16, 4);
+      c.fill();
+      c.fillStyle = "rgba(255,255,255,0.55)";   // ralliraidat
+      c.fillRect(-12, -2.6, 24, 1.7); c.fillRect(-12, 1, 24, 1.7);
+      c.fillStyle = "rgba(20,26,34,0.85)";
+      roundRect(c, -5, -5.5, 10, 11, 3);
+      c.fill();
+      c.fillStyle = "rgba(0,0,0,0.35)";
+      c.fillRect(-13, -8.5, 3, 17);             // takaspoileri
+      c.fillStyle = "rgba(255,255,255,0.75)";
+      c.fillRect(9.5, -6, 2.2, 3); c.fillRect(9.5, 3, 2.2, 3);
+      if (outline) {
+        c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 1.6;
+        roundRect(c, -12, -8, 24, 16, 4); c.stroke();
+      }
+    } else if (vehKey === "paku") {
+      c.fillStyle = "#15181d";
+      c.fillRect(-12, -10, 6.5, 4.5); c.fillRect(-12, 5.5, 6.5, 4.5);
+      c.fillRect(6, -10, 6.5, 4.5); c.fillRect(6, 5.5, 6.5, 4.5);
+      c.fillStyle = color;
+      roundRect(c, -15, -8.5, 30, 17, 3.5);
+      c.fill();
+      c.fillStyle = "rgba(0,0,0,0.22)";         // tavaratila
+      roundRect(c, -14, -7.5, 17, 15, 2.5);
+      c.fill();
+      c.fillStyle = "rgba(20,26,34,0.85)";      // ohjaamo edessä
+      roundRect(c, 6, -6.5, 6.5, 13, 2);
+      c.fill();
+      c.fillStyle = "rgba(255,255,255,0.75)";
+      c.fillRect(13, -5.5, 2, 3.2); c.fillRect(13, 2.3, 2, 3.2);
+      if (outline) {
+        c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 1.6;
+        roundRect(c, -15, -8.5, 30, 17, 3.5); c.stroke();
+      }
+    } else {
+      // sportti
+      c.fillStyle = "#15181d";
+      c.fillRect(-11, -9, 6, 4); c.fillRect(-11, 5, 6, 4);
+      c.fillRect(5, -9, 6, 4); c.fillRect(5, 5, 6, 4);
+      c.fillStyle = color;
+      roundRect(c, -13, -7, 26, 14, 4);
+      c.fill();
+      c.fillStyle = "rgba(255,255,255,0.75)";
+      c.fillRect(10, -5, 2.5, 3); c.fillRect(10, 2, 2.5, 3);
+      c.fillStyle = "rgba(0,0,0,0.35)";
+      c.fillRect(-13.5, -8, 3.5, 16);
+      c.fillStyle = "rgba(20,26,34,0.85)";
+      roundRect(c, -4, -4.5, 9, 9, 2.5);
+      c.fill();
+      c.fillStyle = "rgba(160,210,255,0.35)";
+      roundRect(c, 2, -3.5, 3, 7, 1.5);
+      c.fill();
+      if (outline) {
+        c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 1.6;
+        roundRect(c, -13, -7, 26, 14, 4); c.stroke();
+      }
     }
   }
 
@@ -527,6 +791,8 @@
       var slipping = car.slip > 42 || (car.surf === "grass" && Math.hypot(car.vx, car.vy) > 60);
       // teleporttisuoja: älä piirrä jälkeä jos sijainti hyppäsi (esim. pikakelaus)
       if (Math.hypot(car.x - prev.x, car.y - prev.y) > 30) slipping = false;
+      // sillan kohdalla jäljet sotkisivat tasot — jätä piirtämättä
+      if (E.bridgeLevel(state.track, car) !== null) slipping = false;
       if (slipping) {
         c.strokeStyle = car.surf === "grass" ? "rgba(74,52,28,0.16)" : "rgba(20,22,26,0.13)";
         c.lineWidth = 5.5;
@@ -544,13 +810,26 @@
   }
 
   function spawnDust() {
+    var dustColor = themeOf(state.track).dust;
     state.cars.forEach(function (car) {
       var sp = Math.hypot(car.vx, car.vy);
-      if (car.surf === "grass" && sp > 70 && particles.length < 240) {
+      if (car.surf === "water" && sp > 30 && particles.length < 240) {
+        particles.push({
+          x: car.x - Math.cos(car.angle) * 10, y: car.y - Math.sin(car.angle) * 10,
+          vx: -car.vx * 0.15 + Math.sin(car.x * 5.3) * 24, vy: -car.vy * 0.15 + Math.cos(car.y * 6.1) * 24,
+          life: 0.55, max: 0.55, size: 5, color: "160,200,250"
+        });
+      } else if (car.surf === "mud" && sp > 40 && particles.length < 240) {
+        particles.push({
+          x: car.x - Math.cos(car.angle) * 12, y: car.y - Math.sin(car.angle) * 12,
+          vx: -car.vx * 0.12 + Math.sin(car.x * 6.7) * 18, vy: -car.vy * 0.12 + Math.cos(car.y * 8.3) * 18,
+          life: 0.5, max: 0.5, size: 4.2, color: "120,84,46"
+        });
+      } else if (car.surf === "grass" && sp > 70 && particles.length < 240) {
         particles.push({
           x: car.x - Math.cos(car.angle) * 13, y: car.y - Math.sin(car.angle) * 13,
           vx: -car.vx * 0.1 + Math.sin(car.x * 7.7) * 14, vy: -car.vy * 0.1 + Math.cos(car.y * 9.1) * 14,
-          life: 0.5, max: 0.5, size: 4.5, color: "150,190,120"
+          life: 0.5, max: 0.5, size: 4.5, color: dustColor
         });
       } else if (car.slip > 70 && particles.length < 240) {
         particles.push({
@@ -584,10 +863,34 @@
     }
   }
 
+  function drawObstacles() {
+    state.track.obstacles.forEach(function (o) {
+      var tires = o.r >= 20
+        ? [[-0.45, -0.4], [0.5, -0.35], [0, 0.45]]
+        : [[0, 0]];
+      var tr = o.r >= 20 ? o.r * 0.62 : o.r;
+      ctx.fillStyle = "rgba(0,0,0,0.28)";
+      ctx.beginPath(); ctx.ellipse(o.x + 3, o.y + 4, o.r * 1.05, o.r * 0.85, 0, 0, Math.PI * 2); ctx.fill();
+      tires.forEach(function (t) {
+        var tx = o.x + t[0] * o.r, ty = o.y + t[1] * o.r;
+        ctx.fillStyle = "#23262b";
+        ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#454a52";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(tx, ty, tr * 0.62, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = "#101318";
+        ctx.beginPath(); ctx.arc(tx, ty, tr * 0.32, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.14)";
+        ctx.beginPath(); ctx.arc(tx - tr * 0.3, ty - tr * 0.3, tr * 0.28, 0, Math.PI * 2); ctx.fill();
+      });
+    });
+  }
+
   function render() {
     ctx.setTransform(1, 0, 0, 1, -view.minX, -view.minY);
     ctx.drawImage(staticLayer, view.minX, view.minY);
     ctx.drawImage(skidLayer, view.minX, view.minY);
+    drawObstacles();
 
     particles.forEach(function (p) {
       ctx.fillStyle = "rgba(" + p.color + "," + (p.life / p.max * 0.55).toFixed(2) + ")";
@@ -596,12 +899,19 @@
       ctx.fill();
     });
 
-    // piirrä autot sijoitusjärjestyksessä (kärki päällimmäisenä)
+    // piirrä autot sijoitusjärjestyksessä (kärki päällimmäisenä);
+    // sillan alla ajavat ensin, kansi väliin, kannella ajavat päällimmäisiksi
     var order = state.cars.slice().sort(function (a, b) { return (b.place || 9) - (a.place || 9); });
     var slotOf = {};
     var hi = 0;
     state.cars.forEach(function (c) { if (c.kind === "human") slotOf[c.idx] = hi++; });
-    order.forEach(function (car) { drawCar(car, slotOf[car.idx] || 0); });
+    var lower = [], upper = [];
+    order.forEach(function (car) {
+      (E.bridgeLevel(state.track, car) === 1 ? upper : lower).push(car);
+    });
+    lower.forEach(function (car) { drawCar(car, slotOf[car.idx] || 0); });
+    ctx.drawImage(deckLayer, view.minX, view.minY);
+    upper.forEach(function (car) { drawCar(car, slotOf[car.idx] || 0); });
   }
 
   // ------------------------------------------------------------- HUD
@@ -625,6 +935,18 @@
   function updateStandings() {
     if (!state) return;
     var sorted = state.cars.slice().sort(function (a, b) { return (a.place || 9) - (b.place || 9); });
+
+    // retrotulostaulu radan alla: sija · väri · kierrokset · aika
+    el.scorebar.innerHTML = sorted.map(function (car) {
+      var t = car.finished ? E.formatTime(car.finishTime)
+        : car.bestLap !== null ? E.formatTime(car.bestLap) : "-:--.-";
+      return '<span class="slot' + (car.kind === "human" ? " me" : "") + '">' +
+        '<b class="pos">' + (car.place || "·") + '</b>' +
+        '<span class="chip" style="background:' + car.color + '"></span>' +
+        '<span>' + Math.min(car.lapsDone + (car.finished ? 0 : 1), state.laps) + "/" + state.laps + '</span>' +
+        '<span class="digits">' + t + '</span></span>';
+    }).join("");
+
     sorted.forEach(function (car, vi) {
       var row = standingRows[car.idx];
       row.querySelector(".pl").textContent = (car.place || vi + 1) + ".";

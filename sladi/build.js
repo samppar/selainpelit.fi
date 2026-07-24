@@ -22,6 +22,7 @@ const html = `<!DOCTYPE html><html lang="fi"><head><meta charset="utf-8">
   <div class="stage">
     <div id="boardFrame" class="board-frame">
       <canvas id="board" width="1680" height="1050" role="img" aria-label="Kilparata ylhäältä kuvattuna"></canvas>
+      <div id="scorebar" class="scorebar" aria-hidden="true"></div>
       <button id="btnSnd" class="snd-corner" type="button" title="Äänet (M)" aria-label="Äänet">♪</button>
       <button id="btnFsCorner" class="fs-corner" type="button" title="Koko ruutu (F)" aria-label="Koko ruutu">⛶</button>
       <div id="countWrap" class="count" aria-hidden="true"></div>
@@ -30,6 +31,7 @@ const html = `<!DOCTYPE html><html lang="fi"><head><meta charset="utf-8">
           <h2>Sladi</h2>
           <p>Ylhäältä kuvattu kaahailu, jossa koko rata näkyy kerralla ja autot sladaavat mutkissa. Neljä kierrosta — nopein voittaa.</p>
           <div id="trackPicker" class="track-picker" aria-label="Valitse rata"></div>
+          <div id="vehPicker" class="veh-picker" aria-label="Valitse ajoneuvo"></div>
           <div class="mode-picker" aria-label="Valitse pelimuoto">
             <button type="button" data-mode="1p" data-skill="rento">Yksin · rennot botit<small>hyvä ensimmäiseen kisaan</small></button>
             <button type="button" data-mode="1p" data-skill="kova">Yksin · kovat botit<small>botit jarruttavat myöhään</small></button>
@@ -70,7 +72,9 @@ const html = `<!DOCTYPE html><html lang="fi"><head><meta charset="utf-8">
   <p class="help"><strong>P1:</strong> nuolinäppäimet — <kbd>▲</kbd> kaasu, <kbd>▼</kbd> jarru/pakki.<br>
   <strong>P2:</strong> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> kaksinpelissä.<br>
   <kbd>F</kbd> koko ruutu · <kbd>M</kbd> äänet.<br>
-  Keltaiset nuolet = turbo. Tummat läikät = öljyä — pito katoaa!</p>
+  Keltaiset nuolet = turbo. Öljy vie pidon, ruskea muta hidastaa,
+  sininen vesi upottaa lähes pysähdyksiin. Väistä rengaskasoja —
+  ja Kahdeksikossa alempi tie kulkee sillan alitse!</p>
   <p class="footer-note">Kunnianosoitus 90-luvun suomalaisklassikoille · <a href="/">selainpelit.fi</a></p>
 </aside>
 </main>
